@@ -1,0 +1,65 @@
+# Commerce Agent configuration.
+# Values here are overridable by environment variables (see .env.example).
+# Misconfiguration fails loud at load (constitution PB-1).
+
+llm:
+  provider: deepseek        # deepseek | openai | anthropic | mock
+  model: deepseek-chat
+  base_url: https://api.deepseek.com
+  api_key: ""               # set LLM_API_KEY in .env
+  temperature: 0.0
+  max_tokens: 4096
+
+agent:
+  max_tool_iterations: 8
+  max_turns: 24
+
+embedding:
+  provider: openai          # openai | ollama | mock
+  model: text-embedding-3-small
+  dimensions: 1536
+  base_url: ""
+  api_key: ""
+
+vector_store:
+  provider: chroma
+  persist_directory: ./data/chroma
+  collection_name: knowledge
+
+retrieval:
+  dense_top_k: 20
+  sparse_top_k: 20
+  fusion_top_k: 10
+  rrf_k: 60
+
+rerank:
+  enabled: false
+  provider: none            # none | cross_encoder | llm
+  top_k: 5
+
+evaluation:
+  enabled: false
+  provider: custom
+  metrics: [hit_rate, mrr, faithfulness]
+
+observability:
+  log_level: INFO
+  trace_enabled: true
+  trace_file: ./logs/traces.jsonl
+
+ingestion:
+  chunk_size: 1000
+  chunk_overlap: 200
+  splitter: recursive       # recursive | semantic | fixed
+  chunk_refiner:
+    use_llm: false
+  metadata_enricher:
+    use_llm: false
+
+memory:
+  use_llm: false
+  retention_days: 365
+
+web:
+  host: 0.0.0.0
+  port: 8000

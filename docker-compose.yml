@@ -1,0 +1,19 @@
+# Single-command startup (DP-1).
+# SQLite and Chroma are embedded and file-based, so they live in volumes
+# rather than separate services (DP-6).
+services:
+  app:
+    build: .
+    image: commerce-agent:local
+    env_file:
+      - .env
+    environment:
+      SQLITE_PATH: /app/data/db/app.sqlite
+      CHROMA_PATH: /app/data/chroma
+      TRACE_FILE: /app/logs/traces.jsonl
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
