@@ -22,7 +22,7 @@ embedding:
   api_key: ""
 
 vector_store:
-  provider: memory          # memory | chroma (chroma is not implemented; fails loud)
+  provider: chroma          # chroma (persistent) | memory (keyless/test)
   persist_directory: ./data/chroma
   collection_name: knowledge
 
@@ -97,7 +97,7 @@ session:
 
 # Knowledge retrieval (P4). Keyless lexical retriever over config/knowledge/.
 knowledge:
-  provider: memory          # memory (keyless TF-IDF) | dense (embeddings + vectors)
+  provider: dense           # dense (embeddings + Chroma) | memory (keyless TF-IDF)
   path: ./config/knowledge
   top_k: 3
   min_chars: 40

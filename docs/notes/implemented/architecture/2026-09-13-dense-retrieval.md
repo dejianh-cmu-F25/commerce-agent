@@ -53,3 +53,7 @@ cross-cutting questions:
   the demo corpus, and the first thing to make async if it matters.
 - The `Retriever` port now includes `add`, so ingestion is part of the capability
   rather than a provider-only method.
+- **Superseded in part:** feature `021-chroma-vector-store` adds a Chroma
+  `VectorStore` provider and makes it the shipped default, reversing the "Chroma
+  is deferred" decision recorded here. The port shape and keyless `hash`
+  embedding are unchanged.

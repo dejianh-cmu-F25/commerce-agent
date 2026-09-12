@@ -88,7 +88,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); `knowledge.provider` selects `memory` (keyless TF-IDF, default) or `dense` |
 | Add embeddings | Implement `EmbeddingProvider` (`app/ports/embedding.py`); `embedding.provider` selects keyless `hash` (default) or `openai` |
-| Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects in-process `memory` (Chroma is a future provider) |
+| Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects persistent `chroma` (default) or in-process `memory` |
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
 | Change chunking | Implement `ChunkingStrategy`; select it in config |
