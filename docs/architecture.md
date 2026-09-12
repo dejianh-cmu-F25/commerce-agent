@@ -62,9 +62,10 @@ Docs -> Loader -> Chunker -> Transform -> Embed -> Upsert
 **Observability flow**
 
 ```
-span(trace_id, inputs, outputs, duration, tokens)
+span(trace_id, inputs, outputs, duration, tokens)   # llm span records cache hit/miss tokens
   -> logs/traces.jsonl -> Trace Viewer (web)
-  -> metrics (latency, tokens, cost, cache hit, tool success)
+  -> Metrics view (latency by span, tokens, cost, cache hit, tool success/failure)
+     via GET /metrics -> app/core/metrics.summarize(recent_spans)
 ```
 
 **Control flow**
@@ -97,6 +98,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add durable session state | Extend `SessionEvent`; render and replay from the log |
 | Add a session store | Implement `SessionRepository` (`app/ports/session_store.py`); select it in `settings.yaml` |
 | Add a tracer / span | Emit a `Span` via the `Tracer` port; add attributes (redacted) in the loop |
+| Add a metric | Add attributes to the relevant span, then aggregate in `app/core/metrics.py` and surface in the Metrics view |
 | Add an eval scenario | Add a `Scenario` in `evals/scenarios.py` (scripted turns + expected outcomes); the gate CLI and the web Scenario Runner both pick it up via `evals/runner.py` |
 | Run the gold scenarios from the web | The Scenario Runner calls `evals.runner.run_scenarios` (same code as the gate); served by `GET /scenarios` + `POST /scenarios/run` (WV-4) |
 | Add background work | Add a job runner behind a port |

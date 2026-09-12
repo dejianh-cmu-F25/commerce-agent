@@ -25,3 +25,7 @@ class Tracer(Protocol):
     def get_spans(self, trace_id: str) -> list[Span]:
         """Return the spans of one trace, ordered by start time."""
         ...
+
+    def recent_spans(self, limit: int = 2000) -> list[Span]:
+        """Return up to ``limit`` most recent spans, for aggregation (OB-3)."""
+        ...

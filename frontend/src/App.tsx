@@ -30,6 +30,7 @@ import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
 import { CartCard } from "@/components/app/cart-card";
 import { MemoryView } from "@/components/app/memory-view";
 import { MerchantView } from "@/components/app/merchant-view";
+import { MetricsView } from "@/components/app/metrics-view";
 import { OrderCard, OrdersCard, ReturnCard } from "@/components/app/order-cards";
 import { ScenarioRunner } from "@/components/app/scenario-runner";
 import { SourcesList } from "@/components/app/sources-list";
@@ -73,9 +74,9 @@ function Chat() {
   const budget = latestBudget(messages);
   const isEmpty = messages.length === 0;
   const [resuming, setResuming] = useState(() => transport.getSessionId() !== null);
-  const [view, setView] = useState<"chat" | "traces" | "merchant" | "memory" | "scenarios">(
-    "chat",
-  );
+  const [view, setView] = useState<
+    "chat" | "traces" | "merchant" | "memory" | "scenarios" | "metrics"
+  >("chat");
 
   // Resume the conversation from the server log after a reload (feature 006).
   useEffect(() => {
@@ -118,8 +119,8 @@ function Chat() {
           <span className="hidden text-xs text-muted-foreground sm:inline">
             ACME storefront · spec-driven demo
           </span>
-          <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-2">
-            <div className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-md border p-0.5">
+          <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="flex min-w-0 max-w-full items-center gap-0.5 overflow-x-auto rounded-md border p-0.5">
               <button
                 type="button"
                 onClick={() => setView("chat")}
@@ -170,6 +171,16 @@ function Chat() {
               >
                 Scenarios
               </button>
+              <button
+                type="button"
+                onClick={() => setView("metrics")}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs",
+                  view === "metrics" ? "bg-accent text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Metrics
+              </button>
             </div>
             <button
               type="button"
@@ -191,6 +202,8 @@ function Chat() {
         <MemoryView />
       ) : view === "scenarios" ? (
         <ScenarioRunner />
+      ) : view === "metrics" ? (
+        <MetricsView />
       ) : (
         <>
           <Conversation className="min-h-0 flex-1" aria-live="polite">

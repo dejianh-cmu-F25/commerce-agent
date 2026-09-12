@@ -27,6 +27,9 @@ class NullTracer:
     def get_spans(self, trace_id: str) -> list[Span]:
         return []
 
+    def recent_spans(self, limit: int = 2000) -> list[Span]:
+        return []
+
 
 class JsonlTracer:
     def __init__(self, path: str, max_attr_len: int = 500) -> None:
@@ -92,3 +95,6 @@ class JsonlTracer:
             (span for span in self._read() if span.trace_id == trace_id),
             key=lambda span: span.start_ms,
         )
+
+    def recent_spans(self, limit: int = 2000) -> list[Span]:
+        return self._read()[-max(1, limit) :]
