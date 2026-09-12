@@ -81,3 +81,9 @@ web:
 storefront:
   provider: sqlite          # memory | sqlite
   sqlite_path: ./data/db/storefront.sqlite
+
+# Session log persistence (constitution SL-1). `memory` is the keyless path;
+# `sqlite` lets conversations survive restarts and resume by id.
+session:
+  store: sqlite             # memory | sqlite
+  sqlite_path: ./data/db/sessions.sqlite

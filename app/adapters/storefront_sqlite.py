@@ -29,7 +29,7 @@ class SqliteStorefront:
     def __init__(self, path: str, seed: list[Product] | None = None) -> None:
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self._path)
+        self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute(_SCHEMA)
         self._seed(SEED_PRODUCTS if seed is None else seed)

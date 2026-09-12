@@ -18,8 +18,8 @@ Dependencies point inward only.
 | --- | --- | --- |
 | L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
-| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront) | L1 |
-| L1 Ports | `app/ports` (LLM, Storefront, Backend, Retriever, Memory, Tracer, EventSink) | L0 |
+| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront, session) | L1 |
+| L1 Ports | `app/ports` (LLM, Storefront, Session, Backend, Retriever, Memory, Tracer, EventSink) | L0 |
 | L0 Core | `app/core` (loop, session, events, settings, prompts) | none |
 
 `app/core` imports only `app/ports`. Adapters implement the ports and are
@@ -89,6 +89,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |
 | Add a surface (CLI, websocket) | Implement `EventSink`; mount it |
 | Add durable session state | Extend `SessionEvent`; render and replay from the log |
+| Add a session store | Implement `SessionRepository` (`app/ports/session_store.py`); select it in `settings.yaml` |
 | Add background work | Add a job runner behind a port |
 | Add deployment target | Extend `docker-compose.yml`; keep config in env |
 
