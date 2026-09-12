@@ -131,7 +131,17 @@
 
 ### Responsive & Theme
 
-- [ ] Usable at 375px and on desktop
+<!--
+  The app is a full-viewport shell. Keep these constraints (see
+  docs/ui-conventions.md).
+-->
+
+- [ ] Shell fills the viewport; `body` height equals the window height
+- [ ] No page-level horizontal scroll from 320px up; wide content scrolls or wraps inside its container
+- [ ] Header, transcript, and composer share one responsive, aligned column (narrow on small, wider on large)
+- [ ] Empty state fills and is vertically centered
+- [ ] Suggestion rows wrap or scroll inside their own container on narrow screens
+- [ ] Live window resize re-flows with no stuck widths or overlap
 - [ ] Theme follows `prefers-color-scheme`
 
 ## Success Criteria *(mandatory)*

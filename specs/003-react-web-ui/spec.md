@@ -124,6 +124,11 @@ system theme.
   `node_modules/` and build output MUST NOT be committed.
 - **FR-015**: The old vanilla surface (`web/static/app.js`, `index.html`,
   `styles.css`, `vendor/`) MUST be removed.
+- **FR-016**: The layout MUST scale with the window: header, transcript, and
+  composer share one responsive, aligned column that widens on large screens; the
+  empty state MUST fill and center in the transcript area; wide content (suggestion
+  rows, code) MUST wrap or scroll inside its own container so there is no
+  page-level horizontal scroll from 320px up; live resize MUST re-flow cleanly.
 
 ### Key Entities
 
@@ -153,7 +158,13 @@ system theme.
 
 ### Responsive & Theme
 
-- [ ] Full viewport height; no horizontal scroll at 375px.
+- [ ] Shell fills the viewport; `body` height equals the window height.
+- [ ] No page-level horizontal scroll from 320px up; wide content scrolls or wraps inside its container.
+- [ ] Header, transcript, and composer share one responsive, aligned column
+      (`max-w-3xl` → `lg:max-w-5xl` → `xl:max-w-6xl`).
+- [ ] Empty state fills the transcript area and is vertically centered.
+- [ ] Suggestion rows wrap (or scroll inside their own container) on narrow screens.
+- [ ] Live window resize re-flows with no stuck widths or overlap.
 - [ ] Follows `prefers-color-scheme` (light and dark).
 
 ## Web Acceptance *(convention, WV-1)*

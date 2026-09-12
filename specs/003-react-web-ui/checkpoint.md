@@ -58,3 +58,23 @@ Features: 003
 - The backend event contract is unchanged; `frontend/src/lib/transport.ts`
   adapts the SSE stream to AI SDK UI message chunks.
 - Bundle is large (Streamdown + shiki); lazy code-highlighting is a follow-up.
+
+## Responsive fix (2026-09-13, `fix/003-responsive-layout`)
+
+The first 003 build used a fixed 768px column and a top-aligned empty state, so
+the layout did not scale with the window. Fixed per `docs/ui-conventions.md`:
+
+- One responsive column shared by header, transcript, and composer
+  (`max-w-3xl` → `lg:max-w-5xl` → `xl:max-w-6xl`), so they stay aligned.
+- Empty state fills the transcript area and centers vertically.
+- Suggestion row wraps instead of overflowing on narrow screens.
+
+Measured (empty state, live resize):
+
+| Viewport | body == window | h-overflow | empty h == transcript | column w | header/form aligned |
+| --- | --- | --- | --- | --- | --- |
+| 1920×1080 | yes | none | yes (898) | 1152 | yes |
+| 1440×900 | yes | none | yes (718) | 1152 | yes |
+| 1024×700 | yes | none | yes (518) | 992 | yes |
+| 768×800 | yes | none | yes (618) | 738 | yes |
+| 375×700 | yes | none | yes (518) | 345 | yes |
