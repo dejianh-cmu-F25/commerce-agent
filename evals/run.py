@@ -10,10 +10,13 @@ from __future__ import annotations
 import asyncio
 import tempfile
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cli_sink import ListSink
+from app.adapters.memory_memory import InMemoryMemoryStore
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient
 from app.adapters.retriever_memory import InMemoryRetriever
@@ -21,8 +24,9 @@ from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.core import events as ev
 from app.core.loop import Agent
-from app.core.session import Session
+from app.core.session import MemoryNote, Session
 from app.core.settings import AgentSettings
+from app.core.types import MemoryFact
 from app.knowledge.ingest import load_chunks
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
@@ -33,6 +37,7 @@ from evals.scenarios import SCENARIOS, Scenario
 
 SYSTEM = "You are a commerce agent."
 P101_PRICE = 189.0
+EVAL_CUSTOMER = "eval"
 KNOWLEDGE_DIR = str(Path(__file__).resolve().parents[1] / "config" / "knowledge")
 
 
@@ -43,7 +48,9 @@ class EvalResult:
     failures: list[str] = field(default_factory=list)
 
 
-def _build_agent(scenario: Scenario, merchant: SqliteMerchant) -> Agent:
+def _build_agent(
+    scenario: Scenario, merchant: SqliteMerchant, memory: InMemoryMemoryStore
+) -> Agent:
     registry = ToolRegistry()
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
@@ -57,7 +64,21 @@ def _build_agent(scenario: Scenario, merchant: SqliteMerchant) -> Agent:
         tools=registry,
         settings=AgentSettings(max_turns=12),
         system_prompt=SYSTEM,
+        memory=memory,
     )
+
+
+def _seed_memory(memory: InMemoryMemoryStore, scenario: Scenario) -> None:
+    for kind, text in scenario.seed_memory:
+        memory.add(
+            MemoryFact(
+                id=uuid4().hex[:12],
+                customer_id=EVAL_CUSTOMER,
+                kind=kind,
+                text=text,
+                created_at=datetime.now(UTC).isoformat(),
+            )
+        )
 
 
 async def _run_scenario(scenario: Scenario) -> EvalResult:
@@ -65,9 +86,11 @@ async def _run_scenario(scenario: Scenario) -> EvalResult:
         path = str(Path(tmp) / "store.sqlite")
         SqliteStorefront(path)  # seed products for the merchant
         merchant = SqliteMerchant(path)
-        agent = _build_agent(scenario, merchant)
+        memory = InMemoryMemoryStore()
+        _seed_memory(memory, scenario)
+        agent = _build_agent(scenario, merchant, memory)
 
-        session = Session(id="eval")
+        session = Session(id="eval", customer_id=EVAL_CUSTOMER)
         sink = ListSink()
         await agent.stream_turn(session, scenario.user_text, sink)
 
@@ -83,6 +106,17 @@ async def _run_scenario(scenario: Scenario) -> EvalResult:
         cart = [(line.product_id, line.quantity) for line in session.cart]
         if cart != scenario.expect_cart:
             failures.append(f"cart {cart!r} != {scenario.expect_cart!r}")
+
+        stored = [fact.text for fact in memory.list(EVAL_CUSTOMER)]
+        for text in scenario.expect_memory:
+            if text not in stored:
+                failures.append(f"memory {text!r} not stored (have {stored!r})")
+        recalled = [
+            fact for note in session.events if isinstance(note, MemoryNote) for fact in note.facts
+        ]
+        for text in scenario.expect_recall:
+            if text not in recalled:
+                failures.append(f"memory {text!r} not recalled (have {recalled!r})")
 
         if scenario.name == "merchant_stage":
             # A staged change must not have modified the product (P3).

@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from app.core import events as ev
 from app.core.session import (
     AssistantMessage,
+    MemoryNote,
     Session,
     ToolResultEvent,
     UserMessage,
@@ -25,10 +27,20 @@ from app.core.session import (
 )
 from app.core.settings import AgentSettings
 from app.core.tracing import SpanTimer
-from app.core.types import Finish, Message, TextDelta, ToolCall, ToolCallComplete, Usage
+from app.core.types import (
+    Finish,
+    MemoryFact,
+    Message,
+    TextDelta,
+    ToolCall,
+    ToolCallComplete,
+    Usage,
+)
+from app.memory.extract import extract_facts
 from app.ports.cost_meter import CostMeter
 from app.ports.event_sink import EventSink
 from app.ports.llm import LLMClient
+from app.ports.memory import MemoryStore
 from app.ports.tracer import Tracer
 from app.tools.registry import ToolRegistry
 
@@ -61,6 +73,7 @@ class Agent:
         system_prompt: str,
         cost_meter: CostMeter | None = None,
         tracer: Tracer | None = None,
+        memory: MemoryStore | None = None,
     ) -> None:
         self._llm = llm
         self._tools = tools
@@ -68,6 +81,7 @@ class Agent:
         self._system_prompt = system_prompt
         self._cost_meter = cost_meter
         self._tracer = tracer
+        self._memory = memory
 
     def build_request(self, session: Session) -> list[Message]:
         """Build model messages from the session log (the only path, SL-1)."""
@@ -87,14 +101,71 @@ class Agent:
         with SpanTimer(self._tracer, "turn", trace_id) as span:
             span.attributes["session_id"] = session.id
             try:
+                await self._recall_memory(session, trace_id, span.span_id)
                 reason = await self._run_steps(session, sink, trace_id, span.span_id)
             except Exception as exc:  # surface the failure, never hide it
                 await sink.emit(ev.ErrorEvent(message=str(exc)))
                 reason = "error"
             finally:
+                await self._extract_memory(session, user_text, trace_id, span.span_id)
                 span.attributes["reason"] = reason
                 span.status = "ok" if reason == "stop" else reason
                 await sink.emit(ev.TurnEnd(turn_id=turn_id, reason=reason))
+
+    async def _recall_memory(self, session: Session, trace_id: str, parent_id: str) -> None:
+        """Recall the customer's facts into the log, once per session (SL-1).
+
+        The facts are recorded as a :class:`MemoryNote` so the model context is
+        reconstructable from the log. A store failure degrades to no memory and
+        is traced; it never fails the turn (RD-1).
+        """
+        if self._memory is None or not session.customer_id:
+            return
+        if any(isinstance(event, MemoryNote) for event in session.events):
+            return  # already injected; the facts are in this session's context
+        with SpanTimer(self._tracer, "memory", trace_id, parent_id) as span:
+            span.attributes["op"] = "recall"
+            span.attributes["customer"] = session.customer_id[:8]
+            try:
+                facts = self._memory.list(session.customer_id)
+            except Exception as exc:
+                span.status = "error"
+                span.attributes["error"] = str(exc)
+                return
+            if facts:
+                session.append(MemoryNote(facts=[fact.text for fact in facts]))
+            span.attributes["recalled"] = len(facts)
+
+    async def _extract_memory(
+        self, session: Session, user_text: str, trace_id: str, parent_id: str
+    ) -> None:
+        """Store durable facts from the customer's own text (deterministic, P4)."""
+        if self._memory is None or not session.customer_id:
+            return
+        pairs = extract_facts(user_text)
+        if not pairs:
+            return
+        with SpanTimer(self._tracer, "memory", trace_id, parent_id) as span:
+            span.attributes["op"] = "extract"
+            span.attributes["candidate"] = len(pairs)
+            stored = 0
+            try:
+                for kind, text in pairs:
+                    fact = MemoryFact(
+                        id=uuid4().hex[:12],
+                        customer_id=session.customer_id,
+                        kind=kind,
+                        text=text,
+                        created_at=datetime.now(UTC).isoformat(),
+                    )
+                    if self._memory.add(fact):
+                        stored += 1
+            except Exception as exc:
+                span.status = "error"
+                span.attributes["error"] = str(exc)
+                return
+            span.attributes["stored"] = stored
+            span.attributes["duplicate"] = len(pairs) - stored
 
     async def _run_steps(
         self, session: Session, sink: EventSink, trace_id: str, parent_id: str

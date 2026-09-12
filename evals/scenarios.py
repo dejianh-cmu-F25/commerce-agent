@@ -20,6 +20,11 @@ class Scenario:
     expect_tools: list[str]
     expect_components: list[str] = field(default_factory=list)
     expect_cart: list[tuple[str, int]] = field(default_factory=list)
+    # Customer memory (feature 013): seed facts for the eval customer, then
+    # assert facts stored from the turn and facts recalled into its context.
+    seed_memory: list[tuple[str, str]] = field(default_factory=list)
+    expect_memory: list[str] = field(default_factory=list)
+    expect_recall: list[str] = field(default_factory=list)
 
 
 _SEARCH = tool_turn("search_products", '{"query": "tent"}', call_id="c1")
@@ -81,5 +86,20 @@ SCENARIOS: list[Scenario] = [
         expect_tools=["search_knowledge"],
         expect_components=[],
         expect_cart=[],
+    ),
+    Scenario(
+        name="memory_extract",
+        user_text="I usually wear size M",
+        turns=[_DONE],
+        expect_tools=[],
+        expect_memory=["Wears size M"],
+    ),
+    Scenario(
+        name="memory_recall",
+        user_text="hello",
+        turns=[_DONE],
+        expect_tools=[],
+        seed_memory=[("profile", "Wears size M")],
+        expect_recall=["Wears size M"],
     ),
 ]

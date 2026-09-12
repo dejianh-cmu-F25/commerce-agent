@@ -52,6 +52,7 @@ Features: <feature ids>
 | 010 merchant agent | 010 | inventory; staged price change; human approval applies it (P3) | PASS (2026-09-13) |
 | 011 evaluation | 011 | keyless replay of gold scenarios in the local gate | N/A (no browser surface) |
 | 012 knowledge retrieval | 012 | search_knowledge; answer grounded in policy docs | PASS (2026-09-13) |
+| 013 customer memory | 013 | durable facts stored; recalled in a new chat; forget | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -173,3 +174,14 @@ Features: <feature ids>
   policy from the grounded document (30-day window, refund process).
 - Card and details: `specs/012-knowledge-retrieval/checkpoint.md`.
 - Screenshot: `specs/012-knowledge-retrieval/checkpoint.png`.
+
+### 013 customer memory — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. Stating "I usually wear size M and I'm allergic to wool" stored
+  two facts (Profile / Constraint); a **new chat** answered "You wear size M and
+  you avoid wool." from memory; the Memory view listed the facts and forgetting
+  one removed it. `memory` spans recorded `extract` (stored=2) and `recall`
+  (recalled=2).
+- Card and details: `specs/013-customer-memory/checkpoint.md`.
+- Screenshot: `specs/013-customer-memory/checkpoint.png`.

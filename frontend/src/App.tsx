@@ -28,6 +28,7 @@ import {
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
 import { CartCard } from "@/components/app/cart-card";
+import { MemoryView } from "@/components/app/memory-view";
 import { MerchantView } from "@/components/app/merchant-view";
 import { SourcesList } from "@/components/app/sources-list";
 import { TraceViewer } from "@/components/app/trace-viewer";
@@ -70,7 +71,7 @@ function Chat() {
   const budget = latestBudget(messages);
   const isEmpty = messages.length === 0;
   const [resuming, setResuming] = useState(() => transport.getSessionId() !== null);
-  const [view, setView] = useState<"chat" | "traces" | "merchant">("chat");
+  const [view, setView] = useState<"chat" | "traces" | "merchant" | "memory">("chat");
 
   // Resume the conversation from the server log after a reload (feature 006).
   useEffect(() => {
@@ -145,6 +146,16 @@ function Chat() {
               >
                 Merchant
               </button>
+              <button
+                type="button"
+                onClick={() => setView("memory")}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs",
+                  view === "memory" ? "bg-accent text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Memory
+              </button>
             </div>
             <button
               type="button"
@@ -162,6 +173,8 @@ function Chat() {
         <TraceViewer />
       ) : view === "merchant" ? (
         <MerchantView />
+      ) : view === "memory" ? (
+        <MemoryView />
       ) : (
         <>
           <Conversation className="min-h-0 flex-1" aria-live="polite">
