@@ -4,7 +4,11 @@
 FROM node:20-alpine AS frontend
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+# Optional npm registry mirror for slow networks, e.g.
+#   --build-arg NPM_REGISTRY=https://registry.npmmirror.com
+ARG NPM_REGISTRY=
+RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi \
+    && npm ci
 COPY frontend/ ./
 RUN npm run build
 
@@ -14,7 +18,14 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 RUN pip install --no-cache-dir uv
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+# Optional Python index mirror for slow networks, e.g.
+#   --build-arg UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG UV_DEFAULT_INDEX=
+RUN if [ -n "$UV_DEFAULT_INDEX" ]; then \
+        uv sync --frozen --no-dev --no-install-project --default-index "$UV_DEFAULT_INDEX"; \
+    else \
+        uv sync --frozen --no-dev --no-install-project; \
+    fi
 COPY . .
 RUN uv sync --frozen --no-dev
 

@@ -1,9 +1,10 @@
 # Browser checkpoint: 015-deployment-hardening
 
 Constitution SR-4 / SR-5. This feature changes packaging, not the UI, so there is
-**no new browser surface** to review. The intended acceptance is the keyless
-container smoke test (DP-5); it is implemented and wired into
-`scripts/ci.sh --with-image`, but **was not executed in this environment**.
+**no new browser surface** to review. The acceptance is the keyless container
+smoke test (DP-5); it is implemented, wired into `scripts/ci.sh --with-image`, and
+now **executed and passing** (after accelerating the build with regional mirrors;
+see feature `chore/docker-build-mirrors`).
 
 ## Card
 
@@ -14,7 +15,7 @@ Steps:
   1. scripts/smoke_container.sh commerce-agent:ci
   2. Assert /healthz, /readyz, the SPA shell, a /chat turn, and a non-root uid.
 Review:
-  - [ ] container smoke passes end-to-end  (DEFERRED — see below)
+  - [x] container smoke passes end-to-end
 Clauses: PB-1, P8, DP-1..DP-6
 Features: 015
 ```
@@ -22,8 +23,8 @@ Features: 015
 ## Result
 
 - Date: 2026-09-13
-- Status: **DEFERRED** (container smoke not run in this environment)
-- Evidence: this file; the config tests; local HTTP assertions (below)
+- Status: **PASS**
+- Evidence: this file; the smoke output below; the config tests
 
 | Check | Result |
 | --- | --- |
@@ -32,29 +33,36 @@ Features: 015
 | `.dockerignore` excludes `.env`, `data`, `logs` | pass |
 | `docker compose config` validates | pass |
 | `scripts/smoke_container.sh` syntax (`bash -n`) | pass |
-| Smoke assertions against the app locally (mock/memory) | pass |
-| Container image build + smoke | **deferred** |
+| Container image build | pass |
+| Container smoke: `/healthz`, `/readyz`, SPA, `/chat`, non-root | **pass** |
 
-### Why the container smoke is deferred
+### Smoke output
 
-Docker Hub throughput in this environment is ~90 KB/s (`docker pull
-alpine:3.19`, 3 MB, took 33 s; GitHub ~63 KB/s). A full multi-stage build pulls
-`node:20-alpine` + `python:3.12-slim` + `npm ci` (~480 MB of frontend deps) +
-`uv sync` — ~500 MB+, i.e. **45–60+ minutes**. The build is correct; it is simply
-impractical to run here. Decision (with the maintainer): merge with the smoke
-recorded as deferred and run `make ci-image` on a faster network.
+```
+== container smoke: image commerce-agent:ci ==
+healthz: ok
+readyz:  {"status":"ready","storefront":"memory","memory":"memory"}
+spa:     ok
+chat:    ok
+user:    uid 10001 (non-root)
+OK: container smoke passed
+```
 
-### Local equivalent (no Docker)
+### How it was made feasible
 
-With `LLM_PROVIDER=mock` and the memory providers, the app served:
-`/healthz` → ok; `/readyz` → `{"storefront":"memory","memory":"memory"}`; `/` →
-the SPA shell (`<title>Commerce Agent</title>`); `POST /chat` → an SSE stream
-ending in `"type": "TurnEnd"`. These are exactly the assertions the container
-smoke makes.
+Docker Hub throughput here is ~90 KB/s (`alpine:3.19`, 3 MB, 33 s), so the
+~500 MB multi-stage build was impractical. It was accelerated with regional
+mirrors (see the `chore/docker-build-mirrors` change):
+
+- Docker base images via the Docker Desktop registry mirror
+  `https://docker.m.daocloud.io` (`docker info` reports it).
+- `npm ci` via `--build-arg NPM_REGISTRY=https://registry.npmmirror.com`.
+- `uv sync` via `--build-arg UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple`.
 
 ## Notes
 
 - No application code changed; the fast gate (`make ci-fast`) is unaffected and
   remains Docker-free.
-- The smoke test uses `docker run` (not Compose) and cleans up on every exit
-  path; Compose is validated separately.
+- The smoke test uses `docker run` (not Compose), runs keylessly (`LLM_PROVIDER=mock`
+  + memory providers), and cleans up on every exit path; Compose is validated
+  separately with `docker compose config`.
