@@ -48,6 +48,7 @@ Features: <feature ids>
 | 006 browser resume | 006 | reload restores the transcript; same session continues; New chat | PASS (2026-09-13) |
 | 007 observability | 007 | turn/llm/tool spans with trace_id; GET /traces; parity | PASS (2026-09-13) |
 | 008 trace viewer | 008 | Chat/Traces toggle; trace list + span timeline; chat preserved | PASS (2026-09-13) |
+| 009 cart & checkout | 009 | grounded add-to-cart; cart card; render_checkout (no charge) | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -138,3 +139,11 @@ Features: <feature ids>
   switching back preserves the chat.
 - Card and details: `specs/008-trace-viewer/checkpoint.md`.
 - Screenshot: `specs/008-trace-viewer/checkpoint.png`.
+
+### 009 cart and checkout — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. A grounded add renders a cart card; `render_checkout` renders a
+  summary and states that nothing is charged (P3).
+- Card and details: `specs/009-cart-checkout/checkpoint.md`.
+- Screenshot: `specs/009-cart-checkout/checkpoint.png`.

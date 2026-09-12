@@ -7,10 +7,23 @@ export type Source = {
   in_stock: boolean;
 };
 
+export type CartItem = {
+  product_id: string;
+  title: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+};
+
+export type CartData = { items: CartItem[]; total: number };
+export type CheckoutData = { items: CartItem[]; total: number; charged: boolean };
+
 // Custom data parts carried alongside the message (rendered by our components).
 export type AgentDataTypes = {
   sources: { items: Source[] };
   budget: { spent_cny: number; limit_cny: number; remaining_cny: number };
+  cart: CartData;
+  checkout: CheckoutData;
 };
 
 export type AgentUIMessage = UIMessage<unknown, AgentDataTypes>;
@@ -87,9 +100,14 @@ export function mapEvent(event: WireEvent, ctx: Ctx): UIMessageChunk[] {
       break;
     }
     case "UIComponent": {
-      if (event.data.component === "products") {
-        const payload = (event.data.payload ?? {}) as { items?: Source[] };
-        out.push({ type: "data-sources", data: { items: payload.items ?? [] } });
+      const component = event.data.component;
+      const payload = (event.data.payload ?? {}) as Record<string, unknown>;
+      if (component === "products") {
+        out.push({ type: "data-sources", data: { items: (payload.items as Source[]) ?? [] } });
+      } else if (component === "cart") {
+        out.push({ type: "data-cart", data: payload as unknown as CartData });
+      } else if (component === "checkout") {
+        out.push({ type: "data-checkout", data: payload as unknown as CheckoutData });
       }
       break;
     }

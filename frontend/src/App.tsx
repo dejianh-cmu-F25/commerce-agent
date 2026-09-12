@@ -27,6 +27,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
+import { CartCard } from "@/components/app/cart-card";
 import { SourcesList } from "@/components/app/sources-list";
 import { TraceViewer } from "@/components/app/trace-viewer";
 
@@ -194,6 +195,27 @@ function Chat() {
                     }
                     if (part.type === "data-sources") {
                       return <SourcesList key={index} items={part.data.items} />;
+                    }
+                    if (part.type === "data-cart") {
+                      return (
+                        <CartCard
+                          key={index}
+                          title="Cart"
+                          items={part.data.items}
+                          total={part.data.total}
+                        />
+                      );
+                    }
+                    if (part.type === "data-checkout") {
+                      return (
+                        <CartCard
+                          key={index}
+                          title="Checkout"
+                          items={part.data.items}
+                          total={part.data.total}
+                          note="No payment is taken — this is a render only."
+                        />
+                      );
                     }
                     return null;
                   })}
