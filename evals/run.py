@@ -16,20 +16,24 @@ from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cli_sink import ListSink
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient
+from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.session import Session
 from app.core.settings import AgentSettings
+from app.knowledge.ingest import load_chunks
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
+from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
 from app.tools.registry import ToolRegistry
 from evals.scenarios import SCENARIOS, Scenario
 
 SYSTEM = "You are a commerce agent."
 P101_PRICE = 189.0
+KNOWLEDGE_DIR = str(Path(__file__).resolve().parents[1] / "config" / "knowledge")
 
 
 @dataclass
@@ -44,6 +48,9 @@ def _build_agent(scenario: Scenario, merchant: SqliteMerchant) -> Agent:
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
+    retriever = InMemoryRetriever()
+    retriever.add(load_chunks(KNOWLEDGE_DIR))
+    register_knowledge_tools(registry, retriever)
     register_merchant_tools(registry, merchant)
     return Agent(
         llm=MockLLMClient(scenario.turns),

@@ -23,6 +23,7 @@ from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
+from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
 from app.adapters.storefront_memory import InMemoryStorefront
@@ -34,12 +35,15 @@ from app.core.prompts import load_prompt
 from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
 from app.core.types import Message
+from app.knowledge.ingest import load_chunks
 from app.ports.merchant import MerchantBackend
+from app.ports.retriever import Retriever
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
+from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
 from app.tools.registry import ToolRegistry
 
@@ -112,6 +116,13 @@ def build_merchant(settings: Settings) -> MerchantBackend | None:
     return SqliteMerchant(settings.storefront.sqlite_path)
 
 
+def build_retriever(settings: Settings) -> Retriever:
+    """Load knowledge documents into the configured retriever (PB-1)."""
+    retriever = InMemoryRetriever()
+    retriever.add(load_chunks(settings.knowledge.path, settings.knowledge.min_chars))
+    return retriever
+
+
 def build_agent(
     settings: Settings,
     tracer: Tracer | None = None,
@@ -121,6 +132,7 @@ def build_agent(
     storefront = build_storefront(settings)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
+    register_knowledge_tools(registry, build_retriever(settings))
     if merchant is not None:
         register_merchant_tools(registry, merchant)
     return Agent(

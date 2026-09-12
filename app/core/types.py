@@ -121,3 +121,13 @@ class Change:
     new_value: float
     status: str  # "pending" | "applied"
     created_at: str
+
+
+@dataclass
+class Chunk:
+    """A retrieved knowledge chunk (P4: answers come from these)."""
+
+    id: str
+    text: str
+    source: str
+    score: float = 0.0

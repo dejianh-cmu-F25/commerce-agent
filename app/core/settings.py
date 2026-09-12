@@ -117,6 +117,13 @@ class SessionSettings(BaseModel):
     sqlite_path: str = "./data/db/sessions.sqlite"
 
 
+class KnowledgeSettings(BaseModel):
+    provider: Literal["memory"] = "memory"
+    path: str = "./config/knowledge"
+    top_k: int = 3
+    min_chars: int = 40
+
+
 class Settings(BaseModel):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     agent: AgentSettings = Field(default_factory=AgentSettings)
@@ -132,6 +139,7 @@ class Settings(BaseModel):
     web: WebSettings = Field(default_factory=WebSettings)
     storefront: StorefrontSettings = Field(default_factory=StorefrontSettings)
     session: SessionSettings = Field(default_factory=SessionSettings)
+    knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
 
 
 # Environment variables that override the YAML file.
@@ -152,6 +160,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, type]] = {
     "STOREFRONT_SQLITE_PATH": ("storefront", "sqlite_path", str),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
+    "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
+    "KNOWLEDGE_PATH": ("knowledge", "path", str),
 }
 
 

@@ -74,4 +74,12 @@ SCENARIOS: list[Scenario] = [
         expect_components=[],
         expect_cart=[],
     ),
+    Scenario(
+        name="knowledge_answer",
+        user_text="what is your return policy?",
+        turns=[tool_turn("search_knowledge", '{"query": "return policy"}', call_id="k1"), _DONE],
+        expect_tools=["search_knowledge"],
+        expect_components=[],
+        expect_cart=[],
+    ),
 ]
