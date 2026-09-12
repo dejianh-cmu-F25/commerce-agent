@@ -188,8 +188,8 @@ turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
   `javascript:` executes) — verified by a test.
 - **SC-003**: The layout has no horizontal scroll at 375px and fills the viewport
   at desktop — verified in the checkpoint.
-- **SC-004**: `npm run build`, `eslint`, `tsc --noEmit`, and `vitest` pass in CI;
-  the Docker image builds with the frontend bundled.
+- **SC-004**: `npm run build`, `eslint`, `tsc --noEmit`, and `vitest` pass in the
+  local gate (`scripts/ci.sh`); the Docker image builds with the frontend bundled.
 
 ## Assumptions
 

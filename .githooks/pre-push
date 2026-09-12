@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Pre-push gate (constitution GH-4). Enable once with:
+#   git config core.hooksPath .githooks
+#
+# Runs the fast local CI (skips `npm ci`). Bypass in an emergency with:
+#   git push --no-verify
+set -euo pipefail
+
+exec "$(git rev-parse --show-toplevel)/scripts/ci.sh" --fast
