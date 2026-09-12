@@ -21,6 +21,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
+from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
@@ -33,11 +34,13 @@ from app.core.prompts import load_prompt
 from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
 from app.core.types import Message
+from app.ports.merchant import MerchantBackend
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
+from app.tools.merchant import register_merchant_tools
 from app.tools.registry import ToolRegistry
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -72,6 +75,16 @@ def build_session_store(settings: Settings) -> SessionRepository:
     return SqliteSessionStore(settings.session.sqlite_path)
 
 
+def _product_dict(product) -> dict:
+    return {
+        "id": product.id,
+        "title": product.title,
+        "price": product.price,
+        "stock": product.stock,
+        "in_stock": product.in_stock,
+    }
+
+
 def _message_to_dict(message: Message) -> dict:
     data: dict = {"role": message.role, "content": message.content}
     if message.tool_calls:
@@ -92,11 +105,24 @@ def build_tracer(settings: Settings) -> Tracer:
     return JsonlTracer(settings.observability.trace_file, settings.observability.trace_max_attr_len)
 
 
-def build_agent(settings: Settings, tracer: Tracer | None = None) -> Agent:
+def build_merchant(settings: Settings) -> MerchantBackend | None:
+    """Resolve the merchant backend (PB-1). Requires the SQLite storefront."""
+    if settings.storefront.provider != "sqlite":
+        return None
+    return SqliteMerchant(settings.storefront.sqlite_path)
+
+
+def build_agent(
+    settings: Settings,
+    tracer: Tracer | None = None,
+    merchant: MerchantBackend | None = None,
+) -> Agent:
     registry = ToolRegistry()
     storefront = build_storefront(settings)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
+    if merchant is not None:
+        register_merchant_tools(registry, merchant)
     return Agent(
         llm=build_llm(settings),
         tools=registry,
@@ -127,7 +153,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Commerce Agent", version="0.1.0")
     store = build_session_store(settings)
     tracer = build_tracer(settings)
-    agent = build_agent(settings, tracer)
+    merchant = build_merchant(settings)
+    agent = build_agent(settings, tracer, merchant)
 
     @app.get("/healthz")
     async def healthz() -> dict:
@@ -168,6 +195,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not spans:
             raise HTTPException(status_code=404, detail="trace not found")
         return {"trace_id": trace_id, "spans": [asdict(span) for span in spans]}
+
+    @app.get("/merchant/inventory")
+    async def merchant_inventory() -> dict:
+        if merchant is None:
+            raise HTTPException(status_code=503, detail="merchant requires the sqlite storefront")
+        return {"items": [_product_dict(product) for product in merchant.list_products()]}
+
+    @app.get("/merchant/changes")
+    async def merchant_changes() -> dict:
+        if merchant is None:
+            raise HTTPException(status_code=503, detail="merchant requires the sqlite storefront")
+        return {"changes": [asdict(change) for change in merchant.pending()]}
+
+    @app.post("/merchant/changes/{change_id}/apply")
+    async def merchant_apply(change_id: str) -> dict:
+        if merchant is None:
+            raise HTTPException(status_code=503, detail="merchant requires the sqlite storefront")
+        change = merchant.apply(change_id)
+        if change is None:
+            raise HTTPException(status_code=404, detail="change not found or already applied")
+        return {"change": asdict(change)}
 
     @app.post("/chat")
     async def chat(request: ChatRequest) -> EventSourceResponse:

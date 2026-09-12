@@ -108,3 +108,16 @@ class TraceSummary:
     duration_ms: float
     span_count: int
     status: str
+
+
+@dataclass
+class Change:
+    """A staged merchant change, applied only after human approval (P3)."""
+
+    id: str
+    product_id: str
+    kind: str  # "price" | "stock"
+    old_value: float
+    new_value: float
+    status: str  # "pending" | "applied"
+    created_at: str

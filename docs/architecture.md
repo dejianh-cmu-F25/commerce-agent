@@ -18,8 +18,8 @@ Dependencies point inward only.
 | --- | --- | --- |
 | L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
-| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront, session, tracer) | L1 |
-| L1 Ports | `app/ports` (LLM, Storefront, Session, Tracer, Backend, Retriever, Memory, EventSink) | L0 |
+| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront, session, tracer, merchant) | L1 |
+| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Memory, EventSink) | L0 |
 | L0 Core | `app/core` (loop, session, events, settings, prompts) | none |
 
 `app/core` imports only `app/ports`. Adapters implement the ports and are
