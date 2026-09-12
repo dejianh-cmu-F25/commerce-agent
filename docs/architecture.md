@@ -81,7 +81,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a model-facing capability | Register a `ToolSpec` + handler in `app/tools/registry.py` |
 | Add a long-tail procedure | Add `skills/<name>/SKILL.md` |
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
-| Add retrieval | Implement `Retriever`; wire `dense`/`sparse`/`fusion` |
+| Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); the keyless memory provider is default |
 | Change chunking | Implement `ChunkingStrategy`; select it in config |
 | Add a write guardrail | Add a link to the gate pipeline in `app/gates/` |
 | Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |

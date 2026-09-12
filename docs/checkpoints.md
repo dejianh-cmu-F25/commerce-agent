@@ -51,6 +51,7 @@ Features: <feature ids>
 | 009 cart & checkout | 009 | grounded add-to-cart; cart card; render_checkout (no charge) | PASS (2026-09-13) |
 | 010 merchant agent | 010 | inventory; staged price change; human approval applies it (P3) | PASS (2026-09-13) |
 | 011 evaluation | 011 | keyless replay of gold scenarios in the local gate | N/A (no browser surface) |
+| 012 knowledge retrieval | 012 | search_knowledge; answer grounded in policy docs | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -164,3 +165,11 @@ Features: <feature ids>
 - No browser surface: the harness replays gold scenarios over the real loop/tools
   keylessly and runs in the local gate (`scripts/ci.sh`). Report: `evals/run.py`
   (5/5 scenarios pass). WV-5 permits backend-only features with a recorded reason.
+
+### 012 knowledge retrieval — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. The agent called `search_knowledge` and answered the return
+  policy from the grounded document (30-day window, refund process).
+- Card and details: `specs/012-knowledge-retrieval/checkpoint.md`.
+- Screenshot: `specs/012-knowledge-retrieval/checkpoint.png`.
