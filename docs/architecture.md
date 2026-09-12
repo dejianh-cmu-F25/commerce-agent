@@ -91,6 +91,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add durable session state | Extend `SessionEvent`; render and replay from the log |
 | Add a session store | Implement `SessionRepository` (`app/ports/session_store.py`); select it in `settings.yaml` |
 | Add a tracer / span | Emit a `Span` via the `Tracer` port; add attributes (redacted) in the loop |
+| Add an eval scenario | Add a `Scenario` in `evals/scenarios.py` (scripted turns + expected outcomes) |
 | Add background work | Add a job runner behind a port |
 | Add deployment target | Extend `docker-compose.yml`; keep config in env |
 
