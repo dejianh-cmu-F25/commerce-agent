@@ -22,6 +22,7 @@ coverage.xml
 # --- Runtime data (do not commit) ---
 data/db/
 data/chroma/
+data/budget.json
 logs/
 *.sqlite
 *.sqlite3
