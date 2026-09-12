@@ -17,6 +17,7 @@ from uuid import uuid4
 from app.core.session import (
     AssistantMessage,
     CartLine,
+    MemoryNote,
     Session,
     SessionEvent,
     ToolResultEvent,
@@ -26,8 +27,9 @@ from app.core.types import ToolCall
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
-    id         TEXT PRIMARY KEY,
-    created_at TEXT NOT NULL
+    id          TEXT PRIMARY KEY,
+    customer_id TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS session_events (
     session_id TEXT NOT NULL,
@@ -73,6 +75,8 @@ def encode_event(event: SessionEvent) -> tuple[str, str]:
                 "status": event.status,
             }
         )
+    if isinstance(event, MemoryNote):
+        return "memory", json.dumps({"facts": list(event.facts)})
     raise ValueError(f"Unsupported session event: {type(event).__name__}")
 
 
@@ -95,6 +99,8 @@ def decode_event(kind: str, payload: str) -> SessionEvent:
             content=str(data["content"]),
             status=str(data.get("status", "ok")),
         )
+    if kind == "memory":
+        return MemoryNote(facts=[str(fact) for fact in data.get("facts", [])])
     raise ValueError(f"Unknown session event kind: {kind!r}")
 
 
@@ -107,9 +113,19 @@ class SqliteSessionStore:
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)
+        self._migrate()
 
-    def create(self) -> Session:
-        session = Session(id=uuid4().hex)
+    def _migrate(self) -> None:
+        """Add ``customer_id`` to databases created before feature 013."""
+        columns = {row["name"] for row in self._conn.execute("PRAGMA table_info(sessions)")}
+        if "customer_id" not in columns:
+            self._conn.execute(
+                "ALTER TABLE sessions ADD COLUMN customer_id TEXT NOT NULL DEFAULT ''"
+            )
+            self._conn.commit()
+
+    def create(self, customer_id: str = "") -> Session:
+        session = Session(id=uuid4().hex, customer_id=customer_id)
         self.save(session)
         return session
 
@@ -117,18 +133,26 @@ class SqliteSessionStore:
         row = self._conn.execute("SELECT id FROM sessions WHERE id = ?", (session_id,)).fetchone()
         return None if row is None else self._load(session_id)
 
-    def get_or_create(self, session_id: str | None) -> Session:
+    def get_or_create(self, session_id: str | None, customer_id: str = "") -> Session:
         if session_id:
             existing = self.get(session_id)
             if existing is not None:
+                if customer_id and not existing.customer_id:
+                    existing.customer_id = customer_id
                 return existing
-        return self.create()
+        return self.create(customer_id)
 
     def save(self, session: Session) -> None:
         now = datetime.now(UTC).isoformat()
         self._conn.execute(
-            "INSERT OR IGNORE INTO sessions (id, created_at) VALUES (?, ?)", (session.id, now)
+            "INSERT OR IGNORE INTO sessions (id, customer_id, created_at) VALUES (?, ?, ?)",
+            (session.id, session.customer_id, now),
         )
+        if session.customer_id:
+            self._conn.execute(
+                "UPDATE sessions SET customer_id = ? WHERE id = ? AND customer_id = ''",
+                (session.customer_id, session.id),
+            )
         self._conn.executemany(
             "INSERT OR IGNORE INTO session_events (session_id, seq, kind, payload)"
             " VALUES (?, ?, ?, ?)",
@@ -151,7 +175,10 @@ class SqliteSessionStore:
         self._conn.commit()
 
     def _load(self, session_id: str) -> Session:
-        session = Session(id=session_id)
+        row = self._conn.execute(
+            "SELECT customer_id FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+        session = Session(id=session_id, customer_id=str(row["customer_id"]) if row else "")
         session.events = [
             decode_event(row["kind"], row["payload"])
             for row in self._conn.execute(

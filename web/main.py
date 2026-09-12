@@ -21,6 +21,8 @@ from sse_starlette.sse import EventSourceResponse
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
+from app.adapters.memory_memory import InMemoryMemoryStore
+from app.adapters.memory_sqlite import SqliteMemoryStore
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.retriever_memory import InMemoryRetriever
@@ -36,6 +38,7 @@ from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
 from app.core.types import Message
 from app.knowledge.ingest import load_chunks
+from app.ports.memory import MemoryStore
 from app.ports.merchant import MerchantBackend
 from app.ports.retriever import Retriever
 from app.ports.session_store import SessionRepository
@@ -123,10 +126,18 @@ def build_retriever(settings: Settings) -> Retriever:
     return retriever
 
 
+def build_memory(settings: Settings) -> MemoryStore:
+    """Resolve the customer memory provider from configuration (PB-1, PB-3)."""
+    if settings.memory.provider == "memory":
+        return InMemoryMemoryStore()
+    return SqliteMemoryStore(settings.memory.sqlite_path)
+
+
 def build_agent(
     settings: Settings,
     tracer: Tracer | None = None,
     merchant: MerchantBackend | None = None,
+    memory: MemoryStore | None = None,
 ) -> Agent:
     registry = ToolRegistry()
     storefront = build_storefront(settings)
@@ -142,12 +153,23 @@ def build_agent(
         system_prompt=load_prompt("system"),
         cost_meter=UsageCostMeter(settings.budget),
         tracer=tracer,
+        memory=memory,
     )
 
 
 class ChatRequest(BaseModel):
     message: str
     session_id: str | None = None
+    customer_id: str | None = None
+
+
+def _fact_dict(fact) -> dict:
+    return {
+        "id": fact.id,
+        "kind": fact.kind,
+        "text": fact.text,
+        "created_at": fact.created_at,
+    }
 
 
 class QueueSink:
@@ -166,7 +188,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     store = build_session_store(settings)
     tracer = build_tracer(settings)
     merchant = build_merchant(settings)
-    agent = build_agent(settings, tracer, merchant)
+    memory = build_memory(settings)
+    agent = build_agent(settings, tracer, merchant, memory)
 
     @app.get("/healthz")
     async def healthz() -> dict:
@@ -174,7 +197,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/readyz")
     async def readyz() -> dict:
-        return {"status": "ready", "storefront": settings.storefront.provider}
+        return {
+            "status": "ready",
+            "storefront": settings.storefront.provider,
+            "memory": settings.memory.provider,
+        }
 
     @app.get("/budget")
     async def budget() -> dict:
@@ -229,9 +256,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="change not found or already applied")
         return {"change": asdict(change)}
 
+    @app.get("/memory/{customer_id}")
+    async def memory_list(customer_id: str) -> dict:
+        return {"facts": [_fact_dict(fact) for fact in memory.list(customer_id)]}
+
+    @app.delete("/memory/{customer_id}/facts/{fact_id}")
+    async def memory_forget(customer_id: str, fact_id: str) -> dict:
+        if not memory.forget(customer_id, fact_id):
+            raise HTTPException(status_code=404, detail="fact not found")
+        return {"forgotten": fact_id}
+
+    @app.delete("/memory/{customer_id}")
+    async def memory_forget_all(customer_id: str) -> dict:
+        return {"removed": memory.forget_all(customer_id)}
+
     @app.post("/chat")
     async def chat(request: ChatRequest) -> EventSourceResponse:
-        session = store.get_or_create(request.session_id)
+        session = store.get_or_create(request.session_id, request.customer_id or "")
         sink = QueueSink()
 
         async def event_stream() -> AsyncIterator[dict]:

@@ -18,7 +18,7 @@ Dependencies point inward only.
 | --- | --- | --- |
 | L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
-| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront, session, tracer, merchant) | L1 |
+| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront, session, tracer, merchant, memory) | L1 |
 | L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Memory, EventSink) | L0 |
 | L0 Core | `app/core` (loop, session, events, settings, prompts) | none |
 
@@ -42,12 +42,14 @@ injected. This is the dependency-inversion rule (PB-2, PB-3).
 
 ```
 Browser --POST /chat--> Web --EventSink--> Agent loop
-  loop: build messages from session log  (SL-1 guard)
+  loop: recall customer memory (MemoryStore) --> append MemoryNote to the log
+        build messages from session log  (SL-1 guard)
         --> LLMClient.stream --> text deltas / tool calls
         --> gates --> tools --> adapters (backend, retriever)
         --> append to session log
+        extract customer facts from the user's text (deterministic)
   loop --AgentEvent--> Web --SSE--> Browser
-  every step --> trace span --> logs/traces.jsonl
+  every step --> trace span (turn/llm/tool/memory) --> logs/traces.jsonl
 ```
 
 **Ingestion flow** (feature 008)
@@ -82,6 +84,8 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a long-tail procedure | Add `skills/<name>/SKILL.md` |
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); the keyless memory provider is default |
+| Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
+| Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
 | Change chunking | Implement `ChunkingStrategy`; select it in config |
 | Add a write guardrail | Add a link to the gate pipeline in `app/gates/` |
 | Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |

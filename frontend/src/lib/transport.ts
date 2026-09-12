@@ -1,4 +1,5 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+import { getCustomerId } from "@/lib/identity";
 
 export type Source = {
   id: string;
@@ -180,7 +181,11 @@ export class AgentChatTransport implements ChatTransport<AgentUIMessage> {
     const response = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, session_id: this.sessionId }),
+      body: JSON.stringify({
+        message,
+        session_id: this.sessionId,
+        customer_id: getCustomerId(),
+      }),
       signal: abortSignal,
     });
     if (!response.ok || !response.body) {

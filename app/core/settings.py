@@ -87,7 +87,9 @@ class IngestionSettings(BaseModel):
 
 
 class MemorySettings(BaseModel):
-    use_llm: bool = False
+    provider: Literal["memory", "sqlite"] = "sqlite"
+    sqlite_path: str = "./data/db/memory.sqlite"
+    extraction: Literal["deterministic"] = "deterministic"
     retention_days: int = 365
 
 
@@ -162,6 +164,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, type]] = {
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
     "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
     "KNOWLEDGE_PATH": ("knowledge", "path", str),
+    "MEMORY_PROVIDER": ("memory", "provider", str),
+    "MEMORY_SQLITE_PATH": ("memory", "sqlite_path", str),
 }
 
 

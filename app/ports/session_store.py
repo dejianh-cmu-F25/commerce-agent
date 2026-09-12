@@ -13,7 +13,7 @@ from app.core.session import Session
 
 
 class SessionRepository(Protocol):
-    def create(self) -> Session:
+    def create(self, customer_id: str = "") -> Session:
         """Create and persist a new session with a fresh id."""
         ...
 
@@ -21,7 +21,7 @@ class SessionRepository(Protocol):
         """Load a session, or ``None`` if it is unknown."""
         ...
 
-    def get_or_create(self, session_id: str | None) -> Session:
+    def get_or_create(self, session_id: str | None, customer_id: str = "") -> Session:
         """Load ``session_id`` if it exists, otherwise create a new session."""
         ...
 

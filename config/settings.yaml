@@ -57,8 +57,13 @@ ingestion:
   metadata_enricher:
     use_llm: false
 
+# Cross-session customer memory (feature 013). Facts are grounded in the
+# customer's own text (P4) and recalled into later sessions through the log
+# (SL-1). `memory` is the keyless demo path; `sqlite` persists.
 memory:
-  use_llm: false
+  provider: sqlite          # memory | sqlite
+  sqlite_path: ./data/db/memory.sqlite
+  extraction: deterministic # deterministic (keyless)
   retention_days: 365
 
 # Spend guard (constitution HR-12). Prices are USD per 1M tokens; the cap is CNY.

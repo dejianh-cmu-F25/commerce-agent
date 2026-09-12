@@ -131,3 +131,18 @@ class Chunk:
     text: str
     source: str
     score: float = 0.0
+
+
+@dataclass
+class MemoryFact:
+    """A durable, customer-grounded statement (feature 013).
+
+    Facts come only from the customer's own text (P4); ``id`` is server-issued.
+    ``kind`` is one of ``preference`` | ``constraint`` | ``profile``.
+    """
+
+    id: str
+    customer_id: str
+    kind: str
+    text: str
+    created_at: str
