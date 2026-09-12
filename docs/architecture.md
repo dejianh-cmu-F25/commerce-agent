@@ -18,8 +18,8 @@ Dependencies point inward only.
 | --- | --- | --- |
 | L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
-| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI, storefront, session, tracer, merchant, memory) | L1 |
-| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Memory, EventSink) | L0 |
+| L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, SSE, CLI, storefront, session, tracer, merchant, memory, embedding, vector) | L1 |
+| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Embedding, VectorStore, Memory, EventSink) | L0 |
 | L0 Core | `app/core` (loop, session, events, settings, prompts) | none |
 
 `app/core` imports only `app/ports`. Adapters implement the ports and are
@@ -86,7 +86,9 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
 | Add post-purchase orders | Extend `StorefrontBackend` (orders) and register tools in `app/tools/orders.py`; demo orders live in `app/adapters/order_seed.py` |
 | Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |
-| Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); the keyless memory provider is default |
+| Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); `knowledge.provider` selects `memory` (keyless TF-IDF, default) or `dense` |
+| Add embeddings | Implement `EmbeddingProvider` (`app/ports/embedding.py`); `embedding.provider` selects keyless `hash` (default) or `openai` |
+| Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects in-process `memory` (Chroma is a future provider) |
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
 | Change chunking | Implement `ChunkingStrategy`; select it in config |

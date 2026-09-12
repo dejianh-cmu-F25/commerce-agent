@@ -13,6 +13,10 @@ from app.core.types import Chunk
 
 
 class Retriever(Protocol):
+    def add(self, chunks: list[Chunk]) -> None:
+        """Ingest chunks. Idempotent by chunk id (RD-2)."""
+        ...
+
     def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
         """Return at most ``k`` chunks with a positive score, best first.
 

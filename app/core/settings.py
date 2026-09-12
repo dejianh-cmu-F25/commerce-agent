@@ -32,15 +32,16 @@ class AgentSettings(BaseModel):
 
 
 class EmbeddingSettings(BaseModel):
-    provider: Literal["openai", "ollama", "mock"] = "openai"
+    # `hash` is the keyless default (P8); `openai` is the opt-in semantic upgrade.
+    provider: Literal["hash", "openai", "ollama", "mock"] = "hash"
     model: str = "text-embedding-3-small"
-    dimensions: int = 1536
+    dimensions: int = 256
     base_url: str = ""
     api_key: str = ""
 
 
 class VectorStoreSettings(BaseModel):
-    provider: Literal["chroma", "memory"] = "chroma"
+    provider: Literal["memory", "chroma"] = "memory"
     persist_directory: str = "./data/chroma"
     collection_name: str = "knowledge"
 
@@ -128,7 +129,8 @@ class SessionSettings(BaseModel):
 
 
 class KnowledgeSettings(BaseModel):
-    provider: Literal["memory"] = "memory"
+    # `memory` is the keyless TF-IDF default; `dense` uses embeddings + vectors.
+    provider: Literal["memory", "dense"] = "memory"
     path: str = "./config/knowledge"
     top_k: int = 3
     min_chars: int = 40
@@ -172,6 +174,7 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "EMBEDDING_MODEL": ("embedding", "model", str),
     "EMBEDDING_BASE_URL": ("embedding", "base_url", str),
     "EMBEDDING_API_KEY": ("embedding", "api_key", str),
+    "VECTOR_STORE_PROVIDER": ("vector_store", "provider", str),
     "LOG_LEVEL": ("observability", "log_level", str),
     "TRACE_FILE": ("observability", "trace_file", str),
     "WEB_HOST": ("web", "host", str),
