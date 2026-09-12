@@ -204,20 +204,28 @@ class Agent:
         spent_before = self._cost_meter.spent_cny() if self._cost_meter is not None else 0.0
 
         with SpanTimer(self._tracer, "llm", trace_id, parent_id) as span:
-            async for event in self._llm.stream(messages, self._tools.specs()):
-                if isinstance(event, TextDelta):
-                    text_parts.append(event.text)
-                    await sink.emit(ev.TextDelta(text=event.text))
-                elif isinstance(event, ToolCallComplete):
-                    tool_calls.append(event.call)
-                elif isinstance(event, Usage):
-                    prompt_tokens += event.prompt_tokens
-                    completion_tokens += event.completion_tokens
-                    cache_hit_tokens += event.cache_hit_tokens
-                    cache_miss_tokens += event.cache_miss_tokens
-                    await self._record_usage(event, sink)
-                elif isinstance(event, Finish):
-                    break
+            stream = self._llm.stream(messages, self._tools.specs())
+            try:
+                async for event in stream:
+                    if isinstance(event, TextDelta):
+                        text_parts.append(event.text)
+                        await sink.emit(ev.TextDelta(text=event.text))
+                    elif isinstance(event, ToolCallComplete):
+                        tool_calls.append(event.call)
+                    elif isinstance(event, Usage):
+                        prompt_tokens += event.prompt_tokens
+                        completion_tokens += event.completion_tokens
+                        cache_hit_tokens += event.cache_hit_tokens
+                        cache_miss_tokens += event.cache_miss_tokens
+                        await self._record_usage(event, sink)
+                    elif isinstance(event, Finish):
+                        break
+            finally:
+                # Close the provider stream deterministically (avoid an async
+                # generator cleanup error when we stop before exhaustion).
+                aclose = getattr(stream, "aclose", None)
+                if aclose is not None:
+                    await aclose()
             span.attributes["prompt_tokens"] = prompt_tokens
             span.attributes["completion_tokens"] = completion_tokens
             span.attributes["cache_hit_tokens"] = cache_hit_tokens

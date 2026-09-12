@@ -108,4 +108,6 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add deployment target | Extend `docker-compose.yml`; keep config in env |
 
 Changing the loop itself is the exception, not the rule. If you change
-`app/core/loop.py`, update this document in the same pull request.
+`app/core/loop.py`, update this document in the same pull request. The loop
+closes each provider stream deterministically after the final event, so stopping
+on `Finish` never leaves an async generator to be collected mid-flight.

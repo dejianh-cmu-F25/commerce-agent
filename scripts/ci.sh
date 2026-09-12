@@ -52,6 +52,9 @@ uv run python evals/run.py
 step "Python: retrieval benchmark (keyless)"
 uv run python evals/bench.py
 
+step "Python: feature ablation (keyless)"
+uv run python evals/ablation.py
+
 step "Python: self-review (spec compliance)"
 uv run python scripts/spec_review.py
 

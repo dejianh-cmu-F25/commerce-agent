@@ -29,9 +29,11 @@ def _load(path: Path) -> dict:
 
 def _retrieval_section(retrieval: dict) -> list[str]:
     if not retrieval:
-        return ["_No retrieval results yet._", ""]
+        return []
     k = retrieval["k"]
     lines = [
+        "## Retrieval benchmark (keyless)",
+        "",
         f"Metric definitions: **hit-rate@{k}** = at least one expected document in the "
         f"top {k}; **recall@{k}** = fraction of expected documents found; **MRR** = mean "
         "reciprocal rank of the first hit.",
@@ -69,6 +71,94 @@ def _retrieval_section(retrieval: dict) -> list[str]:
     return lines
 
 
+def _ablation_section(ablation: dict) -> list[str]:
+    configs = ablation.get("configs")
+    if not configs:
+        return []
+    baseline = configs.get("naked", {}).get("pass_rate", 0.0)
+    lines = [
+        "## Feature ablation (keyless)",
+        "",
+        "Each configuration runs the same gold scenarios (scripted model); the delta is "
+        "vs the naked baseline. This isolates each feature's contribution.",
+        "",
+        "| Config | Passed | Pass rate | Delta vs naked |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for name, metrics in configs.items():
+        delta = metrics["pass_rate"] - baseline
+        lines.append(
+            f"| `{name}` | {metrics['passed']}/{metrics['total']} | "
+            f"{metrics['pass_rate']:.3f} | {delta:+.3f} |"
+        )
+    lines.append("")
+    return lines
+
+
+def _agent_section(agent: dict) -> list[str]:
+    if not agent:
+        return []
+    lines = [
+        "## Agent evaluation (real model, opt-in)",
+        "",
+        f"- Model: `{agent.get('model', '?')}` · seeds: {agent.get('seeds', '?')} · "
+        f"judge: `{agent.get('judge_model', '?')}`",
+        f"- Generated: {agent.get('generated', '?')}",
+        f"- Command: `{agent.get('command', '')}`",
+        "",
+    ]
+    reliability = agent.get("reliability", {})
+    if reliability:
+        lines += [
+            f"Reliability over {reliability['tasks']} tasks × {agent.get('seeds', '?')} "
+            f"runs ({reliability['runs']} runs, {reliability['successes']} successes):",
+            "",
+            "| Pass@1 | Pass@k | Best@k | Pass^k |",
+            "| ---: | ---: | ---: | ---: |",
+            f"| {reliability['pass_at_1']:.3f} | {reliability['pass_at_k']:.3f} | "
+            f"{reliability['best_at_k']:.3f} | {reliability['pass_pow_k']:.3f} |",
+            "",
+        ]
+    process = agent.get("process", {})
+    if process:
+        lines += [
+            "Process metrics (per run):",
+            "",
+            "| steps | tool ok/err | ungrounded | avg ms | p95 ms | prompt tok | "
+            "completion tok | cache hit | cost CNY |",
+            "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            f"| {process.get('avg_steps', 0):.2f} | {process.get('tool_ok', 0)}/"
+            f"{process.get('tool_error', 0)} | {process.get('ungrounded_attempts', 0)} | "
+            f"{process.get('avg_latency_ms', 0):.0f} | {process.get('p95_latency_ms', 0):.0f} | "
+            f"{process.get('prompt_tokens', 0)} | {process.get('completion_tokens', 0)} | "
+            f"{process.get('cache_hit_tokens', 0)} | {process.get('cost_cny', 0.0):.4f} |",
+            "",
+        ]
+    failures = agent.get("failures", {})
+    if failures:
+        lines += [
+            "Failure attribution (first error):",
+            "",
+            "| Category | Count |",
+            "| --- | ---: |",
+        ]
+        for category, count in failures.items():
+            lines.append(f"| `{category}` | {count} |")
+        lines.append("")
+    judge = agent.get("judge", {})
+    if judge and judge.get("graded"):
+        lines += [
+            f"Rubric judge: graded {judge['graded']} answers, {judge.get('vetoes', 0)} vetoes.",
+            "",
+            "| Dimension | Avg (1-4) |",
+            "| --- | ---: |",
+        ]
+        for dimension, value in judge.get("avg_scores", {}).items():
+            lines.append(f"| {dimension} | {value:.2f} |")
+        lines.append("")
+    return lines
+
+
 def render() -> str:
     keyless = _load(KEYLESS)
     real = _load(REAL)
@@ -82,19 +172,11 @@ def render() -> str:
         "- Vector stores: in-process `memory` and persistent `chroma`.",
         "- Raw artifacts (`evals/results-*.json`) are regenerated and not committed.",
         "",
-        "## Retrieval benchmark (keyless)",
-        "",
     ]
     lines += _retrieval_section(keyless.get("retrieval", {}))
-    lines += _real_sections(real)
+    lines += _ablation_section(keyless.get("ablation", {}))
+    lines += _agent_section(real.get("agent", {}))
     return "\n".join(lines).rstrip() + "\n"
-
-
-def _real_sections(real: dict) -> list[str]:
-    """Real-model sections; extended by feature 023 (agent reliability, cost)."""
-    if not real:
-        return []
-    return []
 
 
 def main() -> int:
