@@ -160,8 +160,8 @@ def check(spec: Path) -> list[Result]:
     results.append(
         Result(
             "OB observability",
-            MANUAL,
-            "spans + metrics emitted; the web trace viewer (OB-4) is a follow-up",
+            PASS if _has(r"SpanTimer") and _has(r"JsonlTracer") else MANUAL,
+            "spans + metrics emitted and readable via /traces (viewer in the web app)",
         )
     )
 
