@@ -36,6 +36,25 @@ class ToolSpec:
     parameters: dict
 
 
+@dataclass
+class Product:
+    """A storefront product.
+
+    ``id`` is server-issued; it is the only handle that may enter the session
+    (grounding, P4).
+    """
+
+    id: str
+    title: str
+    price: float
+    stock: int
+    tags: list[str] = field(default_factory=list)
+
+    @property
+    def in_stock(self) -> bool:
+        return self.stock > 0
+
+
 # --- Streaming events emitted by an LLM client ---
 
 
