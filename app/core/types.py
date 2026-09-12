@@ -146,3 +146,50 @@ class MemoryFact:
     kind: str
     text: str
     created_at: str
+
+
+@dataclass
+class OrderItem:
+    """A line on an order (feature 014)."""
+
+    product_id: str
+    title: str
+    quantity: int
+    unit_price: float
+
+    @property
+    def line_total(self) -> float:
+        return round(self.unit_price * self.quantity, 2)
+
+
+@dataclass
+class Order:
+    """A customer's order in the storefront system of record (feature 014).
+
+    ``id`` is server-issued; it is the only handle that may enter the session
+    (grounding, P4). ``status`` is one of ``processing`` | ``shipped`` |
+    ``delivered`` | ``cancelled``.
+    """
+
+    id: str
+    customer_id: str
+    status: str
+    placed_at: str
+    total: float
+    delivered_at: str | None = None
+    items: list[OrderItem] = field(default_factory=list)
+
+
+@dataclass
+class ReturnRequest:
+    """A customer's request to return an item (feature 014).
+
+    A proposal, not a refund: the harness records and renders it; it never
+    charges, refunds, or changes the order (P3).
+    """
+
+    id: str
+    order_id: str
+    product_id: str
+    status: str  # "requested"
+    created_at: str

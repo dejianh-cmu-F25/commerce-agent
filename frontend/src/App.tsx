@@ -30,6 +30,7 @@ import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
 import { CartCard } from "@/components/app/cart-card";
 import { MemoryView } from "@/components/app/memory-view";
 import { MerchantView } from "@/components/app/merchant-view";
+import { OrderCard, OrdersCard, ReturnCard } from "@/components/app/order-cards";
 import { SourcesList } from "@/components/app/sources-list";
 import { TraceViewer } from "@/components/app/trace-viewer";
 
@@ -242,6 +243,15 @@ function Chat() {
                           note="No payment is taken — this is a render only."
                         />
                       );
+                    }
+                    if (part.type === "data-orders") {
+                      return <OrdersCard key={index} items={part.data.items} />;
+                    }
+                    if (part.type === "data-order") {
+                      return <OrderCard key={index} order={part.data} />;
+                    }
+                    if (part.type === "data-return") {
+                      return <ReturnCard key={index} data={part.data} />;
                     }
                     return null;
                   })}

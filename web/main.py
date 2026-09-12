@@ -48,6 +48,7 @@ from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
+from app.tools.orders import register_order_tools
 from app.tools.registry import ToolRegistry
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -71,8 +72,10 @@ def build_llm(settings: Settings):
 def build_storefront(settings: Settings) -> StorefrontBackend:
     """Resolve the storefront provider from configuration (PB-1, PB-3)."""
     if settings.storefront.provider == "memory":
-        return InMemoryStorefront(SEED_PRODUCTS)
-    return SqliteStorefront(settings.storefront.sqlite_path)
+        return InMemoryStorefront(SEED_PRODUCTS, seed_orders=settings.storefront.seed_orders)
+    return SqliteStorefront(
+        settings.storefront.sqlite_path, seed_orders=settings.storefront.seed_orders
+    )
 
 
 def build_session_store(settings: Settings) -> SessionRepository:
@@ -143,6 +146,7 @@ def build_agent(
     storefront = build_storefront(settings)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
+    register_order_tools(registry, storefront, settings.returns.window_days)
     register_knowledge_tools(registry, build_retriever(settings))
     if merchant is not None:
         register_merchant_tools(registry, merchant)

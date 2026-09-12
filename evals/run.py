@@ -32,6 +32,7 @@ from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
+from app.tools.orders import register_order_tools
 from app.tools.registry import ToolRegistry
 from evals.scenarios import SCENARIOS, Scenario
 
@@ -55,6 +56,7 @@ def _build_agent(
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
+    register_order_tools(registry, storefront, 30)
     retriever = InMemoryRetriever()
     retriever.add(load_chunks(KNOWLEDGE_DIR))
     register_knowledge_tools(registry, retriever)

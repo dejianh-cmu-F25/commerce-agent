@@ -102,4 +102,41 @@ SCENARIOS: list[Scenario] = [
         seed_memory=[("profile", "Wears size M")],
         expect_recall=["Wears size M"],
     ),
+    Scenario(
+        name="order_status",
+        user_text="where is my order?",
+        turns=[
+            tool_turn("list_orders", "{}", call_id="o1"),
+            tool_turn("get_order_status", '{"order_id": "O-1001"}', call_id="o2"),
+            _DONE,
+        ],
+        expect_tools=["list_orders", "get_order_status"],
+        expect_components=["orders", "order"],
+    ),
+    Scenario(
+        name="start_return",
+        user_text="I want to return the tent",
+        turns=[
+            tool_turn("list_orders", "{}", call_id="o1"),
+            tool_turn(
+                "start_return", '{"order_id": "O-1001", "product_id": "P-101"}', call_id="o2"
+            ),
+            _DONE,
+        ],
+        expect_tools=["list_orders", "start_return"],
+        expect_components=["orders", "return"],
+    ),
+    Scenario(
+        name="return_out_of_window",
+        user_text="I want to return the backpack",
+        turns=[
+            tool_turn("list_orders", "{}", call_id="o1"),
+            tool_turn(
+                "start_return", '{"order_id": "O-1002", "product_id": "P-104"}', call_id="o2"
+            ),
+            _DONE,
+        ],
+        expect_tools=["list_orders", "start_return"],
+        expect_components=["orders"],
+    ),
 ]

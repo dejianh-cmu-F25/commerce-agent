@@ -19,12 +19,53 @@ export type CartItem = {
 export type CartData = { items: CartItem[]; total: number };
 export type CheckoutData = { items: CartItem[]; total: number; charged: boolean };
 
+export type OrderSummary = {
+  id: string;
+  status: string;
+  placed_at: string;
+  delivered_at: string | null;
+  total: number;
+  item_count: number;
+};
+
+export type OrderLine = {
+  product_id: string;
+  title: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+};
+
+export type OrderDetail = {
+  id: string;
+  status: string;
+  placed_at: string;
+  delivered_at: string | null;
+  total: number;
+  window_days: number;
+  items: OrderLine[];
+};
+
+export type ReturnData = {
+  order_id: string;
+  product_id: string;
+  title: string;
+  quantity: number;
+  status: string;
+  created_at: string;
+  window_days: number;
+  refunded: boolean;
+};
+
 // Custom data parts carried alongside the message (rendered by our components).
 export type AgentDataTypes = {
   sources: { items: Source[] };
   budget: { spent_cny: number; limit_cny: number; remaining_cny: number };
   cart: CartData;
   checkout: CheckoutData;
+  orders: { items: OrderSummary[] };
+  order: OrderDetail;
+  return: ReturnData;
 };
 
 export type AgentUIMessage = UIMessage<unknown, AgentDataTypes>;
@@ -109,6 +150,15 @@ export function mapEvent(event: WireEvent, ctx: Ctx): UIMessageChunk[] {
         out.push({ type: "data-cart", data: payload as unknown as CartData });
       } else if (component === "checkout") {
         out.push({ type: "data-checkout", data: payload as unknown as CheckoutData });
+      } else if (component === "orders") {
+        out.push({
+          type: "data-orders",
+          data: { items: (payload.items as OrderSummary[]) ?? [] },
+        });
+      } else if (component === "order") {
+        out.push({ type: "data-order", data: payload as unknown as OrderDetail });
+      } else if (component === "return") {
+        out.push({ type: "data-return", data: payload as unknown as ReturnData });
       }
       break;
     }
