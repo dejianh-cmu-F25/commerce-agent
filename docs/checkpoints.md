@@ -56,6 +56,7 @@ Features: <feature ids>
 | 014 post-purchase care | 014 | order status cards; in-window return; out-of-window refusal | PASS (2026-09-13) |
 | 015 deployment hardening | 015 | config contract; container smoke (DP-5) | N/A — no UI; smoke DEFERRED (slow Docker Hub) |
 | 016 scenario runner | 016 | Scenarios tab; run all keylessly; 375px header | PASS (2026-09-13) |
+| 017 metrics dashboard | 017 | Metrics tab; latency/tokens/cost/tools/budget; 375px | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -188,6 +189,18 @@ Features: <feature ids>
   (recalled=2).
 - Card and details: `specs/013-customer-memory/checkpoint.md`.
 - Screenshot: `specs/013-customer-memory/checkpoint.png`.
+
+### 017 metrics dashboard — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek (one short
+  turn to populate cache tokens).
+- Result: PASS. The Metrics tab showed latency by span, token totals (incl. cache
+  hits), cost, tool success/failure, and the budget; a new turn increased the span
+  count and cache-hit tokens. No page-level horizontal scroll at 375px.
+- Card and details: `specs/017-metrics-dashboard/checkpoint.md`.
+- Screenshot: `specs/017-metrics-dashboard/checkpoint.png`.
+- Bug found and fixed during the checkpoint: the sixth tab overflowed the header
+  at 375px; `min-w-0` lets the tab group scroll inside itself.
 
 ### 016 scenario runner — 2026-09-13
 

@@ -199,6 +199,8 @@ class Agent:
         tool_calls: list[ToolCall] = []
         prompt_tokens = 0
         completion_tokens = 0
+        cache_hit_tokens = 0
+        cache_miss_tokens = 0
         spent_before = self._cost_meter.spent_cny() if self._cost_meter is not None else 0.0
 
         with SpanTimer(self._tracer, "llm", trace_id, parent_id) as span:
@@ -211,11 +213,15 @@ class Agent:
                 elif isinstance(event, Usage):
                     prompt_tokens += event.prompt_tokens
                     completion_tokens += event.completion_tokens
+                    cache_hit_tokens += event.cache_hit_tokens
+                    cache_miss_tokens += event.cache_miss_tokens
                     await self._record_usage(event, sink)
                 elif isinstance(event, Finish):
                     break
             span.attributes["prompt_tokens"] = prompt_tokens
             span.attributes["completion_tokens"] = completion_tokens
+            span.attributes["cache_hit_tokens"] = cache_hit_tokens
+            span.attributes["cache_miss_tokens"] = cache_miss_tokens
             span.attributes["tool_calls"] = len(tool_calls)
             if self._cost_meter is not None:
                 span.attributes["cost_cny"] = round(self._cost_meter.spent_cny() - spent_before, 6)

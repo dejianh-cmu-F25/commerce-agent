@@ -33,6 +33,7 @@ from app.adapters.storefront_sqlite import SqliteStorefront
 from app.adapters.tracer_jsonl import JsonlTracer, NullTracer
 from app.core import events as ev
 from app.core.loop import Agent
+from app.core.metrics import summarize
 from app.core.prompts import load_prompt
 from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
@@ -233,6 +234,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/traces")
     async def list_traces(limit: int = 50) -> dict:
         return {"traces": [asdict(summary) for summary in tracer.list_traces(limit)]}
+
+    @app.get("/metrics")
+    async def metrics(limit: int = 2000) -> dict:
+        window = max(1, min(limit, 20000))
+        summary = summarize(tracer.recent_spans(window))
+        meter = UsageCostMeter(settings.budget)
+        return {
+            "window": {"spans": summary.span_count, "limit": window},
+            "spans": [asdict(stat) for stat in summary.spans],
+            "tokens": {
+                "prompt": summary.prompt_tokens,
+                "completion": summary.completion_tokens,
+                "cache_hit": summary.cache_hit_tokens,
+                "cache_miss": summary.cache_miss_tokens,
+            },
+            "cost_cny": summary.cost_cny,
+            "tools": {"ok": summary.tool_ok, "error": summary.tool_error},
+            "budget": {
+                "currency": settings.budget.currency,
+                "spent": round(meter.spent_cny(), 4),
+                "limit": meter.limit_cny(),
+                "remaining": round(meter.remaining_cny(), 4),
+            },
+        }
 
     @app.get("/traces/{trace_id}")
     async def get_trace(trace_id: str) -> dict:
