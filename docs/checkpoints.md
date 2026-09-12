@@ -44,6 +44,7 @@ Features: <feature ids>
 | 002 web experience | 002 | UI states, markdown, tool steps, sources, stop/retry, a11y, theme | PASS (2026-09-13) |
 | 003 React web UI | 003 | React + AI Elements parity, full-viewport layout, theme, sanitization | PASS (2026-09-13) |
 | 004 storefront backend | 004 | catalog reads from the configured backend; parity; /readyz | PASS (2026-09-13) |
+| 005 session persistence | 005 | session survives restart; GET /sessions/{id}; parity | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -96,3 +97,13 @@ Features: <feature ids>
 - Screenshot: `specs/004-storefront-backend/checkpoint.png`.
 - `/readyz` reports the provider; seeding is idempotent (count stays 5 after
   restart).
+
+### 005 session persistence — 2026-09-13
+
+- Driver: Playwright + API checks, real DeepSeek.
+- Result: PASS. The chat is unchanged; the session is persisted and survives a
+  restart (`GET /sessions/{id}` returns the derived messages).
+- Card and details: `specs/005-session-persistence/checkpoint.md`.
+- Screenshot: `specs/005-session-persistence/checkpoint.png`.
+- The web app is now built via a factory (`uvicorn web.main:create_app --factory`);
+  Docker and `serve.sh` use the same command.

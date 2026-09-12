@@ -11,7 +11,7 @@ import json
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -21,16 +21,20 @@ from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
 from app.adapters.mock_llm import MockLLMClient, text_turn
+from app.adapters.session_memory import InMemorySessionStore
+from app.adapters.session_sqlite import SqliteSessionStore
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.prompts import load_prompt
+from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
+from app.core.types import Message
+from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
-from web.sessions import SessionStore
 
 STATIC_DIR = Path(__file__).parent / "static"
 APP_DIR = STATIC_DIR / "app"
@@ -55,6 +59,26 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
     if settings.storefront.provider == "memory":
         return InMemoryStorefront(SEED_PRODUCTS)
     return SqliteStorefront(settings.storefront.sqlite_path)
+
+
+def build_session_store(settings: Settings) -> SessionRepository:
+    """Resolve the session store from configuration (PB-1, PB-3)."""
+    if settings.session.store == "memory":
+        return InMemorySessionStore()
+    return SqliteSessionStore(settings.session.sqlite_path)
+
+
+def _message_to_dict(message: Message) -> dict:
+    data: dict = {"role": message.role, "content": message.content}
+    if message.tool_calls:
+        data["tool_calls"] = [
+            {"id": c.id, "name": c.name, "arguments": c.arguments} for c in message.tool_calls
+        ]
+    if message.tool_call_id:
+        data["tool_call_id"] = message.tool_call_id
+    if message.name:
+        data["name"] = message.name
+    return data
 
 
 def build_agent(settings: Settings) -> Agent:
@@ -87,7 +111,7 @@ class QueueSink:
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
     app = FastAPI(title="Commerce Agent", version="0.1.0")
-    store = SessionStore()
+    store = build_session_store(settings)
     agent = build_agent(settings)
 
     @app.get("/healthz")
@@ -108,6 +132,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "remaining": round(meter.remaining_cny(), 4),
         }
 
+    @app.get("/sessions/{session_id}")
+    async def get_session(session_id: str) -> dict:
+        session = store.get(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="session not found")
+        messages = derive_messages(session, "")
+        return {
+            "session_id": session.id,
+            "messages": [_message_to_dict(m) for m in messages if m.role != "system"],
+        }
+
     @app.post("/chat")
     async def chat(request: ChatRequest) -> EventSourceResponse:
         session = store.get_or_create(request.session_id)
@@ -126,6 +161,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         break
             finally:
                 await task
+                # Persist after the turn completes (one write per turn).
+                store.save(session)
 
         return EventSourceResponse(event_stream())
 
@@ -145,11 +182,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
-
-
 if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
-    settings = load_settings()
-    uvicorn.run(app, host=settings.web.host, port=settings.web.port)
+    _settings = load_settings()
+    uvicorn.run(create_app(_settings), host=_settings.web.host, port=_settings.web.port)

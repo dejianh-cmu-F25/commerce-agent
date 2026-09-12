@@ -4,7 +4,7 @@
 
 ```sh
 # real DeepSeek (needs LLM_API_KEY in .env)
-uv run --env-file .env uvicorn web.main:app --host 127.0.0.1 --port 8000
+uv run --env-file .env uvicorn web.main:create_app --factory --host 127.0.0.1 --port 8000
 
 # or, with the helper (opens the browser)
 ./scripts/serve.sh

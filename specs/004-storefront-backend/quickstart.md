@@ -15,7 +15,7 @@ Env overrides: `STOREFRONT_PROVIDER`, `STOREFRONT_SQLITE_PATH`.
 ## Run
 
 ```sh
-uv run --env-file .env uvicorn web.main:app --host 127.0.0.1 --port 8000
+uv run --env-file .env uvicorn web.main:create_app --factory --host 127.0.0.1 --port 8000
 # or: ./scripts/serve.sh
 ```
 

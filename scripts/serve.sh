@@ -19,7 +19,7 @@ if [ "$HOST" = "0.0.0.0" ] || [ "$HOST" = "::" ]; then BROWSE_HOST="127.0.0.1"; 
 URL="http://${BROWSE_HOST}:${PORT}"
 
 echo "Starting commerce agent (provider: ${LLM_PROVIDER:-deepseek}) on ${URL} ..."
-uv run uvicorn web.main:app --host "$HOST" --port "$PORT" --log-level warning &
+uv run uvicorn web.main:create_app --factory --host "$HOST" --port "$PORT" --log-level warning &
 SERVER_PID=$!
 trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
 

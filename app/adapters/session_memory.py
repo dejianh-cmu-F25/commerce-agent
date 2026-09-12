@@ -1,7 +1,7 @@
-"""In-memory session store.
+"""In-memory session repository (Service Provider for
+:class:`app.ports.session_store.SessionRepository`).
 
-Sessions are keyed by an unguessable id. Persistence and resume arrive with
-feature 009; for now they live for the process lifetime.
+Sessions live for the process lifetime; used for keyless runs and tests.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from uuid import uuid4
 from app.core.session import Session
 
 
-class SessionStore:
+class InMemorySessionStore:
     def __init__(self) -> None:
         self._sessions: dict[str, Session] = {}
 
@@ -29,3 +29,6 @@ class SessionStore:
             if existing is not None:
                 return existing
         return self.create()
+
+    def save(self, session: Session) -> None:
+        self._sessions[session.id] = session
