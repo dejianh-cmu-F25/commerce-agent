@@ -2,116 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
     <title>Commerce Agent</title>
-    <style>
-      :root {
-        --bg: #0f1115;
-        --panel: #171a21;
-        --text: #e6e8ee;
-        --muted: #9aa3b2;
-        --accent: #6ea8fe;
-        --line: #262b36;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-      header {
-        padding: 14px 20px;
-        border-bottom: 1px solid var(--line);
-        display: flex;
-        align-items: baseline;
-        gap: 12px;
-      }
-      header h1 { font-size: 16px; margin: 0; }
-      header .tag { color: var(--muted); font-size: 12px; }
-      #messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-      .msg { max-width: 760px; }
-      .msg.user { align-self: flex-end; }
-      .bubble {
-        padding: 10px 14px;
-        border-radius: 12px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        white-space: pre-wrap;
-      }
-      .msg.user .bubble { background: #1d2b4a; border-color: #274072; }
-      .meta { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
-      .tool {
-        font-size: 12px;
-        color: var(--muted);
-        border-left: 2px solid var(--accent);
-        padding: 2px 0 2px 8px;
-        margin-top: 6px;
-      }
-      .card {
-        margin-top: 8px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        overflow: hidden;
-      }
-      .card .row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 12px;
-        border-bottom: 1px solid var(--line);
-      }
-      .card .row:last-child { border-bottom: none; }
-      .card .price { color: var(--accent); }
-      .oos { color: var(--muted); font-size: 12px; }
-      footer {
-        border-top: 1px solid var(--line);
-        padding: 12px 20px;
-        display: flex;
-        gap: 10px;
-      }
-      input {
-        flex: 1;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        color: var(--text);
-        border-radius: 10px;
-        padding: 10px 12px;
-        font: inherit;
-      }
-      button {
-        background: var(--accent);
-        color: #0b1020;
-        border: none;
-        border-radius: 10px;
-        padding: 10px 18px;
-        font: inherit;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      button:disabled { opacity: 0.5; cursor: default; }
-    </style>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <header>
+    <header class="banner">
       <h1>Commerce Agent</h1>
       <span class="tag">ACME storefront · spec-driven demo</span>
-      <span class="tag" id="budget">budget: —</span>
+      <span class="spacer"></span>
+      <div class="budget" id="budget" title="Spend against the configured budget">
+        <span id="budget-text">budget: —</span>
+        <span class="bar" role="progressbar" aria-label="Budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span id="budget-fill"></span>
+        </span>
+      </div>
     </header>
-    <div id="messages"></div>
-    <footer>
-      <input id="input" placeholder="Ask for something, e.g. a tent under $250" autocomplete="off" />
-      <button id="send">Send</button>
+
+    <main id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text"></main>
+
+    <button id="to-bottom" class="to-bottom" type="button" hidden>Scroll to bottom ↓</button>
+
+    <footer class="composer">
+      <div class="status" id="status" role="status"></div>
+      <form class="inner" id="composer" autocomplete="off">
+        <input
+          id="input"
+          type="text"
+          placeholder="Ask for something, e.g. a tent under $250"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Message"
+        />
+        <button id="stop" type="button" hidden>Stop</button>
+        <button id="send" type="submit">Send</button>
+      </form>
     </footer>
+
+    <script src="/static/vendor/marked.min.js"></script>
+    <script src="/static/vendor/purify.min.js"></script>
     <script src="/static/app.js"></script>
   </body>
 </html>

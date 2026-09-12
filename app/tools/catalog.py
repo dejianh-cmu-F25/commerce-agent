@@ -92,14 +92,16 @@ async def _search_products(arguments: dict[str, Any], session: Session) -> ToolR
     if not results:
         return ToolResult(content=json.dumps({"query": query, "results": []}))
 
-    payload = {
-        "query": query,
-        "results": [
-            {"id": i["id"], "title": i["title"], "price": i["price"], "in_stock": i["stock"] > 0}
-            for i in results
-        ],
-    }
-    return ToolResult(content=json.dumps(payload))
+    items = [
+        {"id": i["id"], "title": i["title"], "price": i["price"], "in_stock": i["stock"] > 0}
+        for i in results
+    ]
+    payload = {"query": query, "results": items}
+    return ToolResult(
+        content=json.dumps(payload),
+        component="products",
+        payload={"items": items},
+    )
 
 
 def register_catalog_tools(registry: ToolRegistry) -> None:

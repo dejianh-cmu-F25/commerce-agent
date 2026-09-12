@@ -41,6 +41,7 @@ Features: <feature ids>
 | Checkpoint | Features | What to review | Status |
 | --- | --- | --- | --- |
 | 001 agent core | 001 | chat, SSE streaming, tool call, budget, health | PASS (2026-09-13) |
+| 002 web experience | 002 | UI states, markdown, tool steps, sources, stop/retry, a11y, theme | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -57,3 +58,17 @@ Features: <feature ids>
   before splitting. Re-run after the fix passed.
 - Known minor (non-blocking): `/favicon.ico` returns 404 (console noise only);
   tool-call lines render inline with adjacent text instead of on their own lines.
+
+### 002 web experience — 2026-09-13
+
+- Driver: Playwright (Chrome, isolated), real DeepSeek (`deepseek-flash`).
+- Result: PASS. Verified empty state + suggestion chips, markdown rendering,
+  tool steps with status, sources card, budget meter, Stop, error + Retry,
+  sanitization (no XSS), 375px with no horizontal scroll, and light/dark theme.
+- Card and details: `specs/002-web-experience/checkpoint.md`.
+- Screenshot: `specs/002-web-experience/checkpoint.png`.
+- Fixed the two 001 minor items: favicon added (`/static/favicon.svg`, no more
+  404) and tool calls now render as their own steps.
+- Backend seam: `ToolResult` gained optional `component`/`payload`; the loop
+  forwards a tool-declared `UIComponent` (generic; `search_products` declares
+  `products`).
