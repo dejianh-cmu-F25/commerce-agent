@@ -88,6 +88,13 @@ SCENARIOS: list[Scenario] = [
         expect_cart=[],
     ),
     Scenario(
+        name="use_skill",
+        user_text="help me plan a 2-day trip",
+        turns=[tool_turn("use_skill", '{"name": "trip-planning"}', call_id="s1"), _DONE],
+        expect_tools=["use_skill"],
+        expect_components=[],
+    ),
+    Scenario(
         name="memory_extract",
         user_text="I usually wear size M",
         turns=[_DONE],

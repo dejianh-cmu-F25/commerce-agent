@@ -82,7 +82,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | --- | --- |
 | Add a model provider | Implement `app/ports/llm.LLMClient`; select it in `settings.yaml` |
 | Add a model-facing capability | Register a `ToolSpec` + handler in `app/tools/registry.py` |
-| Add a long-tail procedure | Add `skills/<name>/SKILL.md` |
+| Add a long-tail procedure | Add `skills/<name>/SKILL.md`; `app/skills/loader.py` advertises it in the system prompt and `use_skill` loads the body on demand |
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
 | Add post-purchase orders | Extend `StorefrontBackend` (orders) and register tools in `app/tools/orders.py`; demo orders live in `app/adapters/order_seed.py` |
 | Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |

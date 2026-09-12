@@ -107,3 +107,9 @@ knowledge:
 # request only — the harness never refunds or changes the order (P3).
 returns:
   window_days: 30
+
+# Skills (feature 019): long-tail procedures in skills/<name>/SKILL.md. The
+# system prompt lists their names/descriptions; use_skill loads a body on demand.
+skills:
+  enabled: true
+  path: ./skills

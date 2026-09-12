@@ -30,18 +30,21 @@ from app.core.session import MemoryNote, Session
 from app.core.settings import AgentSettings
 from app.core.types import MemoryFact
 from app.knowledge.ingest import load_chunks
+from app.skills.loader import load_skills
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
 from app.tools.orders import register_order_tools
 from app.tools.registry import ToolRegistry
+from app.tools.skills import register_skill_tools
 from evals.scenarios import SCENARIOS, Scenario
 
 SYSTEM = "You are a commerce agent."
 P101_PRICE = 189.0
 EVAL_CUSTOMER = "eval"
 KNOWLEDGE_DIR = str(Path(__file__).resolve().parents[1] / "config" / "knowledge")
+SKILLS_DIR = str(Path(__file__).resolve().parents[1] / "skills")
 
 
 @dataclass
@@ -64,6 +67,7 @@ def _build_agent(
     retriever = InMemoryRetriever()
     retriever.add(load_chunks(KNOWLEDGE_DIR))
     register_knowledge_tools(registry, retriever)
+    register_skill_tools(registry, load_skills(SKILLS_DIR))
     register_merchant_tools(registry, merchant)
     return Agent(
         llm=MockLLMClient(scenario.turns),
