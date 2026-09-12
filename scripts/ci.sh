@@ -46,6 +46,9 @@ uv run pyright
 step "Python: tests (unit + integration)"
 uv run pytest tests/unit tests/integration -q
 
+step "Python: evals (keyless replay)"
+uv run python evals/run.py
+
 step "Python: self-review (spec compliance)"
 uv run python scripts/spec_review.py
 

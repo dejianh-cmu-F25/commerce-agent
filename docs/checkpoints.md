@@ -50,6 +50,7 @@ Features: <feature ids>
 | 008 trace viewer | 008 | Chat/Traces toggle; trace list + span timeline; chat preserved | PASS (2026-09-13) |
 | 009 cart & checkout | 009 | grounded add-to-cart; cart card; render_checkout (no charge) | PASS (2026-09-13) |
 | 010 merchant agent | 010 | inventory; staged price change; human approval applies it (P3) | PASS (2026-09-13) |
+| 011 evaluation | 011 | keyless replay of gold scenarios in the local gate | N/A (no browser surface) |
 
 ### 001 agent core — 2026-09-13
 
@@ -157,3 +158,9 @@ Features: <feature ids>
   (P3).
 - Card and details: `specs/010-merchant-agent/checkpoint.md`.
 - Screenshot: `specs/010-merchant-agent/checkpoint.png`.
+
+### 011 evaluation — 2026-09-13
+
+- No browser surface: the harness replays gold scenarios over the real loop/tools
+  keylessly and runs in the local gate (`scripts/ci.sh`). Report: `evals/run.py`
+  (5/5 scenarios pass). WV-5 permits backend-only features with a recorded reason.
