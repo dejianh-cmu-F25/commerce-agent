@@ -55,6 +55,19 @@ class ErrorEvent:
     message: str
 
 
+@dataclass
+class UsageReported:
+    spent_cny: float
+    limit_cny: float
+    remaining_cny: float
+
+
+@dataclass
+class BudgetExceeded:
+    spent_cny: float
+    limit_cny: float
+
+
 AgentEvent = (
     TurnStart
     | TextDelta
@@ -62,6 +75,8 @@ AgentEvent = (
     | ToolResult
     | UIComponent
     | CartUpdate
+    | UsageReported
+    | BudgetExceeded
     | TurnEnd
     | ErrorEvent
 )

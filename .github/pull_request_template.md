@@ -31,6 +31,12 @@
 - [ ] Guides and sensors both considered (HR-3)
 - [ ] Code is simple and readable; comments explain *why* (CQ)
 
+## Self-review report (SR-1..SR-3)
+
+- [ ] `python scripts/spec_review.py <NNN>-<name>` — no FAIL
+- Report: `specs/<NNN>-<name>/review.md`
+- Manual clauses confirmed: …
+
 ## Decision record
 
 - [ ] Agent Note added/updated under `docs/notes/` (DR-1) — or the change is trivial

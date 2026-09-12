@@ -5,6 +5,11 @@
 const messagesEl = document.getElementById("messages");
 const inputEl = document.getElementById("input");
 const sendEl = document.getElementById("send");
+const budgetEl = document.getElementById("budget");
+
+function setBudget(spent, limit) {
+  budgetEl.textContent = `budget: ¥${Number(spent).toFixed(4)} / ¥${Number(limit).toFixed(2)}`;
+}
 
 let sessionId = null;
 let currentBubble = null;
@@ -88,6 +93,12 @@ function handleEvent(event) {
       break;
     case "UIComponent":
       renderComponent(data.component, data.payload);
+      break;
+    case "UsageReported":
+      setBudget(data.spent_cny, data.limit_cny);
+      break;
+    case "BudgetExceeded":
+      addToolLine(`budget limit reached: ¥${data.spent_cny} / ¥${data.limit_cny}`);
       break;
     case "ErrorEvent":
       addToolLine(`error: ${data.message}`);

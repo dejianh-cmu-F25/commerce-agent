@@ -50,8 +50,16 @@ class ToolCallComplete:
 
 
 @dataclass
+class Usage:
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cache_hit_tokens: int = 0
+    cache_miss_tokens: int = 0
+
+
+@dataclass
 class Finish:
     reason: str
 
 
-LLMEvent = TextDelta | ToolCallComplete | Finish
+LLMEvent = TextDelta | ToolCallComplete | Usage | Finish

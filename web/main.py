@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
+from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
 from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.core import events as ev
@@ -52,6 +53,7 @@ def build_agent(settings: Settings) -> Agent:
         tools=registry,
         settings=settings.agent,
         system_prompt=load_prompt("system"),
+        cost_meter=UsageCostMeter(settings.budget),
     )
 
 
@@ -83,6 +85,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/readyz")
     async def readyz() -> dict:
         return {"status": "ready"}
+
+    @app.get("/budget")
+    async def budget() -> dict:
+        meter = UsageCostMeter(settings.budget)
+        return {
+            "currency": settings.budget.currency,
+            "spent": round(meter.spent_cny(), 4),
+            "limit": meter.limit_cny(),
+            "remaining": round(meter.remaining_cny(), 4),
+        }
 
     @app.post("/chat")
     async def chat(request: ChatRequest) -> EventSourceResponse:

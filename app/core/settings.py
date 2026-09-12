@@ -90,6 +90,17 @@ class MemorySettings(BaseModel):
     retention_days: int = 365
 
 
+class BudgetSettings(BaseModel):
+    enabled: bool = True
+    currency: str = "CNY"
+    total_limit: float = 10.0
+    usd_to_cny: float = 7.25
+    input_cache_miss_per_1m: float = 0.30
+    input_cache_hit_per_1m: float = 0.006
+    output_per_1m: float = 1.20
+    state_file: str = "./data/budget.json"
+
+
 class WebSettings(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
@@ -106,6 +117,7 @@ class Settings(BaseModel):
     observability: ObservabilitySettings = Field(default_factory=ObservabilitySettings)
     ingestion: IngestionSettings = Field(default_factory=IngestionSettings)
     memory: MemorySettings = Field(default_factory=MemorySettings)
+    budget: BudgetSettings = Field(default_factory=BudgetSettings)
     web: WebSettings = Field(default_factory=WebSettings)
 
 

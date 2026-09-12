@@ -60,6 +60,18 @@ memory:
   use_llm: false
   retention_days: 365
 
+# Spend guard (constitution HR-12). Prices are USD per 1M tokens; the cap is CNY.
+# Defaults use conservative (peak) DeepSeek Flash prices so we never overspend.
+budget:
+  enabled: true
+  currency: CNY
+  total_limit: 10.0
+  usd_to_cny: 7.25
+  input_cache_miss_per_1m: 0.30
+  input_cache_hit_per_1m: 0.006
+  output_per_1m: 1.20
+  state_file: ./data/budget.json
+
 web:
   host: 0.0.0.0
   port: 8000

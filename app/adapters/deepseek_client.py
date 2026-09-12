@@ -18,6 +18,7 @@ from app.core.types import (
     ToolCall,
     ToolCallComplete,
     ToolSpec,
+    Usage,
 )
 
 
@@ -85,15 +86,19 @@ class DeepSeekClient:
             "temperature": self._temperature,
             "max_tokens": self._max_tokens,
             "stream": True,
+            "stream_options": {"include_usage": True},
         }
         if tools:
             kwargs["tools"] = _to_openai_tools(tools)
 
         tool_buffers: dict[int, dict[str, str]] = {}
         finish_reason = "stop"
+        usage = None
 
         response = await self._client.chat.completions.create(**kwargs)
         async for chunk in response:
+            if getattr(chunk, "usage", None) is not None:
+                usage = chunk.usage
             if not chunk.choices:
                 continue
             choice = chunk.choices[0]
@@ -118,7 +123,16 @@ class DeepSeekClient:
                 continue
             yield ToolCallComplete(
                 ToolCall(
-                    id=buf["id"] or f"call_{index}", name=buf["name"], arguments=buf["args"] or "{}"
+                    id=buf["id"] or f"call_{index}",
+                    name=buf["name"],
+                    arguments=buf["args"] or "{}",
                 )
+            )
+        if usage is not None:
+            yield Usage(
+                prompt_tokens=usage.prompt_tokens or 0,
+                completion_tokens=usage.completion_tokens or 0,
+                cache_hit_tokens=getattr(usage, "prompt_cache_hit_tokens", 0) or 0,
+                cache_miss_tokens=getattr(usage, "prompt_cache_miss_tokens", 0) or 0,
             )
         yield Finish(finish_reason)

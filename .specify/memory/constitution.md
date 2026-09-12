@@ -125,6 +125,22 @@ core path.
 - **HR-10** Long tasks persist state to disk, record progress, and can resume.
 - **HR-11** New behavior attaches to a documented extension point. Changing the loop updates
   the architecture doc. See `docs/architecture.md` ("Where new behavior goes").
+- **HR-12 Budgets.** The harness enforces a spend budget. It records token usage per call,
+  converts it to the configured currency, and stops the loop with a clear event when the
+  budget is exceeded. A console-side hard limit is the deployment's responsibility.
+
+## SR — Self-Review & Checkpoints
+
+- **SR-1** Before opening a pull request, the agent self-reviews the change against every
+  clause of this constitution and the feature spec.
+- **SR-2** Each clause is marked **AUTO** (automated check passed), **MANUAL** (confirmed with
+  a note), or **N/A** (with a reason). No clause is left blank.
+- **SR-3** A clause that fails without a recorded waiver **blocks the pull request**.
+- **SR-4** When a feature introduces or changes browser-visible content, the agent starts the
+  app, opens the page, and presents a review card.
+- **SR-5** The review card lists the URL, the steps, the expected result, and the clauses and
+  features under review.
+- The self-review report lives at `specs/<NNN>-<name>/review.md`.
 
 ## DR — Decision Records
 

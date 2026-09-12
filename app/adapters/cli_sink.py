@@ -18,6 +18,10 @@ class CliSink:
             print(f"[tool:{event.status}] {event.summary}")
         elif isinstance(event, ev.UIComponent):
             print(f"[ui] {event.component}")
+        elif isinstance(event, ev.UsageReported):
+            print(f"[cost] ¥{event.spent_cny} / ¥{event.limit_cny}")
+        elif isinstance(event, ev.BudgetExceeded):
+            print(f"[budget] limit reached: ¥{event.spent_cny} / ¥{event.limit_cny}")
         elif isinstance(event, ev.ErrorEvent):
             print(f"[error] {event.message}")
         elif isinstance(event, ev.TurnEnd):

@@ -20,7 +20,8 @@ from app.core.session import (
     derive_messages,
 )
 from app.core.settings import AgentSettings
-from app.core.types import Finish, Message, TextDelta, ToolCall, ToolCallComplete
+from app.core.types import Finish, Message, TextDelta, ToolCall, ToolCallComplete, Usage
+from app.ports.cost_meter import CostMeter
 from app.ports.event_sink import EventSink
 from app.ports.llm import LLMClient
 from app.tools.registry import ToolRegistry
@@ -52,11 +53,13 @@ class Agent:
         tools: ToolRegistry,
         settings: AgentSettings,
         system_prompt: str,
+        cost_meter: CostMeter | None = None,
     ) -> None:
         self._llm = llm
         self._tools = tools
         self._settings = settings
         self._system_prompt = system_prompt
+        self._cost_meter = cost_meter
 
     def build_request(self, session: Session) -> list[Message]:
         """Build model messages from the session log (the only path, SL-1)."""
@@ -82,6 +85,14 @@ class Agent:
 
     async def _run_steps(self, session: Session, sink: EventSink) -> str:
         for _ in range(self._settings.max_turns):
+            if self._cost_meter is not None and self._cost_meter.over_budget():
+                await sink.emit(
+                    ev.BudgetExceeded(
+                        spent_cny=self._cost_meter.spent_cny(),
+                        limit_cny=self._cost_meter.limit_cny(),
+                    )
+                )
+                return "budget"
             messages = self.build_request(session)
             text, tool_calls = await self._model_call(messages, sink)
             session.append(AssistantMessage(text=text, tool_calls=tool_calls))
@@ -102,9 +113,23 @@ class Agent:
                 await sink.emit(ev.TextDelta(text=event.text))
             elif isinstance(event, ToolCallComplete):
                 tool_calls.append(event.call)
+            elif isinstance(event, Usage):
+                await self._record_usage(event, sink)
             elif isinstance(event, Finish):
                 break
         return "".join(text_parts), tool_calls
+
+    async def _record_usage(self, usage: Usage, sink: EventSink) -> None:
+        if self._cost_meter is None:
+            return
+        self._cost_meter.record(usage)
+        await sink.emit(
+            ev.UsageReported(
+                spent_cny=round(self._cost_meter.spent_cny(), 6),
+                limit_cny=self._cost_meter.limit_cny(),
+                remaining_cny=round(self._cost_meter.remaining_cny(), 6),
+            )
+        )
 
     async def _execute_call(self, call: ToolCall, session: Session, sink: EventSink) -> None:
         arguments = _parse_arguments(call.arguments)
