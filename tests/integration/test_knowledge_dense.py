@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+from app.adapters.vector_chroma import ChromaVectorStore
 from app.core.settings import (
     EmbeddingSettings,
     KnowledgeSettings,
@@ -34,8 +37,15 @@ def test_keyless_dense_needs_no_key():
     assert len(provider.embed(["hello"])[0]) == settings.embedding.dimensions
 
 
-def test_unimplemented_providers_fail_loud():
+def test_unimplemented_embedding_provider_fails_loud():
     with pytest.raises(ValueError):
         build_embedding(Settings(embedding=EmbeddingSettings(provider="ollama")))
-    with pytest.raises(ValueError):
-        build_vector_store(Settings(vector_store=VectorStoreSettings(provider="chroma")))
+
+
+def test_chroma_vector_store_builds(tmp_path: Path):
+    settings = Settings(
+        vector_store=VectorStoreSettings(
+            provider="chroma", persist_directory=str(tmp_path / "chroma")
+        )
+    )
+    assert isinstance(build_vector_store(settings), ChromaVectorStore)

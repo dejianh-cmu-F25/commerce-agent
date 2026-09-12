@@ -13,6 +13,7 @@ dependencies = [
     "openai>=1.40",
     "pyyaml>=6.0",
     "sse-starlette>=2.1",
+    "chromadb>=1.5,<2",
 ]
 
 [dependency-groups]

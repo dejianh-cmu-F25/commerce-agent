@@ -34,6 +34,7 @@ from app.adapters.session_sqlite import SqliteSessionStore
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.adapters.tracer_jsonl import JsonlTracer, NullTracer
+from app.adapters.vector_chroma import ChromaVectorStore
 from app.adapters.vector_memory import InMemoryVectorStore
 from app.core import events as ev
 from app.core.loop import Agent
@@ -150,7 +151,11 @@ def build_vector_store(settings: Settings):
     provider = settings.vector_store.provider
     if provider == "memory":
         return InMemoryVectorStore()
-    raise ValueError(f"vector_store.provider {provider!r} is not implemented; use 'memory'")
+    if provider == "chroma":
+        return ChromaVectorStore(
+            settings.vector_store.persist_directory, settings.vector_store.collection_name
+        )
+    raise ValueError(f"Unknown vector store provider: {provider!r}")
 
 
 def build_retriever(settings: Settings) -> Retriever:
