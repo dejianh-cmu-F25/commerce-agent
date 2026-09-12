@@ -54,7 +54,7 @@ Features: <feature ids>
 | 012 knowledge retrieval | 012 | search_knowledge; answer grounded in policy docs | PASS (2026-09-13) |
 | 013 customer memory | 013 | durable facts stored; recalled in a new chat; forget | PASS (2026-09-13) |
 | 014 post-purchase care | 014 | order status cards; in-window return; out-of-window refusal | PASS (2026-09-13) |
-| 015 deployment hardening | 015 | config contract; container smoke (DP-5) | N/A — no UI; smoke DEFERRED (slow Docker Hub) |
+| 015 deployment hardening | 015 | config contract; container smoke (DP-5) | PASS (2026-09-13; via regional mirrors) |
 | 016 scenario runner | 016 | Scenarios tab; run all keylessly; 375px header | PASS (2026-09-13) |
 | 017 metrics dashboard | 017 | Metrics tab; latency/tokens/cost/tools/budget; 375px | PASS (2026-09-13) |
 
@@ -216,11 +216,14 @@ Features: <feature ids>
 
 - No new browser surface. The acceptance is a keyless container smoke test
   (`scripts/smoke_container.sh`), wired into `scripts/ci.sh --with-image`.
-- Config-parity tests, `docker compose config`, and `bash -n` pass; the smoke's
-  HTTP assertions pass against the app locally in mock/memory mode.
-- **Container build + smoke DEFERRED**: Docker Hub throughput here is ~90 KB/s,
-  so the ~500 MB multi-stage build would take 45–60+ min. Run `make ci-image` on
-  a faster network. Details: `specs/015-deployment-hardening/checkpoint.md`.
+- Result: **PASS** (after accelerating the build with regional mirrors; see
+  `chore/docker-build-mirrors`). The smoke reported `healthz: ok`,
+  `readyz: {"storefront":"memory","memory":"memory"}`, `spa: ok`, `chat: ok`,
+  `user: uid 10001 (non-root)`.
+- Earlier this was deferred because Docker Hub throughput here is ~90 KB/s; the
+  build was made feasible with the DaoCloud registry mirror plus npm/PyPI build
+  args (`NPM_REGISTRY`, `UV_DEFAULT_INDEX`).
+- Details: `specs/015-deployment-hardening/checkpoint.md`.
 
 ### 014 post-purchase care — 2026-09-13
 

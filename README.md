@@ -50,6 +50,16 @@ Then open the web UI and try the Scenario Runner.
   (`scripts/smoke_container.sh`): liveness, readiness, the SPA, a chat turn, and a
   non-root process — no API key required (DP-3..DP-5).
 - `make ci-fast` (the pre-push gate) stays fast and Docker-free.
+- On slow networks, accelerate the build with mirrors (all opt-in; defaults stay
+  official):
+  ```sh
+  NPM_REGISTRY=https://registry.npmmirror.com \
+  UV_DEFAULT_INDEX=https://pypi.tuna.tsinghua.edu.cn/simple \
+  make ci-image
+  ```
+  Base images use the Docker daemon's `registry-mirrors` (e.g. add
+  `"registry-mirrors": ["https://docker.m.daocloud.io"]` in Docker Desktop →
+  Settings → Docker Engine).
 
 ## Layout
 

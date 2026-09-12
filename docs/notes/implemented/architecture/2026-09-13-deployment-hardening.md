@@ -40,12 +40,22 @@ The deployment surface had drifted from the app:
   container on every exit path.
 - **The smoke test runs only under `--with-image`** (and `make ci-image`), after
   the image build; the pre-push fast gate is unchanged.
+- **Build mirrors are opt-in build args, not hardcoded defaults.** The image
+  build takes `NPM_REGISTRY` (npm) and `UV_DEFAULT_INDEX` (Python); `scripts/ci.sh`
+  forwards them from the environment. Base images use the Docker daemon's
+  `registry-mirrors`. Defaults stay the official registries, so the image remains
+  reproducible anywhere; slow networks opt in explicitly
+  (`chore/docker-build-mirrors`).
 
 ## Consequences
 
 - Adding a settings override without documenting it in `.env.example` now fails
   the gate, so the contract cannot silently drift.
-- The image build and smoke remain opt-in and slow; CI parity still depends on a
-  developer or hook running `make ci-image` before a release.
+- The image build and smoke remain opt-in (the pre-push fast gate is Docker-free),
+  but with mirrors the build is practical: the smoke was executed and passed
+  (`healthz ok`, `readyz {"storefront":"memory","memory":"memory"}`, `spa ok`,
+  `chat ok`, `uid 10001`).
 - The smoke uses a mock model, so it proves the packaging, not provider behavior;
   provider paths stay covered by the browser checkpoints.
+- Mirror configuration is environment-specific and not committed; the repository
+  only carries the switches.

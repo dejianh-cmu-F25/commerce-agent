@@ -67,7 +67,12 @@ step "Frontend: lint / typecheck / test / build"
 
 if [ "$WITH_IMAGE" -eq 1 ]; then
   step "Docker image build"
-  docker build -t commerce-agent:ci .
+  # Optional mirrors for slow networks (see Dockerfile):
+  #   NPM_REGISTRY, UV_DEFAULT_INDEX
+  build_args=()
+  [ -n "${NPM_REGISTRY:-}" ] && build_args+=(--build-arg "NPM_REGISTRY=${NPM_REGISTRY}")
+  [ -n "${UV_DEFAULT_INDEX:-}" ] && build_args+=(--build-arg "UV_DEFAULT_INDEX=${UV_DEFAULT_INDEX}")
+  docker build -t commerce-agent:ci ${build_args[@]+"${build_args[@]}"} .
   step "Docker container smoke test"
   ./scripts/smoke_container.sh commerce-agent:ci
 fi
