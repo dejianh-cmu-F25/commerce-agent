@@ -13,7 +13,10 @@ fi
 
 HOST="${WEB_HOST:-127.0.0.1}"
 PORT="${WEB_PORT:-8000}"
-URL="http://${HOST}:${PORT}"
+# Bind to HOST but browse a reachable address (0.0.0.0 is not browsable).
+BROWSE_HOST="$HOST"
+if [ "$HOST" = "0.0.0.0" ] || [ "$HOST" = "::" ]; then BROWSE_HOST="127.0.0.1"; fi
+URL="http://${BROWSE_HOST}:${PORT}"
 
 echo "Starting commerce agent (provider: ${LLM_PROVIDER:-deepseek}) on ${URL} ..."
 uv run uvicorn web.main:app --host "$HOST" --port "$PORT" --log-level warning &
