@@ -47,6 +47,7 @@ Features: <feature ids>
 | 005 session persistence | 005 | session survives restart; GET /sessions/{id}; parity | PASS (2026-09-13) |
 | 006 browser resume | 006 | reload restores the transcript; same session continues; New chat | PASS (2026-09-13) |
 | 007 observability | 007 | turn/llm/tool spans with trace_id; GET /traces; parity | PASS (2026-09-13) |
+| 008 trace viewer | 008 | Chat/Traces toggle; trace list + span timeline; chat preserved | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -128,3 +129,12 @@ Features: <feature ids>
 - Card and details: `specs/007-observability/checkpoint.md`.
 - Screenshot: `specs/007-observability/checkpoint.png`.
 - The web Trace Viewer (OB-4) is a follow-up.
+
+### 008 trace viewer — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. A Chat/Traces toggle lists recent traces and renders a selected
+  trace's `turn`/`llm`/`tool` timeline with durations, status, and attributes;
+  switching back preserves the chat.
+- Card and details: `specs/008-trace-viewer/checkpoint.md`.
+- Screenshot: `specs/008-trace-viewer/checkpoint.png`.

@@ -28,6 +28,7 @@ import {
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
 import { SourcesList } from "@/components/app/sources-list";
+import { TraceViewer } from "@/components/app/trace-viewer";
 
 // Tool steps pull in the syntax highlighter (shiki); load them on demand so the
 // initial bundle stays small.
@@ -67,6 +68,7 @@ function Chat() {
   const budget = latestBudget(messages);
   const isEmpty = messages.length === 0;
   const [resuming, setResuming] = useState(() => transport.getSessionId() !== null);
+  const [view, setView] = useState<"chat" | "traces">("chat");
 
   // Resume the conversation from the server log after a reload (feature 006).
   useEffect(() => {
@@ -110,6 +112,28 @@ function Chat() {
             ACME storefront · spec-driven demo
           </span>
           <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-0.5 rounded-md border p-0.5">
+              <button
+                type="button"
+                onClick={() => setView("chat")}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs",
+                  view === "chat" ? "bg-accent text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("traces")}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs",
+                  view === "traces" ? "bg-accent text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Traces
+              </button>
+            </div>
             <button
               type="button"
               onClick={newChat}
@@ -122,7 +146,11 @@ function Chat() {
         </div>
       </header>
 
-      <Conversation className="min-h-0 flex-1" aria-live="polite">
+      {view === "traces" ? (
+        <TraceViewer />
+      ) : (
+        <>
+          <Conversation className="min-h-0 flex-1" aria-live="polite">
         <ConversationContent
           className={cn(CONTAINER, "gap-6", isEmpty && "min-h-full")}
         >
@@ -208,7 +236,9 @@ function Chat() {
             <PromptInputSubmit status={status} onStop={stop} />
           </PromptInputFooter>
         </PromptInput>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
