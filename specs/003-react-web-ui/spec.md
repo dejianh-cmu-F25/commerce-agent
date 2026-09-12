@@ -125,7 +125,8 @@ system theme.
 - **FR-015**: The old vanilla surface (`web/static/app.js`, `index.html`,
   `styles.css`, `vendor/`) MUST be removed.
 - **FR-016**: The layout MUST scale with the window: header, transcript, and
-  composer share one responsive, aligned column that widens on large screens; the
+  composer share one aligned column with a **fluid width** (≈92% of the viewport,
+  capped at ~80rem) so it fits small screens and stays readable on large ones; the
   empty state MUST fill and center in the transcript area; wide content (suggestion
   rows, code) MUST wrap or scroll inside its own container so there is no
   page-level horizontal scroll from 320px up; live resize MUST re-flow cleanly.
@@ -160,8 +161,8 @@ system theme.
 
 - [ ] Shell fills the viewport; `body` height equals the window height.
 - [ ] No page-level horizontal scroll from 320px up; wide content scrolls or wraps inside its container.
-- [ ] Header, transcript, and composer share one responsive, aligned column
-      (`max-w-3xl` → `lg:max-w-5xl` → `xl:max-w-6xl`).
+- [ ] Header, transcript, and composer share one aligned column with a fluid
+      width (≈92% of the viewport, capped at ~80rem) — no fixed breakpoint jumps.
 - [ ] Empty state fills the transcript area and is vertically centered.
 - [ ] Suggestion rows wrap (or scroll inside their own container) on narrow screens.
 - [ ] Live window resize re-flows with no stuck widths or overlap.

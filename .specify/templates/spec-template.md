@@ -138,7 +138,7 @@
 
 - [ ] Shell fills the viewport; `body` height equals the window height
 - [ ] No page-level horizontal scroll from 320px up; wide content scrolls or wraps inside its container
-- [ ] Header, transcript, and composer share one responsive, aligned column (narrow on small, wider on large)
+- [ ] Header, transcript, and composer share one aligned column with a fluid width (≈92% of the viewport, capped at ~80rem for readable line length)
 - [ ] Empty state fills and is vertically centered
 - [ ] Suggestion rows wrap or scroll inside their own container on narrow screens
 - [ ] Live window resize re-flows with no stuck widths or overlap
