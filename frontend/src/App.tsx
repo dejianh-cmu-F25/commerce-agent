@@ -28,6 +28,7 @@ import {
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
 import { CartCard } from "@/components/app/cart-card";
+import { MerchantView } from "@/components/app/merchant-view";
 import { SourcesList } from "@/components/app/sources-list";
 import { TraceViewer } from "@/components/app/trace-viewer";
 
@@ -69,7 +70,7 @@ function Chat() {
   const budget = latestBudget(messages);
   const isEmpty = messages.length === 0;
   const [resuming, setResuming] = useState(() => transport.getSessionId() !== null);
-  const [view, setView] = useState<"chat" | "traces">("chat");
+  const [view, setView] = useState<"chat" | "traces" | "merchant">("chat");
 
   // Resume the conversation from the server log after a reload (feature 006).
   useEffect(() => {
@@ -134,6 +135,16 @@ function Chat() {
               >
                 Traces
               </button>
+              <button
+                type="button"
+                onClick={() => setView("merchant")}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs",
+                  view === "merchant" ? "bg-accent text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Merchant
+              </button>
             </div>
             <button
               type="button"
@@ -149,6 +160,8 @@ function Chat() {
 
       {view === "traces" ? (
         <TraceViewer />
+      ) : view === "merchant" ? (
+        <MerchantView />
       ) : (
         <>
           <Conversation className="min-h-0 flex-1" aria-live="polite">

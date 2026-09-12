@@ -49,6 +49,7 @@ Features: <feature ids>
 | 007 observability | 007 | turn/llm/tool spans with trace_id; GET /traces; parity | PASS (2026-09-13) |
 | 008 trace viewer | 008 | Chat/Traces toggle; trace list + span timeline; chat preserved | PASS (2026-09-13) |
 | 009 cart & checkout | 009 | grounded add-to-cart; cart card; render_checkout (no charge) | PASS (2026-09-13) |
+| 010 merchant agent | 010 | inventory; staged price change; human approval applies it (P3) | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -147,3 +148,12 @@ Features: <feature ids>
   summary and states that nothing is charged (P3).
 - Card and details: `specs/009-cart-checkout/checkpoint.md`.
 - Screenshot: `specs/009-cart-checkout/checkpoint.png`.
+
+### 010 merchant agent — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. The operator agent lists inventory and stages a price change; a
+  human approves it in the Merchant view and only then does the product update
+  (P3).
+- Card and details: `specs/010-merchant-agent/checkpoint.md`.
+- Screenshot: `specs/010-merchant-agent/checkpoint.png`.
