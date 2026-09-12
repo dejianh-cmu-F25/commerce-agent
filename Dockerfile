@@ -1,6 +1,14 @@
 # syntax=docker/dockerfile:1
 
-# --- builder: install dependencies into a virtualenv ---
+# --- frontend: build the React SPA (Vite) ---
+FROM node:20-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# --- builder: install python dependencies into a virtualenv ---
 FROM python:3.12-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 RUN pip install --no-cache-dir uv
@@ -18,6 +26,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 WORKDIR /app
 RUN useradd --create-home --uid 10001 appuser
 COPY --from=builder /app /app
+COPY --from=frontend /web/static/app /app/web/static/app
 RUN mkdir -p /app/data/db /app/data/chroma /app/logs \
     && chown -R appuser:appuser /app
 USER appuser

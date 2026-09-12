@@ -32,6 +32,8 @@ logs/
 node_modules/
 dist/
 .next/
+frontend/node_modules/
+web/static/app/
 
 # --- Spec Kit / agent local state ---
 # Keep committed: .claude/skills, .specify/templates, .specify/memory

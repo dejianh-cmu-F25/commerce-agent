@@ -16,7 +16,7 @@ Dependencies point inward only.
 
 | Layer | Contents | Depends on |
 | --- | --- | --- |
-| L4 Surfaces | `web/` (chat, SSE), CLI | L3 |
+| L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
 | L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, Chroma, SSE, CLI) | L1 |
 | L1 Ports | `app/ports` (LLM, Backend, Retriever, Memory, Tracer, EventSink) | L0 |
@@ -84,7 +84,8 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add retrieval | Implement `Retriever`; wire `dense`/`sparse`/`fusion` |
 | Change chunking | Implement `ChunkingStrategy`; select it in config |
 | Add a write guardrail | Add a link to the gate pipeline in `app/gates/` |
-| Add a UI component | Register `component_type -> renderer` in `web/static/app.js` |
+| Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |
+| Change how backend events reach the UI | Edit `frontend/src/lib/transport.ts` (SSE → AI SDK `UIMessageChunk`) |
 | Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |
 | Add a surface (CLI, websocket) | Implement `EventSink`; mount it |
 | Add durable session state | Extend `SessionEvent`; render and replay from the log |

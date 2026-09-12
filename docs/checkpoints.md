@@ -42,6 +42,7 @@ Features: <feature ids>
 | --- | --- | --- | --- |
 | 001 agent core | 001 | chat, SSE streaming, tool call, budget, health | PASS (2026-09-13) |
 | 002 web experience | 002 | UI states, markdown, tool steps, sources, stop/retry, a11y, theme | PASS (2026-09-13) |
+| 003 React web UI | 003 | React + AI Elements parity, full-viewport layout, theme, sanitization | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -72,3 +73,15 @@ Features: <feature ids>
 - Backend seam: `ToolResult` gained optional `component`/`payload`; the loop
   forwards a tool-declared `UIComponent` (generic; `search_products` declares
   `products`).
+
+### 003 React web UI — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. React 19 + AI Elements rebuilt the surface with full parity
+  (markdown, `Tool` steps, `Sources`, budget meter, Stop, error + Retry) plus a
+  full-viewport layout and system-theme following.
+- Card and details: `specs/003-react-web-ui/checkpoint.md`.
+- Screenshot: `specs/003-react-web-ui/checkpoint.png`.
+- Architecture: a custom `ChatTransport` adapts the existing SSE stream to AI
+  SDK `UIMessageChunk`; the backend event contract is unchanged. See the Agent
+  Note `docs/notes/implemented/architecture/2026-09-13-react-ai-elements-frontend.md`.
