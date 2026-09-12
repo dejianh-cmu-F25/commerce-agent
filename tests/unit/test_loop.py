@@ -91,3 +91,21 @@ def test_derive_messages_is_deterministic():
     assert first == second
     assert first[0].role == "system"
     assert first[1].role == "user"
+
+
+async def test_tool_can_declare_a_ui_component():
+    agent = make_agent(
+        [
+            tool_turn("search_products", '{"query": "tent"}'),
+            text_turn("Here is a tent."),
+        ]
+    )
+    session = Session(id="s5")
+    sink = ListSink()
+
+    await agent.stream_turn(session, "I need a tent", sink)
+
+    # The loop forwards the tool-declared component without interpreting it.
+    components = sink.of_type(ev.UIComponent)
+    assert components and components[0].component == "products"
+    assert components[0].payload["items"][0]["id"] == "P-101"

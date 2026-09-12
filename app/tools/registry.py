@@ -19,6 +19,10 @@ from app.core.types import ToolSpec
 class ToolResult:
     content: str
     status: str = "ok"  # "ok" | "blocked" | "error"
+    # Optional UI hint: the loop forwards this to the surface as a UIComponent.
+    # The loop never interprets it (keeps the loop generic, P2/P5, WV-3).
+    component: str | None = None
+    payload: dict[str, Any] | None = None
 
 
 ToolHandler = Callable[[dict[str, Any], Session], Awaitable[ToolResult]]

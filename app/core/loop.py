@@ -143,3 +143,8 @@ class Agent:
         await sink.emit(
             ev.ToolResult(name=call.name, status=result.status, summary=_summarize(result.content))
         )
+        if result.component:
+            # Forward a tool-declared component; the loop does not interpret it.
+            await sink.emit(
+                ev.UIComponent(component=result.component, payload=result.payload or {})
+            )
