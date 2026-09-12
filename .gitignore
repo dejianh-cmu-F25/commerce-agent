@@ -28,6 +28,9 @@ logs/
 *.sqlite3
 *.jsonl
 
+# --- Evaluation artifacts (regenerated; the report is committed) ---
+evals/results-*.json
+
 # --- Node / web ---
 node_modules/
 dist/

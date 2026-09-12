@@ -1,0 +1,121 @@
+# Feature Specification: Retrieval Benchmark & Ablation
+
+**Feature Branch**: `022-retrieval-benchmark`
+
+**Created**: 2026-09-13
+
+**Status**: Draft
+
+**Input**: A keyless retrieval benchmark over the policy corpus: a labeled
+query set, hit-rate/recall/MRR metrics, and an ablation comparing TF-IDF,
+dense+hash, and dense+Chroma, with a committed report.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Measure retrieval quality (Priority: P1)
+
+Given a labeled query set, the system reports hit-rate@k, recall@k, and MRR for
+the configured retriever, deterministically and without a key.
+
+**Why this priority**: Retrieval is the grounding path (P4); its quality is the
+first thing to measure, and it produces the clearest "before/after" numbers.
+
+**Independent Test**: Run the benchmark and assert the metrics are in [0, 1] and
+stable across runs.
+
+**Acceptance Scenarios**:
+
+1. **Given** the labeled set, **When** the benchmark runs, **Then** it reports
+   hit-rate@k, recall@k, and MRR for each provider.
+2. **Given** the same inputs, **When** the benchmark runs twice, **Then** the
+   deterministic metrics are identical.
+
+---
+
+### User Story 2 - Ablate the retrieval providers (Priority: P1)
+
+The benchmark compares TF-IDF (`memory`), dense+hash, and dense+Chroma on the
+same queries, so the effect of each choice is visible.
+
+**Why this priority**: The ablation is the evidence for the project's retrieval
+changes (the resume's "I changed X → +Y").
+
+**Independent Test**: Run all three configs; assert each produces metrics and the
+report lists them side by side.
+
+**Acceptance Scenarios**:
+
+1. **Given** three configs, **When** the benchmark runs, **Then** the report shows
+   their metrics in one table.
+
+---
+
+### User Story 3 - A committed, reproducible report (Priority: P2)
+
+The results are written to a committed `evals/report.md` with the command, the
+metric definition, and the query count; the local gate runs the benchmark.
+
+**Independent Test**: The gate runs the benchmark; `evals/report.md` exists and
+matches the benchmark output.
+
+**Acceptance Scenarios**:
+
+1. **Given** the gate, **When** it runs, **Then** the retrieval benchmark passes a
+   minimum-quality threshold.
+2. **Given** `evals/report.md`, **When** read, **Then** it states the command, the
+   model/embedding, and the metrics per config.
+
+---
+
+### Edge Cases
+
+- **Empty corpus**: metrics are 0; the bench reports it.
+- **No hits**: a query with no match counts as a miss.
+- **Ties**: ranking ties break deterministically by chunk id.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The system MUST provide pure retrieval metrics: hit-rate@k,
+  recall@k, and MRR, with a documented definition.
+- **FR-002**: The system MUST provide a labeled retrieval set (query → expected
+  source, with a difficulty label) over `config/knowledge/`.
+- **FR-003**: A benchmark MUST evaluate at least three retriever configs
+  (TF-IDF `memory`, dense+`hash`, dense+`chroma`) on the same set.
+- **FR-004**: The benchmark MUST be keyless and deterministic (metrics), and MUST
+  pass a minimum-quality threshold in the gate.
+- **FR-005**: A report generator MUST write `evals/report.md` (committed) with the
+  command, metric definitions, per-config metrics, and the query count.
+- **FR-006**: Adding a query MUST require only a data change.
+
+### Key Entities
+
+- **RetrievalCase**: a query, its expected source document, and a difficulty.
+- **RetrievalMetrics**: hit-rate@k, recall@k, MRR, and the number of cases.
+
+## Observability
+
+- The benchmark is offline (keyless); it reads the same corpus the app ingests.
+  No runtime span is added.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: The report shows hit-rate@k, recall@k, and MRR for each of the three
+  configs.
+- **SC-002**: The deterministic metrics are identical across runs.
+- **SC-003**: Every config meets the minimum threshold (≥ 0.7 hit-rate@3) so the
+  gate is meaningful.
+- **SC-004**: `evals/report.md` is committed and states the command and metrics.
+- **SC-005**: The local gate (ruff, pyright, pytest, evals, spec self-review,
+  frontend) passes.
+
+## Assumptions
+
+- The corpus is the three policy docs; the labeled set is small but covers
+  easy/medium/hard queries and all three documents.
+- Semantic embedding quality (OpenAI) is out of scope; the ablation uses the
+  keyless hash embedding so the benchmark is reproducible.
+- Latency is measured but indicative (single machine), not a pass/fail gate.

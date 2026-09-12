@@ -102,6 +102,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a tracer / span | Emit a `Span` via the `Tracer` port; add attributes (redacted) in the loop |
 | Add a metric | Add attributes to the relevant span, then aggregate in `app/core/metrics.py` and surface in the Metrics view |
 | Add an eval scenario | Add a `Scenario` in `evals/scenarios.py` (scripted turns + expected outcomes); the gate CLI and the web Scenario Runner both pick it up via `evals/runner.py` |
+| Add a retrieval query | Add a `RetrievalCase` in `evals/retrieval_set.py`; the keyless benchmark and `evals/report.md` pick it up |
 | Run the gold scenarios from the web | The Scenario Runner calls `evals.runner.run_scenarios` (same code as the gate); served by `GET /scenarios` + `POST /scenarios/run` (WV-4) |
 | Add background work | Add a job runner behind a port |
 | Add deployment target | Extend `docker-compose.yml`; keep config in env |
