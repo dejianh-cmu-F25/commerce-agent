@@ -63,6 +63,12 @@ class EvaluationSettings(BaseModel):
     enabled: bool = False
     provider: Literal["custom", "ragas"] = "custom"
     metrics: list[str] = Field(default_factory=lambda: ["hit_rate", "mrr", "faithfulness"])
+    # Real-model evaluation (feature 023): opt-in, budget-capped.
+    seeds: int = Field(default=3, ge=1, le=20)
+    pass_k: int = Field(default=3, ge=1, le=20)
+    judge: bool = True
+    judge_model: str = "deepseek-chat"
+    max_cost_cny: float = Field(default=1.0, gt=0)
 
 
 class ObservabilitySettings(BaseModel):
@@ -198,6 +204,11 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "MEMORY_SQLITE_PATH": ("memory", "sqlite_path", str),
     "SKILLS_ENABLED": ("skills", "enabled", _to_bool),
     "SKILLS_PATH": ("skills", "path", str),
+    "EVAL_SEEDS": ("evaluation", "seeds", int),
+    "EVAL_PASS_K": ("evaluation", "pass_k", int),
+    "EVAL_JUDGE": ("evaluation", "judge", _to_bool),
+    "EVAL_JUDGE_MODEL": ("evaluation", "judge_model", str),
+    "EVAL_MAX_COST_CNY": ("evaluation", "max_cost_cny", float),
 }
 
 

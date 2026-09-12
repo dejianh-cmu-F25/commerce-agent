@@ -61,6 +61,8 @@ Features: <feature ids>
 | 019 skills | 019 | skills catalog + use_skill tool | N/A (existing tool-step UI; no new component) |
 | 020 gates | 020 | guardrails extracted to app/gates (behavior-preserving) | N/A (internal refactor; no UI change) |
 | 021 chroma vector store | 021 | persistent Chroma provider; app defaults to dense + Chroma | N/A (backend provider; no UI change) |
+| 022 retrieval benchmark | 022 | hit-rate/MRR ablation; committed report | N/A (CLI/report; no UI change) |
+| 023 agent evaluation | 023 | process metrics, attribution, Pass@k/Pass^k, judge, ablation | N/A (CLI/report; no UI change) |
 
 ### 001 agent core — 2026-09-13
 

@@ -25,3 +25,43 @@ hit-rate@3 by difficulty:
 | `tfidf` | 1.000 | 0.800 | 1.000 |
 | `dense-hash` | 1.000 | 1.000 | 1.000 |
 | `dense-chroma` | 1.000 | 1.000 | 1.000 |
+
+## Feature ablation (keyless)
+
+Each configuration runs the same gold scenarios (scripted model); the delta is vs the naked baseline. This isolates each feature's contribution.
+
+| Config | Passed | Pass rate | Delta vs naked |
+| --- | ---: | ---: | ---: |
+| `naked` | 9/12 | 0.750 | +0.000 |
+| `+memory` | 11/12 | 0.917 | +0.167 |
+| `+skills` | 10/12 | 0.833 | +0.083 |
+| `+dense-hash` | 9/12 | 0.750 | +0.000 |
+| `+dense-chroma` | 9/12 | 0.750 | +0.000 |
+
+## Agent evaluation (real model, opt-in)
+
+- Model: `deepseek-flash` · seeds: 3 · judge: `deepseek-chat`
+- Generated: 2026-09-12
+- Command: `uv run python evals/agent_eval.py --real --seeds 3`
+
+Reliability over 7 tasks × 3 runs (21 runs, 21 successes):
+
+| Pass@1 | Pass@k | Best@k | Pass^k |
+| ---: | ---: | ---: | ---: |
+| 1.000 | 1.000 | 1.000 | 1.000 |
+
+Process metrics (per run):
+
+| steps | tool ok/err | ungrounded | avg ms | p95 ms | prompt tok | completion tok | cache hit | cost CNY |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1.95 | 41/0 | 0 | 3045 | 5312 | 90429 | 6988 | 78208 | 0.0908 |
+
+Rubric judge: graded 21 answers, 0 vetoes.
+
+| Dimension | Avg (1-4) |
+| --- | ---: |
+| grounding | 3.95 |
+| correctness | 4.00 |
+| policy_compliance | 3.90 |
+| completeness | 3.86 |
+| tone | 4.00 |
