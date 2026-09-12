@@ -37,10 +37,19 @@ Early scaffold. See `specs/` for the feature backlog.
 ```sh
 cp .env.example .env        # add your DeepSeek API key
 uv sync                     # install dependencies
-docker compose up --build   # app + SQLite + Chroma
+docker compose up --build   # app (SQLite embedded; data/logs on host volumes)
 ```
 
 Then open the web UI and try the Scenario Runner.
+
+## Deployment
+
+- Config is one contract: `.env.example` lists exactly the variables the app
+  reads, and a test enforces parity with `docker-compose.yml` (PB-1, DP-2).
+- `make ci-image` builds the image and runs a **keyless container smoke test**
+  (`scripts/smoke_container.sh`): liveness, readiness, the SPA, a chat turn, and a
+  non-root process — no API key required (DP-3..DP-5).
+- `make ci-fast` (the pre-push gate) stays fast and Docker-free.
 
 ## Layout
 

@@ -1,4 +1,4 @@
-.PHONY: ci ci-fast ci-image setup-hooks serve
+.PHONY: ci ci-fast ci-image smoke-image setup-hooks serve
 
 # Local CI gate (constitution GH-4).
 ci:
@@ -8,9 +8,13 @@ ci:
 ci-fast:
 	./scripts/ci.sh --fast
 
-# Full gate including the Docker image build (slow).
+# Full gate including the Docker image build + container smoke test (slow).
 ci-image:
 	./scripts/ci.sh --with-image
+
+# Container smoke test against an existing image (keyless; no key needed).
+smoke-image:
+	./scripts/smoke_container.sh
 
 # One-time: route git hooks to .githooks (enables the pre-push gate).
 setup-hooks:
