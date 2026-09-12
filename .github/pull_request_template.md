@@ -10,11 +10,10 @@
 
 ## Verification
 
-- [ ] `ruff check . && ruff format --check .`
-- [ ] `pyright`
-- [ ] `pytest tests/unit tests/integration`
+- [ ] Local gate passes: `scripts/ci.sh` (or `make ci`) — ruff + format, pyright,
+      pytest unit+integration, spec self-review, agent notes, frontend lint/typecheck/test/build
+- [ ] `scripts/ci.sh --with-image` — if the change touches the image, CI, or the build
 - [ ] `python evals/run.py` (keyless replay) — if the feature touches model behavior
-- [ ] Image builds: `docker build .`
 
 ## Web acceptance (WV-2)
 

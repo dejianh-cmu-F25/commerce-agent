@@ -111,7 +111,8 @@ core path.
   ship `.env.example`.
 - **DP-3** `/healthz` (liveness) and `/readyz` (readiness).
 - **DP-4** Multi-stage build, non-root user, reproducible.
-- **DP-5** CI builds the image and runs a container smoke test.
+- **DP-5** The local gate builds the image (`scripts/ci.sh --with-image`) and runs a
+  container smoke test.
 - **DP-6** Persistent volumes for SQLite, Chroma, and traces.
 
 ## HR — Harness Engineering
@@ -169,7 +170,7 @@ core path.
 - **TT-1** Three tiers: unit (mock externals), integration (real SQLite, fake LLM), e2e.
 - **TT-2** Keyless replay: a fixture-driven FakeLLM replays recorded sessions. Assert only
   deterministic outcomes (tool sequence, final state, rendered component), never model prose.
-- **TT-3** `pyright` runs in CI.
+- **TT-3** `pyright` runs in the local gate (`scripts/ci.sh`).
 
 ## RD — Resilience & Data
 
@@ -183,8 +184,10 @@ core path.
 - **GH-1** One feature, one branch: `<NNN>-<name>`, created by `/speckit-specify`.
 - **GH-2** A feature is done only when merged into `main` via a pull request.
 - **GH-3** Human review gate. Solo repository: enforced by the PR checklist (no required approvals).
-- **GH-4** Required checks: `lint + typecheck + unit + integration + image build`. Strict,
-  squash merge, linear history.
+- **GH-4** The gate is **local**: run `scripts/ci.sh` (ruff + format, pyright, pytest
+  unit+integration, spec self-review, agent-notes; frontend lint, typecheck, test, build)
+  before pushing. Docker image build is optional (`scripts/ci.sh --with-image`). Squash
+  merge, linear history.
 - **GH-5** Traceability: the PR links the spec, lists completed tasks, and reports eval results.
 - **GH-6** Delete the branch after merge.
 
@@ -192,11 +195,12 @@ core path.
 
 ## Governance
 
-- `main` is protected: no force push, no deletion, PR required, status checks required,
-  conversation resolution required, linear history, bypass disabled. Required approvals are
-  not set (solo maintainer).
+- `main` is protected: no force push, no deletion, PR required, conversation
+  resolution required, linear history, bypass disabled. Required approvals are
+  not set (solo maintainer). The gate is the local `scripts/ci.sh` plus the PR
+  checklist; there are no GitHub status checks.
 - Changes to this constitution go through a pull request like any feature.
 - All PRs and reviews verify compliance with these principles. Any complexity beyond the
   simplest workable design must be justified in an Agent Note.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+**Version**: 1.2.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13

@@ -20,7 +20,7 @@ from `@ai-sdk/react` over a **custom `ChatTransport`** that adapts the existing
 `POST /chat` SSE stream to AI SDK UI message chunks. The backend event contract
 is unchanged; the harness and session log are untouched (SL-1). FastAPI serves
 the built SPA (`web/static/app`) so one container runs everything (DP-1). The
-build runs in CI and in a multi-stage Docker image; `node_modules/` and build
+build runs in the local gate and in a multi-stage Docker image; `node_modules/` and build
 output are not committed.
 
 Generated registry components (AI Elements, shadcn/ui) are vendored and excluded
