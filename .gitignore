@@ -1,0 +1,46 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+htmlcov/
+.coverage
+coverage.xml
+
+# --- Secrets / environment ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# --- Runtime data (do not commit) ---
+data/db/
+data/chroma/
+logs/
+*.sqlite
+*.sqlite3
+*.jsonl
+
+# --- Node / web ---
+node_modules/
+dist/
+.next/
+
+# --- Spec Kit / agent local state ---
+# Keep committed: .claude/skills, .specify/templates, .specify/memory
+# Ignore local-only settings that may hold credentials
+.claude/settings.local.json
+.claude/.credentials*
+.specify/init-options.json
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
