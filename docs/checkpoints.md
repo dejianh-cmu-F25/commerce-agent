@@ -55,6 +55,7 @@ Features: <feature ids>
 | 013 customer memory | 013 | durable facts stored; recalled in a new chat; forget | PASS (2026-09-13) |
 | 014 post-purchase care | 014 | order status cards; in-window return; out-of-window refusal | PASS (2026-09-13) |
 | 015 deployment hardening | 015 | config contract; container smoke (DP-5) | N/A — no UI; smoke DEFERRED (slow Docker Hub) |
+| 016 scenario runner | 016 | Scenarios tab; run all keylessly; 375px header | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -187,6 +188,16 @@ Features: <feature ids>
   (recalled=2).
 - Card and details: `specs/013-customer-memory/checkpoint.md`.
 - Screenshot: `specs/013-customer-memory/checkpoint.png`.
+
+### 016 scenario runner — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA (no model call; the runner is
+  keyless).
+- Result: PASS. The Scenarios tab listed the 11 gold scenarios; "Run all" reported
+  **11/11 passed** with each scenario's tool sequence and components; the header
+  wrapped at 375px with no page-level horizontal scroll.
+- Card and details: `specs/016-scenario-runner/checkpoint.md`.
+- Screenshot: `specs/016-scenario-runner/checkpoint.png`.
 
 ### 015 deployment hardening — 2026-09-13
 

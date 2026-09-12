@@ -50,6 +50,8 @@ from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
 from app.tools.orders import register_order_tools
 from app.tools.registry import ToolRegistry
+from evals.runner import run_scenarios
+from evals.scenarios import SCENARIOS
 
 STATIC_DIR = Path(__file__).parent / "static"
 APP_DIR = STATIC_DIR / "app"
@@ -259,6 +261,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if change is None:
             raise HTTPException(status_code=404, detail="change not found or already applied")
         return {"change": asdict(change)}
+
+    @app.get("/scenarios")
+    async def list_scenarios() -> dict:
+        return {
+            "scenarios": [
+                {
+                    "name": scenario.name,
+                    "user_text": scenario.user_text,
+                    "expect_tools": scenario.expect_tools,
+                    "expect_components": scenario.expect_components,
+                }
+                for scenario in SCENARIOS
+            ]
+        }
+
+    @app.post("/scenarios/run")
+    async def run_scenarios_endpoint() -> dict:
+        results = await run_scenarios()
+        return {"results": [asdict(result) for result in results]}
 
     @app.get("/memory/{customer_id}")
     async def memory_list(customer_id: str) -> dict:
