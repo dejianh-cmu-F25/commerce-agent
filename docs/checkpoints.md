@@ -64,6 +64,7 @@ Features: <feature ids>
 | 022 retrieval benchmark | 022 | hit-rate/MRR ablation; committed report | N/A (CLI/report; no UI change) |
 | 023 agent evaluation | 023 | process metrics, attribution, Pass@k/Pass^k, judge, ablation | N/A (CLI/report; no UI change) |
 | 024 parameterized cases | 024 | seeded templates; discriminating real-eval metric | N/A (CLI/report; no UI change) |
+| 025 eval report view | 025 | Report tab renders evals/report.md; 375px | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -196,6 +197,15 @@ Features: <feature ids>
   (recalled=2).
 - Card and details: `specs/013-customer-memory/checkpoint.md`.
 - Screenshot: `specs/013-customer-memory/checkpoint.png`.
+
+### 025 eval report view — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA (no model call).
+- Result: PASS. The Report tab rendered `evals/report.md` — retrieval benchmark,
+  feature ablation, real reliability/process/failure/judge tables — with no
+  page-level horizontal scroll at 375px.
+- Card and details: `specs/025-eval-report-view/checkpoint.md`.
+- Screenshot: `specs/025-eval-report-view/checkpoint.png`.
 
 ### 017 metrics dashboard — 2026-09-13
 
