@@ -13,9 +13,15 @@ from typing import Any
 
 from app.core.session import Session
 from app.core.types import Order, ToolSpec
+from app.gates.base import GateContext
+from app.gates.pipeline import GatePipeline
+from app.gates.provenance import ProvenanceGate
+from app.gates.returns import ReturnEligibilityGate
 from app.ports.storefront import StorefrontBackend
-from app.returns.policy import return_eligibility
 from app.tools.registry import ToolRegistry, ToolResult
+
+_PROVENANCE = GatePipeline([ProvenanceGate()])
+_RETURN = GatePipeline([ReturnEligibilityGate()])
 
 LIST_ORDERS_SPEC = ToolSpec(
     name="list_orders",
@@ -103,7 +109,7 @@ def register_order_tools(
 
     async def _get_order_status(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", "")).strip()
-        if not session.knows(order_id):
+        if not _PROVENANCE.run(GateContext(session=session, ids=[order_id])).allowed:
             return ToolResult(
                 content=json.dumps(
                     {"error": "unknown order id; call list_orders first", "order_id": order_id}
@@ -122,7 +128,7 @@ def register_order_tools(
     async def _start_return(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", "")).strip()
         product_id = str(arguments.get("product_id", "")).strip()
-        if not session.knows(order_id):
+        if not _PROVENANCE.run(GateContext(session=session, ids=[order_id])).allowed:
             return ToolResult(
                 content=json.dumps(
                     {"error": "unknown order id; call list_orders first", "order_id": order_id}
@@ -136,10 +142,16 @@ def register_order_tools(
                 status="error",
             )
 
-        eligible, reason = return_eligibility(order, product_id, window_days)
-        if not eligible:
+        decision = _RETURN.run(
+            GateContext(
+                session=session, order=order, product_id=product_id, window_days=window_days
+            )
+        )
+        if not decision.allowed:
             return ToolResult(
-                content=json.dumps({"eligible": False, "reason": reason, "order_id": order_id}),
+                content=json.dumps(
+                    {"eligible": False, "reason": decision.reason, "order_id": order_id}
+                ),
                 status="error",
             )
 
@@ -155,7 +167,7 @@ def register_order_tools(
             "refunded": False,
         }
         return ToolResult(
-            content=json.dumps({**payload, "reason": reason}),
+            content=json.dumps({**payload, "reason": decision.reason}),
             component="return",
             payload=payload,
         )
