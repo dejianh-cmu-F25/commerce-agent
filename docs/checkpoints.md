@@ -54,6 +54,7 @@ Features: <feature ids>
 | 012 knowledge retrieval | 012 | search_knowledge; answer grounded in policy docs | PASS (2026-09-13) |
 | 013 customer memory | 013 | durable facts stored; recalled in a new chat; forget | PASS (2026-09-13) |
 | 014 post-purchase care | 014 | order status cards; in-window return; out-of-window refusal | PASS (2026-09-13) |
+| 015 deployment hardening | 015 | config contract; container smoke (DP-5) | N/A — no UI; smoke DEFERRED (slow Docker Hub) |
 
 ### 001 agent core — 2026-09-13
 
@@ -186,6 +187,16 @@ Features: <feature ids>
   (recalled=2).
 - Card and details: `specs/013-customer-memory/checkpoint.md`.
 - Screenshot: `specs/013-customer-memory/checkpoint.png`.
+
+### 015 deployment hardening — 2026-09-13
+
+- No new browser surface. The acceptance is a keyless container smoke test
+  (`scripts/smoke_container.sh`), wired into `scripts/ci.sh --with-image`.
+- Config-parity tests, `docker compose config`, and `bash -n` pass; the smoke's
+  HTTP assertions pass against the app locally in mock/memory mode.
+- **Container build + smoke DEFERRED**: Docker Hub throughput here is ~90 KB/s,
+  so the ~500 MB multi-stage build would take 45–60+ min. Run `make ci-image` on
+  a faster network. Details: `specs/015-deployment-hardening/checkpoint.md`.
 
 ### 014 post-purchase care — 2026-09-13
 

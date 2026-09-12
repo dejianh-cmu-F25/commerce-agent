@@ -1,6 +1,10 @@
-# Single-command startup (DP-1).
-# SQLite and Chroma are embedded and file-based, so they live in volumes
-# rather than separate services (DP-6).
+# Single-command startup (DP-1). SQLite is embedded and file-based, so data and
+# logs live on host volumes rather than in separate services (DP-6).
+#
+# The environment names below are the app's real config contract (see
+# .env.example and _ENV_OVERRIDES in app/core/settings.py); a unit test enforces
+# that they stay in sync. Secrets come from .env at runtime and are never baked
+# into the image (DP-2).
 services:
   app:
     build: .
@@ -8,8 +12,14 @@ services:
     env_file:
       - .env
     environment:
-      SQLITE_PATH: /app/data/db/app.sqlite
-      CHROMA_PATH: /app/data/chroma
+      WEB_HOST: 0.0.0.0
+      WEB_PORT: 8000
+      STOREFRONT_PROVIDER: sqlite
+      STOREFRONT_SQLITE_PATH: /app/data/db/storefront.sqlite
+      SESSION_STORE: sqlite
+      SESSION_SQLITE_PATH: /app/data/db/sessions.sqlite
+      MEMORY_PROVIDER: sqlite
+      MEMORY_SQLITE_PATH: /app/data/db/memory.sqlite
       TRACE_FILE: /app/logs/traces.jsonl
     ports:
       - "8000:8000"

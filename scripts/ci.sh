@@ -68,6 +68,8 @@ step "Frontend: lint / typecheck / test / build"
 if [ "$WITH_IMAGE" -eq 1 ]; then
   step "Docker image build"
   docker build -t commerce-agent:ci .
+  step "Docker container smoke test"
+  ./scripts/smoke_container.sh commerce-agent:ci
 fi
 
 printf '\n\033[1;32mOK: local CI passed\033[0m\n'
