@@ -45,6 +45,7 @@ Features: <feature ids>
 | 003 React web UI | 003 | React + AI Elements parity, full-viewport layout, theme, sanitization | PASS (2026-09-13) |
 | 004 storefront backend | 004 | catalog reads from the configured backend; parity; /readyz | PASS (2026-09-13) |
 | 005 session persistence | 005 | session survives restart; GET /sessions/{id}; parity | PASS (2026-09-13) |
+| 006 browser resume | 006 | reload restores the transcript; same session continues; New chat | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -107,3 +108,13 @@ Features: <feature ids>
 - Screenshot: `specs/005-session-persistence/checkpoint.png`.
 - The web app is now built via a factory (`uvicorn web.main:create_app --factory`);
   Docker and `serve.sh` use the same command.
+
+### 006 browser resume — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. The session id is stored in the browser; a reload restores the
+  transcript from `GET /sessions/{id}` and the next message continues the same
+  session. New chat clears it; a stale id is cleared gracefully.
+- Card and details: `specs/006-browser-resume/checkpoint.md`.
+- Screenshot: `specs/006-browser-resume/checkpoint.png`.
+- History is text-only (tool steps are not reconstructed).
