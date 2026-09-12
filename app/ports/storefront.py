@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from app.core.types import Product
+from app.core.types import Order, Product
 
 
 class StorefrontBackend(Protocol):
@@ -23,4 +23,16 @@ class StorefrontBackend(Protocol):
 
     def get(self, product_id: str) -> Product | None:
         """Return the product with ``product_id``, or ``None``."""
+        ...
+
+    def list_orders(self, customer_id: str) -> list[Order]:
+        """Return the customer's orders, newest first.
+
+        An empty ``customer_id`` returns ``[]``. Demo orders are seeded
+        idempotently when configured (feature 014).
+        """
+        ...
+
+    def get_order(self, customer_id: str, order_id: str) -> Order | None:
+        """Return one of the customer's orders, or ``None``."""
         ...

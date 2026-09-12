@@ -83,6 +83,8 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a model-facing capability | Register a `ToolSpec` + handler in `app/tools/registry.py` |
 | Add a long-tail procedure | Add `skills/<name>/SKILL.md` |
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
+| Add post-purchase orders | Extend `StorefrontBackend` (orders) and register tools in `app/tools/orders.py`; demo orders live in `app/adapters/order_seed.py` |
+| Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); the keyless memory provider is default |
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |

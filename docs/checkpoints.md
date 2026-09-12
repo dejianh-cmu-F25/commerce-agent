@@ -53,6 +53,7 @@ Features: <feature ids>
 | 011 evaluation | 011 | keyless replay of gold scenarios in the local gate | N/A (no browser surface) |
 | 012 knowledge retrieval | 012 | search_knowledge; answer grounded in policy docs | PASS (2026-09-13) |
 | 013 customer memory | 013 | durable facts stored; recalled in a new chat; forget | PASS (2026-09-13) |
+| 014 post-purchase care | 014 | order status cards; in-window return; out-of-window refusal | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -185,3 +186,14 @@ Features: <feature ids>
   (recalled=2).
 - Card and details: `specs/013-customer-memory/checkpoint.md`.
 - Screenshot: `specs/013-customer-memory/checkpoint.png`.
+
+### 014 post-purchase care — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. "Where is my order?" rendered an orders list and a grounded order
+  detail card; returning the tent on the in-window order O-1001 rendered a
+  "Return requested" card ("No refund is issued yet"); returning the backpack on
+  the out-of-window order O-1002 was refused with the window reason and no return
+  card.
+- Card and details: `specs/014-post-purchase/checkpoint.md`.
+- Screenshot: `specs/014-post-purchase/checkpoint.png`.

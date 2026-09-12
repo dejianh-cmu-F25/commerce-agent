@@ -7,6 +7,7 @@ variables. Validation happens once at load; a bad value fails loud (PB-1).
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Literal
 
@@ -112,6 +113,13 @@ class WebSettings(BaseModel):
 class StorefrontSettings(BaseModel):
     provider: Literal["memory", "sqlite"] = "sqlite"
     sqlite_path: str = "./data/db/storefront.sqlite"
+    seed_orders: bool = True
+
+
+class ReturnsSettings(BaseModel):
+    # The machine-readable return window; keep in sync with
+    # config/knowledge/returns.md (feature 014).
+    window_days: int = Field(default=30, gt=0)
 
 
 class SessionSettings(BaseModel):
@@ -142,10 +150,20 @@ class Settings(BaseModel):
     storefront: StorefrontSettings = Field(default_factory=StorefrontSettings)
     session: SessionSettings = Field(default_factory=SessionSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
+    returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
+
+
+def _to_bool(raw: str) -> bool:
+    value = raw.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"expected a boolean, got {raw!r}")
 
 
 # Environment variables that override the YAML file.
-_ENV_OVERRIDES: dict[str, tuple[str, str, type]] = {
+_ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "LLM_PROVIDER": ("llm", "provider", str),
     "LLM_MODEL": ("llm", "model", str),
     "LLM_BASE_URL": ("llm", "base_url", str),
@@ -160,6 +178,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, type]] = {
     "WEB_PORT": ("web", "port", int),
     "STOREFRONT_PROVIDER": ("storefront", "provider", str),
     "STOREFRONT_SQLITE_PATH": ("storefront", "sqlite_path", str),
+    "STOREFRONT_SEED_ORDERS": ("storefront", "seed_orders", _to_bool),
+    "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
     "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
