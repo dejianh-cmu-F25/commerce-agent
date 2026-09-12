@@ -29,6 +29,7 @@ from app.tools.registry import ToolRegistry
 from web.sessions import SessionStore
 
 STATIC_DIR = Path(__file__).parent / "static"
+APP_DIR = STATIC_DIR / "app"
 
 
 def build_llm(settings: Settings):
@@ -119,9 +120,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/")
     async def index() -> FileResponse:
-        return FileResponse(STATIC_DIR / "index.html")
+        return FileResponse(APP_DIR / "index.html")
 
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    @app.get("/favicon.svg")
+    async def favicon() -> FileResponse:
+        return FileResponse(APP_DIR / "favicon.svg")
+
+    # Hashed Vite assets; mounted only when a build is present so the app can be
+    # imported (e.g. in unit tests) without a frontend build.
+    assets_dir = APP_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
     return app
 
 
