@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
+from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -25,6 +26,7 @@ from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
+from app.adapters.tracer_jsonl import JsonlTracer, NullTracer
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.prompts import load_prompt
@@ -33,6 +35,7 @@ from app.core.settings import Settings, load_settings
 from app.core.types import Message
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
+from app.ports.tracer import Tracer
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
 
@@ -81,7 +84,14 @@ def _message_to_dict(message: Message) -> dict:
     return data
 
 
-def build_agent(settings: Settings) -> Agent:
+def build_tracer(settings: Settings) -> Tracer:
+    """Resolve the tracer from configuration (PB-1, PB-3)."""
+    if not settings.observability.trace_enabled:
+        return NullTracer()
+    return JsonlTracer(settings.observability.trace_file, settings.observability.trace_max_attr_len)
+
+
+def build_agent(settings: Settings, tracer: Tracer | None = None) -> Agent:
     registry = ToolRegistry()
     register_catalog_tools(registry, build_storefront(settings))
     return Agent(
@@ -90,6 +100,7 @@ def build_agent(settings: Settings) -> Agent:
         settings=settings.agent,
         system_prompt=load_prompt("system"),
         cost_meter=UsageCostMeter(settings.budget),
+        tracer=tracer,
     )
 
 
@@ -112,7 +123,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
     app = FastAPI(title="Commerce Agent", version="0.1.0")
     store = build_session_store(settings)
-    agent = build_agent(settings)
+    tracer = build_tracer(settings)
+    agent = build_agent(settings, tracer)
 
     @app.get("/healthz")
     async def healthz() -> dict:
@@ -142,6 +154,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "session_id": session.id,
             "messages": [_message_to_dict(m) for m in messages if m.role != "system"],
         }
+
+    @app.get("/traces")
+    async def list_traces(limit: int = 50) -> dict:
+        return {"traces": [asdict(summary) for summary in tracer.list_traces(limit)]}
+
+    @app.get("/traces/{trace_id}")
+    async def get_trace(trace_id: str) -> dict:
+        spans = tracer.get_spans(trace_id)
+        if not spans:
+            raise HTTPException(status_code=404, detail="trace not found")
+        return {"trace_id": trace_id, "spans": [asdict(span) for span in spans]}
 
     @app.post("/chat")
     async def chat(request: ChatRequest) -> EventSourceResponse:

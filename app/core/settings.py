@@ -67,6 +67,7 @@ class ObservabilitySettings(BaseModel):
     log_level: str = "INFO"
     trace_enabled: bool = True
     trace_file: str = "./logs/traces.jsonl"
+    trace_max_attr_len: int = 500
 
 
 class ChunkRefinerSettings(BaseModel):
