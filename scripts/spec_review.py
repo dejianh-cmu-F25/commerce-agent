@@ -144,6 +144,13 @@ def check(spec: Path) -> list[Result]:
             "spec has Web Acceptance + Observability sections",
         )
     )
+    results.append(
+        Result(
+            "WV-6 UI states specified",
+            PASS if ("## Web Acceptance" not in spec_md or "## UI States" in spec_md) else FAIL,
+            "spec lists UI states (or has no web surface)",
+        )
+    )
     results.append(Result("OB observability", MANUAL, "trace viewer/metrics arrive with 080-083"))
 
     # --- Deployment ---

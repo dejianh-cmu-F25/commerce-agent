@@ -85,6 +85,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Change chunking | Implement `ChunkingStrategy`; select it in config |
 | Add a write guardrail | Add a link to the gate pipeline in `app/gates/` |
 | Add a UI component | Register `component_type -> renderer` in `web/static/app.js` |
+| Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |
 | Add a surface (CLI, websocket) | Implement `EventSink`; mount it |
 | Add durable session state | Extend `SessionEvent`; render and replay from the log |
 | Add background work | Add a job runner behind a port |

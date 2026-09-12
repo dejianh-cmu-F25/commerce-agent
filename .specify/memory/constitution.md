@@ -83,7 +83,18 @@ core path.
   feature's deliverable.
 - **WV-4** The web app provides a **Scenario Runner** and an **Observability** page.
 - **WV-5** Backend-only features still expose a web-triggerable entry (admin page or runner).
-- Enforcement is a convention plus a `feature-close` reminder, not a hard gate.
+- **WV-6 UI States.** A browser-visible feature spec **must** enumerate its UI states —
+  empty, loading/streaming, success, error, and disabled — and define the behavior of each.
+  A happy-path-only spec is incomplete.
+- **WV-7 Accessibility.** Interactive UI **must** be keyboard-operable with a visible focus
+  ring; streamed content is announced with `aria-live`; motion respects
+  `prefers-reduced-motion`; text inputs are at least 16px.
+- **WV-8 Responsive & Theme.** The UI **must** be usable from 375px to desktop and **must**
+  follow the system color scheme (`prefers-color-scheme`).
+- **WV-9 Rendering Safety.** Any model- or user-derived markup rendered into the DOM **must**
+  be sanitized first; raw HTML injection is forbidden.
+- Enforcement is a convention plus a `feature-close` reminder, not a hard gate. The
+  checklist and details live in `docs/ui-conventions.md`.
 
 ## OB — Observability
 
@@ -188,4 +199,4 @@ core path.
 - All PRs and reviews verify compliance with these principles. Any complexity beyond the
   simplest workable design must be justified in an Agent Note.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+**Version**: 1.1.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
