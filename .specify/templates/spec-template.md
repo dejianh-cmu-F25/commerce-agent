@@ -103,6 +103,37 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+
+<!--
+  Fill this in only when the feature changes what the user sees or does in the
+  browser. Keep it technology-agnostic: describe behavior, not frameworks or CSS.
+  Every state below must be defined — a happy-path-only spec is incomplete (WV-6).
+  See docs/ui-conventions.md for the review checklist and details.
+-->
+
+### UI States
+
+| State | Trigger | What the user sees |
+| --- | --- | --- |
+| Empty | No conversation yet | [e.g., suggestion prompts] |
+| Loading / Streaming | Request in flight | [e.g., progress indicator, streamed text, Stop] |
+| Success | Reply complete | [e.g., rendered answer, sources] |
+| Error | Request fails | [e.g., inline message with Retry] |
+| Disabled | Invalid input or in flight | [e.g., Send disabled] |
+
+### Accessibility
+
+- [ ] Keyboard-operable with a visible focus ring; Enter submits
+- [ ] Streamed updates announced with `aria-live`
+- [ ] Motion respects `prefers-reduced-motion`
+- [ ] Interactive elements are labeled; text inputs are at least 16px
+
+### Responsive & Theme
+
+- [ ] Usable at 375px and on desktop
+- [ ] Theme follows `prefers-color-scheme`
+
 ## Success Criteria *(mandatory)*
 
 <!--
