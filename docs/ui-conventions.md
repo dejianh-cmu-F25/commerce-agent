@@ -1,9 +1,9 @@
 # Web UI Conventions
 
 Guide for specifying, building, and reviewing the browser surface (constitution
-WV-1..WV-9, HR-3). Borrowed patterns, not frameworks: this project stays
-zero-build vanilla JS (P6, HR-9), so we take the *ideas* from popular agent
-frontends and implement them with small, dependency-light components.
+WV-1..WV-9, HR-3). The surface is React 19 + Vite + Tailwind v4 + shadcn/ui +
+Vercel AI Elements (feature 003); we take the *patterns* from popular agent
+frontends and keep the harness (backend, event contract) framework-agnostic.
 
 ## Writing the UI part of a spec
 
@@ -15,8 +15,9 @@ frameworks. A browser-visible spec includes, in addition to `## Web Acceptance`:
   incomplete (WV-6).
 - **Accessibility** — keyboard, focus, `aria-live` for streamed text,
   `prefers-reduced-motion`, labeled controls, ≥16px inputs (WV-7).
-- **Responsive & Theme** — usable at 375px and desktop; follows
-  `prefers-color-scheme` (WV-8).
+- **Responsive & Theme** — the app fills the viewport and the layout scales with
+  the window; usable from 320px up; follows `prefers-color-scheme` (WV-8). See
+  "Layout & responsive constraints" below.
 - **Rendering Safety** — model/user markup is sanitized before it enters the DOM
   (WV-9).
 
@@ -40,6 +41,22 @@ model (`submitted → streaming → ready/error`). Adopt selectively:
   a Stop button while streaming.
 - **Budget meter** — spend vs limit as a progress bar (HR-12).
 - **Error state** — inline message with Retry; never a silent failure.
+
+## Layout & responsive constraints
+
+The app is a full-viewport shell (header / transcript / composer). These are
+binding for any browser-visible feature:
+
+- **Fill the viewport.** The shell is `100dvh`; header and composer are fixed
+  height; the transcript takes the remaining space and scrolls. `body` height
+  equals the viewport at every size.
+- **No page-level horizontal scroll** at ≥320px. Wide content (code, tables,
+  suggestion rows) scrolls or wraps inside its own container.
+- **Readable, scaling content column.** Header content, transcript, and composer
+  share one container that is responsive: narrow on small screens, wider on large
+  (`max-w-3xl` → `lg:max-w-5xl` → `xl:max-w-6xl`), and they stay aligned.
+- **Empty state fills and centers** in the transcript area, not top-aligned.
+- **Re-flow on live resize** with no stuck widths, overlap, or overflow.
 
 ## Review checklist
 
@@ -85,12 +102,21 @@ Reviewer-owned. Mark an item only when verified.
 - [ ] Feedback is shown relative to its trigger (inline, not a global toast).
 - [ ] Theme follows `prefers-color-scheme`; a favicon is present.
 
+### Layout & responsive
+- [ ] The shell fills the viewport (`body` height == window height).
+- [ ] No page-level horizontal scroll at 320–1920px.
+- [ ] Header, transcript, and composer share one responsive, aligned column.
+- [ ] Empty state fills and is vertically centered.
+- [ ] Suggestion rows wrap (or scroll inside their own container) on narrow screens.
+- [ ] Live window resize re-flows with no stuck widths or overlap.
+
 ## Rendering safety (WV-9)
 
-Model output is untrusted: it is influenced by user text and tool results. When
-rendering markdown to HTML, always sanitize (e.g., vendored `marked` +
-`DOMPurify`) and set `rel="noopener noreferrer"` on links. Never assign
-model-derived strings to `innerHTML` without sanitizing.
+Model output is untrusted: it is influenced by user text and tool results. The
+React surface renders markdown through Streamdown (`MessageResponse`), which
+sanitizes; links get `rel="noopener noreferrer"`. If you add a raw-HTML renderer,
+sanitize first (e.g., DOMPurify). Never assign model-derived strings to
+`innerHTML` without sanitizing.
 
 ## Sources
 
