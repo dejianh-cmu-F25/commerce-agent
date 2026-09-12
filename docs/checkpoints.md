@@ -46,6 +46,7 @@ Features: <feature ids>
 | 004 storefront backend | 004 | catalog reads from the configured backend; parity; /readyz | PASS (2026-09-13) |
 | 005 session persistence | 005 | session survives restart; GET /sessions/{id}; parity | PASS (2026-09-13) |
 | 006 browser resume | 006 | reload restores the transcript; same session continues; New chat | PASS (2026-09-13) |
+| 007 observability | 007 | turn/llm/tool spans with trace_id; GET /traces; parity | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -118,3 +119,12 @@ Features: <feature ids>
 - Card and details: `specs/006-browser-resume/checkpoint.md`.
 - Screenshot: `specs/006-browser-resume/checkpoint.png`.
 - History is text-only (tool steps are not reconstructed).
+
+### 007 observability — 2026-09-13
+
+- Driver: Playwright + API checks, real DeepSeek.
+- Result: PASS. The chat is unchanged; each turn writes `turn`/`llm`/`tool` spans
+  to `logs/traces.jsonl` sharing a `trace_id`, readable via `GET /traces`.
+- Card and details: `specs/007-observability/checkpoint.md`.
+- Screenshot: `specs/007-observability/checkpoint.png`.
+- The web Trace Viewer (OB-4) is a follow-up.

@@ -6,7 +6,7 @@ Kept dependency-free so core and ports can both import them.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 Role = Literal["system", "user", "assistant", "tool"]
 
@@ -82,3 +82,29 @@ class Finish:
 
 
 LLMEvent = TextDelta | ToolCallComplete | Usage | Finish
+
+
+# --- Observability ---
+
+
+@dataclass
+class Span:
+    """One unit of work in a trace (SL-2, OB-1)."""
+
+    trace_id: str
+    span_id: str
+    name: str
+    start_ms: float
+    end_ms: float
+    parent_id: str | None = None
+    status: str = "ok"
+    attributes: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class TraceSummary:
+    trace_id: str
+    start_ms: float
+    duration_ms: float
+    span_count: int
+    status: str

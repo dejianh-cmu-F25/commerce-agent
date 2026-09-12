@@ -133,7 +133,13 @@ def check(spec: Path) -> list[Result]:
             "derive_messages + SL1Violation present",
         )
     )
-    results.append(Result("SL-2 structured traces", MANUAL, "tracing arrives with feature 080"))
+    results.append(
+        Result(
+            "SL-2 structured traces",
+            PASS if _has(r"SpanTimer") and _has(r"trace_id") else MANUAL,
+            "turn/llm/tool spans recorded via a Tracer port",
+        )
+    )
 
     # --- Web-visible & observability ---
     spec_md = (spec / "spec.md").read_text() if (spec / "spec.md").exists() else ""
@@ -151,7 +157,13 @@ def check(spec: Path) -> list[Result]:
             "spec lists UI states (or has no web surface)",
         )
     )
-    results.append(Result("OB observability", MANUAL, "trace viewer/metrics arrive with 080-083"))
+    results.append(
+        Result(
+            "OB observability",
+            MANUAL,
+            "spans + metrics emitted; the web trace viewer (OB-4) is a follow-up",
+        )
+    )
 
     # --- Deployment ---
     dockerfile = (ROOT / "Dockerfile").read_text() if (ROOT / "Dockerfile").exists() else ""

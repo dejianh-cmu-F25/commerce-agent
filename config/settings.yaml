@@ -46,6 +46,7 @@ observability:
   log_level: INFO
   trace_enabled: true
   trace_file: ./logs/traces.jsonl
+  trace_max_attr_len: 500   # redact (truncate) span inputs/outputs (OB-5)
 
 ingestion:
   chunk_size: 1000
