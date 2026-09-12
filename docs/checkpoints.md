@@ -43,6 +43,7 @@ Features: <feature ids>
 | 001 agent core | 001 | chat, SSE streaming, tool call, budget, health | PASS (2026-09-13) |
 | 002 web experience | 002 | UI states, markdown, tool steps, sources, stop/retry, a11y, theme | PASS (2026-09-13) |
 | 003 React web UI | 003 | React + AI Elements parity, full-viewport layout, theme, sanitization | PASS (2026-09-13) |
+| 004 storefront backend | 004 | catalog reads from the configured backend; parity; /readyz | PASS (2026-09-13) |
 
 ### 001 agent core — 2026-09-13
 
@@ -85,3 +86,13 @@ Features: <feature ids>
 - Architecture: a custom `ChatTransport` adapts the existing SSE stream to AI
   SDK `UIMessageChunk`; the backend event contract is unchanged. See the Agent
   Note `docs/notes/implemented/architecture/2026-09-13-react-ai-elements-frontend.md`.
+
+### 004 storefront backend — 2026-09-13
+
+- Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
+- Result: PASS. `search_products` now reads from the configured storefront
+  (`sqlite` by default); behavior is unchanged and sources still render.
+- Card and details: `specs/004-storefront-backend/checkpoint.md`.
+- Screenshot: `specs/004-storefront-backend/checkpoint.png`.
+- `/readyz` reports the provider; seeding is idempotent (count stays 5 after
+  restart).

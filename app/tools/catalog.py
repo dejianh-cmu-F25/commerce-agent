@@ -1,8 +1,8 @@
-"""A tiny in-memory catalog and the ``search_products`` tool.
+"""The ``search_products`` tool, backed by an injected storefront.
 
-This is a stand-in for the real catalog backend; feature 002 replaces it with a
-proper StorefrontBackend. It exists here to prove the loop can call a tool and
-to exercise provenance (only server-issued product ids are remembered).
+The tool is a consumer of :class:`app.ports.storefront.StorefrontBackend`
+(PB-2). It reads products from the backend and remembers only the ids the
+backend returned (grounding, P4).
 """
 
 from __future__ import annotations
@@ -10,41 +10,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from app.adapters.storefront_common import clamp_limit
 from app.core.session import Session
 from app.core.types import ToolSpec
+from app.ports.storefront import StorefrontBackend
 from app.tools.registry import ToolRegistry, ToolResult
-
-_CATALOG: list[dict[str, Any]] = [
-    {
-        "id": "P-101",
-        "title": "2-Person Tent",
-        "price": 189.0,
-        "stock": 12,
-        "tags": ["camping", "tent"],
-    },
-    {
-        "id": "P-102",
-        "title": "Down Sleeping Bag",
-        "price": 129.0,
-        "stock": 7,
-        "tags": ["camping", "sleep"],
-    },
-    {"id": "P-103", "title": "Camp Stove", "price": 64.0, "stock": 0, "tags": ["camping", "cook"]},
-    {
-        "id": "P-104",
-        "title": "Trail Backpack 40L",
-        "price": 95.0,
-        "stock": 20,
-        "tags": ["camping", "hike"],
-    },
-    {
-        "id": "P-105",
-        "title": "Insulated Water Bottle",
-        "price": 24.0,
-        "stock": 50,
-        "tags": ["camping", "drink"],
-    },
-]
 
 SEARCH_PRODUCTS_SPEC = ToolSpec(
     name="search_products",
@@ -68,41 +38,27 @@ SEARCH_PRODUCTS_SPEC = ToolSpec(
 )
 
 
-def _matches(query: str) -> list[dict[str, Any]]:
-    terms = [t for t in query.lower().split() if t]
-    if not terms:
-        return []
-    scored: list[tuple[int, dict[str, Any]]] = []
-    for item in _CATALOG:
-        haystack = f"{item['title']} {' '.join(item['tags'])}".lower()
-        score = sum(1 for t in terms if t in haystack)
-        if score:
-            scored.append((score, item))
-    scored.sort(key=lambda pair: (-pair[0], pair[1]["price"]))
-    return [item for _, item in scored]
-
-
-async def _search_products(arguments: dict[str, Any], session: Session) -> ToolResult:
-    query = str(arguments.get("query", "")).strip()
-    limit = int(arguments.get("limit", 5))
-    results = _matches(query)[:limit]
-
-    session.remember_ids([item["id"] for item in results])
-
-    if not results:
-        return ToolResult(content=json.dumps({"query": query, "results": []}))
-
-    items = [
-        {"id": i["id"], "title": i["title"], "price": i["price"], "in_stock": i["stock"] > 0}
-        for i in results
+def _items(results: list[Any]) -> list[dict[str, Any]]:
+    return [
+        {"id": p.id, "title": p.title, "price": p.price, "in_stock": p.in_stock} for p in results
     ]
-    payload = {"query": query, "results": items}
-    return ToolResult(
-        content=json.dumps(payload),
-        component="products",
-        payload={"items": items},
-    )
 
 
-def register_catalog_tools(registry: ToolRegistry) -> None:
+def register_catalog_tools(registry: ToolRegistry, storefront: StorefrontBackend) -> None:
+    async def _search_products(arguments: dict[str, Any], session: Session) -> ToolResult:
+        query = str(arguments.get("query", "")).strip()
+        limit = clamp_limit(int(arguments.get("limit", 5)))
+        results = storefront.search(query, limit)
+        session.remember_ids([p.id for p in results])
+
+        if not results:
+            return ToolResult(content=json.dumps({"query": query, "results": []}))
+
+        items = _items(results)
+        return ToolResult(
+            content=json.dumps({"query": query, "results": items}),
+            component="products",
+            payload={"items": items},
+        )
+
     registry.register(SEARCH_PRODUCTS_SPEC, _search_products)

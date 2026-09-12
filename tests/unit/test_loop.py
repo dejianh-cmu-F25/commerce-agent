@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cli_sink import ListSink
 from app.adapters.mock_llm import MockLLMClient, text_turn, tool_turn
+from app.adapters.storefront_memory import InMemoryStorefront
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.session import AssistantMessage, Session, ToolResultEvent, derive_messages
@@ -16,7 +18,7 @@ SYSTEM = "You are a test assistant."
 
 def make_agent(turns) -> Agent:
     registry = ToolRegistry()
-    register_catalog_tools(registry)
+    register_catalog_tools(registry, InMemoryStorefront(SEED_PRODUCTS))
     return Agent(
         llm=MockLLMClient(turns),
         tools=registry,

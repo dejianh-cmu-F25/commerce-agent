@@ -75,3 +75,9 @@ budget:
 web:
   host: 0.0.0.0
   port: 8000
+
+# Storefront system of record (constitution PB-2). Only server-issued ids enter
+# the session (P4). `memory` keeps the keyless demo path; `sqlite` persists.
+storefront:
+  provider: sqlite          # memory | sqlite
+  sqlite_path: ./data/db/storefront.sqlite

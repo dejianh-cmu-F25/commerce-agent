@@ -17,13 +17,17 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
+from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
 from app.adapters.mock_llm import MockLLMClient, text_turn
+from app.adapters.storefront_memory import InMemoryStorefront
+from app.adapters.storefront_sqlite import SqliteStorefront
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.prompts import load_prompt
 from app.core.settings import Settings, load_settings
+from app.ports.storefront import StorefrontBackend
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
 from web.sessions import SessionStore
@@ -46,9 +50,16 @@ def build_llm(settings: Settings):
     return DeepSeekClient(settings.llm)
 
 
+def build_storefront(settings: Settings) -> StorefrontBackend:
+    """Resolve the storefront provider from configuration (PB-1, PB-3)."""
+    if settings.storefront.provider == "memory":
+        return InMemoryStorefront(SEED_PRODUCTS)
+    return SqliteStorefront(settings.storefront.sqlite_path)
+
+
 def build_agent(settings: Settings) -> Agent:
     registry = ToolRegistry()
-    register_catalog_tools(registry)
+    register_catalog_tools(registry, build_storefront(settings))
     return Agent(
         llm=build_llm(settings),
         tools=registry,
@@ -85,7 +96,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/readyz")
     async def readyz() -> dict:
-        return {"status": "ready"}
+        return {"status": "ready", "storefront": settings.storefront.provider}
 
     @app.get("/budget")
     async def budget() -> dict:
