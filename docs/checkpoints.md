@@ -59,6 +59,7 @@ Features: <feature ids>
 | 017 metrics dashboard | 017 | Metrics tab; latency/tokens/cost/tools/budget; 375px | PASS (2026-09-13) |
 | 018 dense retrieval | 018 | dense path behind Retriever; keyless default unchanged | N/A (no browser surface) |
 | 019 skills | 019 | skills catalog + use_skill tool | N/A (existing tool-step UI; no new component) |
+| 020 gates | 020 | guardrails extracted to app/gates (behavior-preserving) | N/A (internal refactor; no UI change) |
 
 ### 001 agent core — 2026-09-13
 

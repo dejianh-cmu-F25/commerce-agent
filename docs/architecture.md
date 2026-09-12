@@ -92,7 +92,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
 | Change chunking | Implement `ChunkingStrategy`; select it in config |
-| Add a write guardrail | Add a link to the gate pipeline in `app/gates/` |
+| Add a write guardrail | Add a gate in `app/gates/` and run it through the tool's `GatePipeline` (see `ProvenanceGate`, `ReturnEligibilityGate`) |
 | Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |
 | Change how backend events reach the UI | Edit `frontend/src/lib/transport.ts` (SSE → AI SDK `UIMessageChunk`) |
 | Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |

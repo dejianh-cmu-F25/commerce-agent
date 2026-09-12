@@ -13,8 +13,13 @@ from typing import Any
 
 from app.core.session import CartLine, Session
 from app.core.types import ToolSpec
+from app.gates.base import GateContext
+from app.gates.pipeline import GatePipeline
+from app.gates.provenance import ProvenanceGate
 from app.ports.storefront import StorefrontBackend
 from app.tools.registry import ToolRegistry, ToolResult
+
+_PROVENANCE = GatePipeline([ProvenanceGate()])
 
 ADD_TO_CART_SPEC = ToolSpec(
     name="add_to_cart",
@@ -80,7 +85,7 @@ def _clamp_quantity(value: Any) -> int:
 def register_cart_tools(registry: ToolRegistry, storefront: StorefrontBackend) -> None:
     async def _add_to_cart(arguments: dict[str, Any], session: Session) -> ToolResult:
         product_id = str(arguments.get("product_id", "")).strip()
-        if not session.knows(product_id):
+        if not _PROVENANCE.run(GateContext(session=session, ids=[product_id])).allowed:
             # P4: the model may only add ids the session has already seen.
             return ToolResult(
                 content=json.dumps(
