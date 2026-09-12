@@ -57,6 +57,7 @@ Features: <feature ids>
 | 015 deployment hardening | 015 | config contract; container smoke (DP-5) | PASS (2026-09-13; via regional mirrors) |
 | 016 scenario runner | 016 | Scenarios tab; run all keylessly; 375px header | PASS (2026-09-13) |
 | 017 metrics dashboard | 017 | Metrics tab; latency/tokens/cost/tools/budget; 375px | PASS (2026-09-13) |
+| 018 dense retrieval | 018 | dense path behind Retriever; keyless default unchanged | N/A (no browser surface) |
 
 ### 001 agent core — 2026-09-13
 

@@ -21,16 +21,20 @@ from sse_starlette.sse import EventSourceResponse
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
+from app.adapters.embedding_hash import HashEmbeddingProvider
+from app.adapters.embedding_openai import OpenAIEmbeddingProvider
 from app.adapters.memory_memory import InMemoryMemoryStore
 from app.adapters.memory_sqlite import SqliteMemoryStore
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
+from app.adapters.retriever_dense import DenseRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.adapters.tracer_jsonl import JsonlTracer, NullTracer
+from app.adapters.vector_memory import InMemoryVectorStore
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.metrics import summarize
@@ -125,10 +129,37 @@ def build_merchant(settings: Settings) -> MerchantBackend | None:
     return SqliteMerchant(settings.storefront.sqlite_path)
 
 
+def build_embedding(settings: Settings):
+    """Resolve the embedding provider (PB-1). Keyless `hash` is the default."""
+    provider = settings.embedding.provider
+    if provider in ("hash", "mock"):
+        return HashEmbeddingProvider(settings.embedding.dimensions)
+    if provider == "openai":
+        return OpenAIEmbeddingProvider(
+            model=settings.embedding.model,
+            api_key=settings.embedding.api_key,
+            base_url=settings.embedding.base_url,
+        )
+    raise ValueError(f"Unknown embedding provider: {provider!r}")
+
+
+def build_vector_store(settings: Settings):
+    """Resolve the vector store provider (PB-1)."""
+    provider = settings.vector_store.provider
+    if provider == "memory":
+        return InMemoryVectorStore()
+    raise ValueError(f"vector_store.provider {provider!r} is not implemented; use 'memory'")
+
+
 def build_retriever(settings: Settings) -> Retriever:
     """Load knowledge documents into the configured retriever (PB-1)."""
-    retriever = InMemoryRetriever()
-    retriever.add(load_chunks(settings.knowledge.path, settings.knowledge.min_chars))
+    chunks = load_chunks(settings.knowledge.path, settings.knowledge.min_chars)
+    retriever: Retriever
+    if settings.knowledge.provider == "dense":
+        retriever = DenseRetriever(build_embedding(settings), build_vector_store(settings))
+    else:
+        retriever = InMemoryRetriever()
+    retriever.add(chunks)
     return retriever
 
 
