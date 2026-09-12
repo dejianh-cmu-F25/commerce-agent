@@ -129,7 +129,8 @@ async function send() {
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      // sse_starlette separates events with CRLF; normalize to LF before splitting.
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
       const chunks = buffer.split("\n\n");
       buffer = chunks.pop();
       for (const chunk of chunks) {

@@ -40,4 +40,20 @@ Features: <feature ids>
 
 | Checkpoint | Features | What to review | Status |
 | --- | --- | --- | --- |
-| 001 agent core | 001 | chat, SSE streaming, tool call, budget, health | pending review |
+| 001 agent core | 001 | chat, SSE streaming, tool call, budget, health | PASS (2026-09-13) |
+
+### 001 agent core — 2026-09-13
+
+- Driver: Playwright MCP (Chrome, `--isolated`), real DeepSeek (`deepseek-flash`).
+- Scenario: `I need a tent under $250 for a weekend trip`.
+- Result: PASS. Agent streamed text, called `search_products` (twice, both `[ok]`),
+  answered with `2-Person Tent — $189 (in stock)`, and the header budget updated to
+  `¥0.0218 / ¥10.00`.
+- Card and details: `specs/001-agent-core/checkpoint.md`.
+- Screenshot: `specs/001-agent-core/checkpoint.png`.
+- Bug found and fixed during this checkpoint: the SSE client split events on `\n\n`
+  while `sse_starlette` emits `\r\n\r\n`, so no event ever parsed and the UI rendered
+  nothing (spend still occurred). Fixed in `web/static/app.js` by normalizing CRLF to LF
+  before splitting. Re-run after the fix passed.
+- Known minor (non-blocking): `/favicon.ico` returns 404 (console noise only);
+  tool-call lines render inline with adjacent text instead of on their own lines.
