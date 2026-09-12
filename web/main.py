@@ -36,6 +36,7 @@ from app.core.types import Message
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
+from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
 
@@ -93,7 +94,9 @@ def build_tracer(settings: Settings) -> Tracer:
 
 def build_agent(settings: Settings, tracer: Tracer | None = None) -> Agent:
     registry = ToolRegistry()
-    register_catalog_tools(registry, build_storefront(settings))
+    storefront = build_storefront(settings)
+    register_catalog_tools(registry, storefront)
+    register_cart_tools(registry, storefront)
     return Agent(
         llm=build_llm(settings),
         tools=registry,
