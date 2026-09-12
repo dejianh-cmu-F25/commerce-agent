@@ -25,6 +25,26 @@ type Ctx = {
 const asString = (v: unknown, fallback = ""): string => (typeof v === "string" ? v : fallback);
 const asNumber = (v: unknown): number => (typeof v === "number" ? v : Number(v ?? 0));
 
+// The session id is kept in browser storage so a reload can resume (feature 006).
+const SESSION_KEY = "commerce-agent.session";
+
+function readStoredSession(): string | null {
+  try {
+    return window.localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null; // storage unavailable (e.g. private mode)
+  }
+}
+
+function writeStoredSession(id: string | null): void {
+  try {
+    if (id) window.localStorage.setItem(SESSION_KEY, id);
+    else window.localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore: behave as a fresh session */
+  }
+}
+
 // Translate one backend AgentEvent into zero or more AI SDK UI message chunks.
 export function mapEvent(event: WireEvent, ctx: Ctx): UIMessageChunk[] {
   const out: UIMessageChunk[] = [];
@@ -108,7 +128,16 @@ export function mapEvent(event: WireEvent, ctx: Ctx): UIMessageChunk[] {
 // Adapts the backend's SSE event stream (POST /chat) to the AI SDK transport
 // contract, so `useChat` drives status/stop/regenerate and AI Elements renders.
 export class AgentChatTransport implements ChatTransport<AgentUIMessage> {
-  private sessionId: string | null = null;
+  private sessionId: string | null = readStoredSession();
+
+  getSessionId(): string | null {
+    return this.sessionId;
+  }
+
+  reset(): void {
+    this.sessionId = null;
+    writeStoredSession(null);
+  }
 
   async sendMessages(
     options: Parameters<ChatTransport<AgentUIMessage>["sendMessages"]>[0],
@@ -160,6 +189,7 @@ export class AgentChatTransport implements ChatTransport<AgentUIMessage> {
               const event = JSON.parse(line.slice(5).trim()) as WireEvent;
               if (event.type === "SessionStarted") {
                 this.sessionId = asString(event.data.session_id) || null;
+                writeStoredSession(this.sessionId);
                 continue;
               }
               for (const chunk of mapEvent(event, ctx)) controller.enqueue(chunk);

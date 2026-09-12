@@ -1,9 +1,10 @@
 import { useChat } from "@ai-sdk/react";
 import type { ToolUIPart } from "ai";
 import { AlertCircleIcon, RotateCcwIcon } from "lucide-react";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AgentChatTransport, type AgentUIMessage } from "@/lib/transport";
+import { rehydrateMessages, type ServerMessage } from "@/lib/resume";
 import {
   Conversation,
   ConversationContent,
@@ -60,11 +61,45 @@ function latestBudget(messages: AgentUIMessage[]): Budget | null {
 }
 
 function Chat() {
-  const { messages, sendMessage, status, stop, regenerate, error } =
+  const { messages, setMessages, sendMessage, status, stop, regenerate, error } =
     useChat<AgentUIMessage>({ transport });
   const controller = usePromptInputController();
   const budget = latestBudget(messages);
   const isEmpty = messages.length === 0;
+  const [resuming, setResuming] = useState(() => transport.getSessionId() !== null);
+
+  // Resume the conversation from the server log after a reload (feature 006).
+  useEffect(() => {
+    const sessionId = transport.getSessionId();
+    if (!sessionId) return;
+    let cancelled = false;
+    fetch(`/sessions/${sessionId}`)
+      .then(async (response) => {
+        if (response.status === 404) {
+          transport.reset();
+          return null;
+        }
+        if (!response.ok) return null;
+        return (await response.json()) as { messages: ServerMessage[] };
+      })
+      .then((data) => {
+        if (!cancelled && data) setMessages(rehydrateMessages(data.messages));
+      })
+      .catch(() => {
+        /* history load failed; keep the empty state (RD-1) */
+      })
+      .finally(() => {
+        if (!cancelled) setResuming(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [setMessages]);
+
+  function newChat() {
+    transport.reset();
+    setMessages([]);
+  }
 
   return (
     <div className="flex h-dvh flex-col bg-background text-foreground">
@@ -74,7 +109,14 @@ function Chat() {
           <span className="hidden text-xs text-muted-foreground sm:inline">
             ACME storefront · spec-driven demo
           </span>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={newChat}
+              className="rounded-md border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              New chat
+            </button>
             <BudgetMeter budget={budget} />
           </div>
         </div>
@@ -86,17 +128,23 @@ function Chat() {
         >
           {isEmpty ? (
             <ConversationEmptyState className="flex-1">
-              <h3 className="font-medium text-sm">Ask for something to get started.</h3>
-              <p className="text-sm text-muted-foreground">Try one of these:</p>
-              <Suggestions className="w-auto flex-wrap justify-center gap-2 whitespace-normal pt-2">
-                {SUGGESTIONS.map((s) => (
-                  <Suggestion
-                    key={s.label}
-                    suggestion={s.label}
-                    onClick={() => controller.textInput.setInput(s.prompt)}
-                  />
-                ))}
-              </Suggestions>
+              {resuming ? (
+                <p className="text-sm text-muted-foreground">Loading conversation…</p>
+              ) : (
+                <>
+                  <h3 className="font-medium text-sm">Ask for something to get started.</h3>
+                  <p className="text-sm text-muted-foreground">Try one of these:</p>
+                  <Suggestions className="w-auto flex-wrap justify-center gap-2 whitespace-normal pt-2">
+                    {SUGGESTIONS.map((s) => (
+                      <Suggestion
+                        key={s.label}
+                        suggestion={s.label}
+                        onClick={() => controller.textInput.setInput(s.prompt)}
+                      />
+                    ))}
+                  </Suggestions>
+                </>
+              )}
             </ConversationEmptyState>
           ) : (
             messages.map((message) => (
