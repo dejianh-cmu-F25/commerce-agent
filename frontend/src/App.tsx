@@ -31,8 +31,10 @@ import { ToolStep } from "@/components/app/tool-step";
 const transport = new AgentChatTransport();
 
 // One responsive column shared by the header, transcript, and composer so they
-// stay aligned and scale with the window (docs/ui-conventions.md).
-const CONTAINER = "mx-auto w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl";
+// stay aligned and scale with the window. Fluid: 92% on small screens, capped at
+// 80rem (~1280px) for readable line length on large screens. `min()` never
+// overflows. See docs/ui-conventions.md.
+const CONTAINER = "mx-auto w-full max-w-[min(80rem,92%)]";
 
 const SUGGESTIONS = [
   { label: "A tent under $250", prompt: "I need a tent under $250 for a weekend trip" },

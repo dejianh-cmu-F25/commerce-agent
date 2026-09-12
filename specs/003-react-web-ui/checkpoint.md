@@ -78,3 +78,9 @@ Measured (empty state, live resize):
 | 1024×700 | yes | none | yes (518) | 992 | yes |
 | 768×800 | yes | none | yes (618) | 738 | yes |
 | 375×700 | yes | none | yes (518) | 345 | yes |
+
+Later refined to a **fluid cap**: the shared column is `min(80rem, 92%)` — 92% of
+the viewport on small screens, capped at 1280px on large ones, with no breakpoint
+jumps (`min()` cannot overflow). Measured column widths: 2560→1280, 1920→1280,
+1440→1280, 1024→942, 768→707, 375→345, 320→294; header, transcript, and composer
+stay aligned at every size.

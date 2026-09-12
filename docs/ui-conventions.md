@@ -53,8 +53,9 @@ binding for any browser-visible feature:
 - **No page-level horizontal scroll** at ≥320px. Wide content (code, tables,
   suggestion rows) scrolls or wraps inside its own container.
 - **Readable, scaling content column.** Header content, transcript, and composer
-  share one container that is responsive: narrow on small screens, wider on large
-  (`max-w-3xl` → `lg:max-w-5xl` → `xl:max-w-6xl`), and they stay aligned.
+  share one container with a **fluid** width — `min(80rem, 92%)`: ~92% of the
+  viewport on small screens, capped at 80rem on large ones for readable line
+  length. No fixed breakpoint jumps; `min()` never overflows. They stay aligned.
 - **Empty state fills and centers** in the transcript area, not top-aligned.
 - **Re-flow on live resize** with no stuck widths, overlap, or overflow.
 
@@ -105,7 +106,8 @@ Reviewer-owned. Mark an item only when verified.
 ### Layout & responsive
 - [ ] The shell fills the viewport (`body` height == window height).
 - [ ] No page-level horizontal scroll at 320–1920px.
-- [ ] Header, transcript, and composer share one responsive, aligned column.
+- [ ] Header, transcript, and composer share one aligned column with a fluid width
+      (`min(80rem, 92%)`): fills small screens, capped for readability on large ones.
 - [ ] Empty state fills and is vertically centered.
 - [ ] Suggestion rows wrap (or scroll inside their own container) on narrow screens.
 - [ ] Live window resize re-flows with no stuck widths or overlap.
