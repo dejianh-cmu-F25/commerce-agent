@@ -123,6 +123,12 @@ class ReturnsSettings(BaseModel):
     window_days: int = Field(default=30, gt=0)
 
 
+class SkillsSettings(BaseModel):
+    # Long-tail procedures in ``skills/<name>/SKILL.md`` (feature 019).
+    enabled: bool = True
+    path: str = "./skills"
+
+
 class SessionSettings(BaseModel):
     store: Literal["memory", "sqlite"] = "sqlite"
     sqlite_path: str = "./data/db/sessions.sqlite"
@@ -153,6 +159,7 @@ class Settings(BaseModel):
     session: SessionSettings = Field(default_factory=SessionSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
     returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
+    skills: SkillsSettings = Field(default_factory=SkillsSettings)
 
 
 def _to_bool(raw: str) -> bool:
@@ -189,6 +196,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "KNOWLEDGE_PATH": ("knowledge", "path", str),
     "MEMORY_PROVIDER": ("memory", "provider", str),
     "MEMORY_SQLITE_PATH": ("memory", "sqlite_path", str),
+    "SKILLS_ENABLED": ("skills", "enabled", _to_bool),
+    "SKILLS_PATH": ("skills", "path", str),
 }
 
 

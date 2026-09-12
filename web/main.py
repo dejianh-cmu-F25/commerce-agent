@@ -49,12 +49,14 @@ from app.ports.retriever import Retriever
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
+from app.skills.loader import SkillLibrary, load_skills
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
 from app.tools.orders import register_order_tools
 from app.tools.registry import ToolRegistry
+from app.tools.skills import register_skill_tools
 from evals.runner import run_scenarios
 from evals.scenarios import SCENARIOS
 
@@ -170,6 +172,13 @@ def build_memory(settings: Settings) -> MemoryStore:
     return SqliteMemoryStore(settings.memory.sqlite_path)
 
 
+def build_skill_library(settings: Settings) -> SkillLibrary:
+    """Load skills from configuration (PB-1); disabled or missing yields none."""
+    if not settings.skills.enabled:
+        return SkillLibrary()
+    return load_skills(settings.skills.path)
+
+
 def build_agent(
     settings: Settings,
     tracer: Tracer | None = None,
@@ -184,11 +193,22 @@ def build_agent(
     register_knowledge_tools(registry, build_retriever(settings))
     if merchant is not None:
         register_merchant_tools(registry, merchant)
+
+    system_prompt = load_prompt("system")
+    skills = build_skill_library(settings)
+    if len(skills) > 0:
+        register_skill_tools(registry, skills)
+        system_prompt += (
+            "\n\n## Available skills\n"
+            + skills.catalog()
+            + "\n\nLoad a skill with the use_skill tool when it matches the request."
+        )
+
     return Agent(
         llm=build_llm(settings),
         tools=registry,
         settings=settings.agent,
-        system_prompt=load_prompt("system"),
+        system_prompt=system_prompt,
         cost_meter=UsageCostMeter(settings.budget),
         tracer=tracer,
         memory=memory,

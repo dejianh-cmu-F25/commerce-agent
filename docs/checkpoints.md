@@ -58,6 +58,7 @@ Features: <feature ids>
 | 016 scenario runner | 016 | Scenarios tab; run all keylessly; 375px header | PASS (2026-09-13) |
 | 017 metrics dashboard | 017 | Metrics tab; latency/tokens/cost/tools/budget; 375px | PASS (2026-09-13) |
 | 018 dense retrieval | 018 | dense path behind Retriever; keyless default unchanged | N/A (no browser surface) |
+| 019 skills | 019 | skills catalog + use_skill tool | N/A (existing tool-step UI; no new component) |
 
 ### 001 agent core — 2026-09-13
 
