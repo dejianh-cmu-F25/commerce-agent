@@ -40,7 +40,7 @@ from app.tools.knowledge import register_knowledge_tools
 from app.tools.orders import register_order_tools
 from app.tools.registry import ToolRegistry
 from app.tools.skills import register_skill_tools
-from evals.real_cases import REAL_CASES, RealCase
+from evals.real_cases import CASE_NAMES, RealCase, build_cases
 from web.main import build_retriever, build_skill_library
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -98,11 +98,30 @@ def _tool_context(session: Session) -> str:
     )
 
 
+def _rendered_prices(sink: ListSink) -> list[float]:
+    prices: list[float] = []
+    for event in sink.of_type(ev.UIComponent):
+        if event.component != "products":
+            continue
+        for item in (event.payload or {}).get("items", []):
+            price = item.get("price") if isinstance(item, dict) else None
+            if isinstance(price, (int, float)):
+                prices.append(float(price))
+    return prices
+
+
 def _succeeds(case: RealCase, session: Session, sink: ListSink) -> bool:
     tools = {event.name for event in sink.of_type(ev.ToolCallStarted)}
     components = {event.component for event in sink.of_type(ev.UIComponent)}
     cart = {line.product_id for line in session.cart}
     answer = _final_text(session).lower()
+
+    if case.max_price is not None and not any(
+        price <= case.max_price for price in _rendered_prices(sink)
+    ):
+        return False
+    if case.min_cart_items and len(session.cart) < case.min_cart_items:
+        return False
     return (
         set(case.essential_tools) <= tools
         and set(case.essential_components) <= components
@@ -165,14 +184,14 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
     start_cost = meter.spent_cny()
     cap = settings.evaluation.max_cost_cny
 
-    outcomes: dict[str, list[bool]] = {case.name: [] for case in REAL_CASES}
+    outcomes: dict[str, list[bool]] = {name: [] for name in CASE_NAMES}
     run_metrics: list[RunMetrics] = []
     failure_counts: dict[str, int] = {}
     judge_results: list[JudgeResult] = []
     stopped = False
 
     for seed in range(seeds):
-        for case in REAL_CASES:
+        for case in build_cases(seed):
             if meter.spent_cny() - start_cost >= cap:
                 stopped = True
                 break
@@ -187,7 +206,8 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
             outcomes[case.name].append(success)
             if not success:
                 attribution = attribute(session)
-                category = attribution.category if attribution else "unknown"
+                # No tool error means the outcome predicate failed: incomplete.
+                category = attribution.category if attribution else "incomplete"
                 failure_counts[category] = failure_counts.get(category, 0) + 1
 
             if use_judge:
@@ -208,9 +228,7 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
         if stopped:
             break
 
-    reliability = aggregate(
-        [outcomes[case.name] for case in REAL_CASES], settings.evaluation.pass_k
-    )
+    reliability = aggregate([outcomes[name] for name in CASE_NAMES], settings.evaluation.pass_k)
     return {
         "model": settings.llm.model,
         "judge_model": settings.evaluation.judge_model if use_judge else "disabled",
@@ -235,14 +253,14 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
         "failures": failure_counts,
         "judge": _summarize_judge(judge_results),
         "per_task": {
-            case.name: {
-                "pass_at_1": round(sum(outcomes[case.name]) / len(outcomes[case.name]), 4),
-                "pass_at_k": 1.0 if any(outcomes[case.name]) else 0.0,
+            name: {
+                "pass_at_1": round(sum(outcomes[name]) / len(outcomes[name]), 4),
+                "pass_at_k": 1.0 if any(outcomes[name]) else 0.0,
                 "pass_pow_k": (
-                    1.0 if len(outcomes[case.name]) == seeds and all(outcomes[case.name]) else 0.0
+                    1.0 if len(outcomes[name]) == seeds and all(outcomes[name]) else 0.0
                 ),
             }
-            for case in REAL_CASES
+            for name in CASE_NAMES
         },
     }
 

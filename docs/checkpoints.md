@@ -63,6 +63,7 @@ Features: <feature ids>
 | 021 chroma vector store | 021 | persistent Chroma provider; app defaults to dense + Chroma | N/A (backend provider; no UI change) |
 | 022 retrieval benchmark | 022 | hit-rate/MRR ablation; committed report | N/A (CLI/report; no UI change) |
 | 023 agent evaluation | 023 | process metrics, attribution, Pass@k/Pass^k, judge, ablation | N/A (CLI/report; no UI change) |
+| 024 parameterized cases | 024 | seeded templates; discriminating real-eval metric | N/A (CLI/report; no UI change) |
 
 ### 001 agent core — 2026-09-13
 

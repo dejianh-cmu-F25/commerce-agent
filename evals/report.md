@@ -44,24 +44,30 @@ Each configuration runs the same gold scenarios (scripted model); the delta is v
 - Generated: 2026-09-12
 - Command: `uv run python evals/agent_eval.py --real --seeds 3`
 
-Reliability over 7 tasks × 3 runs (21 runs, 21 successes):
+Reliability over 6 tasks × 3 runs (18 runs, 14 successes):
 
 | Pass@1 | Pass@k | Best@k | Pass^k |
 | ---: | ---: | ---: | ---: |
-| 1.000 | 1.000 | 1.000 | 1.000 |
+| 0.778 | 0.833 | 0.833 | 0.667 |
 
 Process metrics (per run):
 
 | steps | tool ok/err | ungrounded | avg ms | p95 ms | prompt tok | completion tok | cache hit | cost CNY |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1.95 | 41/0 | 0 | 3045 | 5312 | 90429 | 6988 | 78208 | 0.0908 |
+| 1.61 | 29/0 | 0 | 2836 | 3955 | 63083 | 6333 | 54272 | 0.0766 |
 
-Rubric judge: graded 21 answers, 0 vetoes.
+Failure attribution (first error):
+
+| Category | Count |
+| --- | ---: |
+| `incomplete` | 4 |
+
+Rubric judge: graded 18 answers, 0 vetoes.
 
 | Dimension | Avg (1-4) |
 | --- | ---: |
-| grounding | 3.95 |
-| correctness | 4.00 |
-| policy_compliance | 3.90 |
-| completeness | 3.86 |
-| tone | 4.00 |
+| grounding | 3.89 |
+| correctness | 3.67 |
+| policy_compliance | 3.89 |
+| completeness | 3.56 |
+| tone | 3.89 |
