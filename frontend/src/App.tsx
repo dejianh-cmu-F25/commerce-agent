@@ -1,6 +1,7 @@
 import { useChat } from "@ai-sdk/react";
 import type { ToolUIPart } from "ai";
 import { AlertCircleIcon, RotateCcwIcon } from "lucide-react";
+import { Suspense, lazy } from "react";
 import { cn } from "@/lib/utils";
 import { AgentChatTransport, type AgentUIMessage } from "@/lib/transport";
 import {
@@ -26,7 +27,12 @@ import {
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { BudgetMeter, type Budget } from "@/components/app/budget-meter";
 import { SourcesList } from "@/components/app/sources-list";
-import { ToolStep } from "@/components/app/tool-step";
+
+// Tool steps pull in the syntax highlighter (shiki); load them on demand so the
+// initial bundle stays small.
+const ToolStep = lazy(() =>
+  import("@/components/app/tool-step").then((m) => ({ default: m.ToolStep })),
+);
 
 const transport = new AgentChatTransport();
 
@@ -104,7 +110,11 @@ function Chat() {
                       return <MessageResponse key={index}>{part.text}</MessageResponse>;
                     }
                     if (part.type.startsWith("tool-")) {
-                      return <ToolStep key={index} part={part as ToolUIPart} />;
+                      return (
+                        <Suspense key={index} fallback={null}>
+                          <ToolStep part={part as ToolUIPart} />
+                        </Suspense>
+                      );
                     }
                     if (part.type === "data-sources") {
                       return <SourcesList key={index} items={part.data.items} />;

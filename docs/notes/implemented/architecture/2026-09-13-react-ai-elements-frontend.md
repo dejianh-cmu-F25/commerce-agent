@@ -51,7 +51,8 @@ from what the components assume.
   API routes.
 - AI Elements gives us `Conversation`, `Message`/`Response` (Streamdown),
   `PromptInput`, `Tool`, and `Sources`; our app adds a budget meter and wiring.
-- The main JS bundle is large (Streamdown + shiki). This is acceptable for the
-  demo; lazy-loading code highlighting is a follow-up.
+- The main JS bundle was reduced from ~524 kB to ~296 kB gzip by dropping unused
+  Streamdown plugins (math/mermaid/code) and lazy-loading tool steps, so the
+  syntax highlighter (shiki) loads on demand instead of at first paint.
 - Registry components are vendored; re-running the AI Elements CLI may overwrite
   them and reintroduce type drift, so updates should be deliberate.

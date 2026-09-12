@@ -57,7 +57,10 @@ Features: 003
   `/healthz`, `/readyz`, `/budget` are unchanged.
 - The backend event contract is unchanged; `frontend/src/lib/transport.ts`
   adapts the SSE stream to AI SDK UI message chunks.
-- Bundle is large (Streamdown + shiki); lazy code-highlighting is a follow-up.
+- Bundle: initial JS reduced from ~524 kB to ~296 kB gzip by dropping unused
+  Streamdown plugins (math/mermaid/code) and lazy-loading tool steps; the shiki
+  syntax highlighter now loads on demand (verified: the `tool-step` chunk is not
+  fetched before a tool call and is fetched after).
 
 ## Responsive fix (2026-09-13, `fix/003-responsive-layout`)
 
