@@ -97,6 +97,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Change how backend events reach the UI | Edit `frontend/src/lib/transport.ts` (SSE → AI SDK `UIMessageChunk`) |
 | Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |
 | Add a surface (CLI, websocket) | Implement `EventSink`; mount it |
+| Add an evaluation view | `frontend/src/components/app/report-view.tsx` renders `evals/report.md` (served by `GET /report`) through the sanitizing markdown renderer |
 | Add durable session state | Extend `SessionEvent`; render and replay from the log |
 | Add a session store | Implement `SessionRepository` (`app/ports/session_store.py`); select it in `settings.yaml` |
 | Add a tracer / span | Emit a `Span` via the `Tracer` port; add attributes (redacted) in the loop |

@@ -32,6 +32,7 @@ import { MemoryView } from "@/components/app/memory-view";
 import { MerchantView } from "@/components/app/merchant-view";
 import { MetricsView } from "@/components/app/metrics-view";
 import { OrderCard, OrdersCard, ReturnCard } from "@/components/app/order-cards";
+import { ReportView } from "@/components/app/report-view";
 import { ScenarioRunner } from "@/components/app/scenario-runner";
 import { SourcesList } from "@/components/app/sources-list";
 import { TraceViewer } from "@/components/app/trace-viewer";
@@ -75,7 +76,7 @@ function Chat() {
   const isEmpty = messages.length === 0;
   const [resuming, setResuming] = useState(() => transport.getSessionId() !== null);
   const [view, setView] = useState<
-    "chat" | "traces" | "merchant" | "memory" | "scenarios" | "metrics"
+    "chat" | "traces" | "merchant" | "memory" | "scenarios" | "metrics" | "report"
   >("chat");
 
   // Resume the conversation from the server log after a reload (feature 006).
@@ -181,6 +182,16 @@ function Chat() {
               >
                 Metrics
               </button>
+              <button
+                type="button"
+                onClick={() => setView("report")}
+                className={cn(
+                  "rounded px-2 py-0.5 text-xs",
+                  view === "report" ? "bg-accent text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Report
+              </button>
             </div>
             <button
               type="button"
@@ -204,6 +215,8 @@ function Chat() {
         <ScenarioRunner />
       ) : view === "metrics" ? (
         <MetricsView />
+      ) : view === "report" ? (
+        <ReportView />
       ) : (
         <>
           <Conversation className="min-h-0 flex-1" aria-live="polite">

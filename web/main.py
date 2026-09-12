@@ -63,6 +63,7 @@ from evals.scenarios import SCENARIOS
 
 STATIC_DIR = Path(__file__).parent / "static"
 APP_DIR = STATIC_DIR / "app"
+REPORT_PATH = Path(__file__).resolve().parents[1] / "evals" / "report.md"
 
 
 def build_llm(settings: Settings):
@@ -342,6 +343,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if change is None:
             raise HTTPException(status_code=404, detail="change not found or already applied")
         return {"change": asdict(change)}
+
+    @app.get("/report")
+    async def report() -> dict:
+        if not REPORT_PATH.exists():
+            return {"markdown": ""}
+        return {"markdown": REPORT_PATH.read_text(encoding="utf-8")}
 
     @app.get("/scenarios")
     async def list_scenarios() -> dict:
