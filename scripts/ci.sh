@@ -70,6 +70,9 @@ uv run python evals/fallbacks.py
 step "Python: scale envelope & SLOs (keyless)"
 uv run python evals/scale.py
 
+step "Python: guardrails (keyless)"
+uv run python evals/guardrails.py
+
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
 

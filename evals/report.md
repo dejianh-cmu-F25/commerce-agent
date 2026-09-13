@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
 | `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
 
 hit-rate@3 by difficulty:
 
@@ -86,6 +86,20 @@ The deterministic input guard, scored against a labeled set of hostile and benig
 | ---: | ---: | ---: |
 | 17 | 0.412 | 1.000 |
 
+## Guardrails (keyless)
+
+Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
+
+| Guardrail | Value | Floor | Direction | Source | Status |
+| --- | ---: | ---: | --- | --- | --- |
+| `quality:gold_pass_rate` | 1.0 | 1.0 | ≥ | `segments` | OK |
+| `safety:adversarial_safe_rate` | 1.0 | 1.0 | ≥ | `adversarial` | OK |
+| `safety:regression_coverage` | 1.0 | 1.0 | ≥ | `regressions` | OK |
+| `data:dirty_accuracy` | 1.0 | 1.0 | ≥ | `data_quality` | OK |
+| `resilience:fallback_coverage` | 1.0 | 1.0 | ≥ | `fallbacks` | OK |
+| `latency:turn_p95_us` | 20.5 | 10000.0 | ≤ | `scale` | OK |
+| `cost:spent_cny` | 0.6562 | 10.0 | ≤ | `budget` | OK |
+
 ## Regressions (keyless)
 
 Named, root-caused regressions for past failures (`docs/regressions.md`); the gate runs each so a fixed failure cannot silently return.
@@ -108,10 +122,10 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.7/11.3 | 15.0/23.6 | 48945 | 0 |
-| 4 | 6.5/8.1 | 15.0/17.1 | 53243 | 0 |
-| 16 | 6.7/8.7 | 15.1/46.9 | 39782 | 0 |
-| 64 | 6.4/8.0 | 15.0/15.7 | 53718 | 0 |
+| 1 | 6.5/10.2 | 14.3/22.4 | 50467 | 0 |
+| 4 | 6.0/11.5 | 14.3/18.8 | 56200 | 0 |
+| 16 | 6.1/8.0 | 14.3/20.5 | 55505 | 0 |
+| 64 | 6.1/10.6 | 14.3/17.7 | 56635 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -171,7 +185,7 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #4 003-react-web-ui | web | `unmeasured` | React 19 + AI Elements SPA with a custom transport | — | No benchmark existed at the time | — | localized to `specs/003-react-web-ui` (area: web) | git revert the squash-merge commit; no destructive migration | accepted | `specs/003-react-web-ui` |
 | 2026-09-13 | #5 fix responsive-layout | web | `no-behavior` | Responsive layout fix | — | UI-only; no metric | — | web only | git revert the squash-merge commit; no destructive migration | accepted | `6246672` |
 | 2026-09-13 | #6 fix fluid-column | web | `no-behavior` | Fluid content column | — | UI-only; no metric | — | web only | git revert the squash-merge commit; no destructive migration | accepted | `ad7c831` |
-| 2026-09-13 | #7 perf web-bundle | web | `measurable` | Cut the initial bundle size | web bundle gzip (kB, index chunk) | 533 → 299 | — | web only | git revert the squash-merge commit; no destructive migration | accepted | `958c4b4` |
+| 2026-09-13 | #7 perf web-bundle | web | `measurable` | Cut the initial bundle size | web bundle gzip (kB, index chunk) | 533 → 299 | not compared at the time (pre-036); see docs/guardrails.md | web only | git revert the squash-merge commit; no destructive migration | accepted | `958c4b4` |
 | 2026-09-13 | #8 chore local-ci | process | `docs` | Replace GitHub Actions with a local CI gate | — | — | — | localized to `scripts/ci.sh` (area: process) | git revert the squash-merge commit; no destructive migration | accepted | `scripts/ci.sh` |
 | 2026-09-13 | #9 004-storefront-backend | storefront | `unmeasured` | Storefront backend port (memory + sqlite) | — | No benchmark existed at the time | — | localized to `specs/004-storefront-backend` (area: storefront) | git revert the squash-merge commit; no destructive migration | accepted | `specs/004-storefront-backend` |
 | 2026-09-13 | #10 005-session-persistence | session | `unmeasured` | Persist sessions (memory + sqlite), resume by id | — | No benchmark existed at the time | — | localized to `specs/005-session-persistence` (area: session) | git revert the squash-merge commit; no destructive migration | accepted | `specs/005-session-persistence` |
@@ -180,21 +194,21 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #13 008-trace-viewer | web | `unmeasured` | Chat/Traces toggle and span timeline | — | No benchmark existed at the time | — | localized to `specs/008-trace-viewer` (area: web) | git revert the squash-merge commit; no destructive migration | accepted | `specs/008-trace-viewer` |
 | 2026-09-13 | #14 009-cart-checkout | cart | `unmeasured` | Grounded add-to-cart and render-only checkout | — | No benchmark existed at the time | — | localized to `specs/009-cart-checkout` (area: cart) | git revert the squash-merge commit; no destructive migration | accepted | `specs/009-cart-checkout` |
 | 2026-09-13 | #15 010-merchant-agent | merchant | `unmeasured` | Staged changes with human-only approval | — | No benchmark existed at the time | — | localized to `specs/010-merchant-agent` (area: merchant) | git revert the squash-merge commit; no destructive migration | accepted | `specs/010-merchant-agent` |
-| 2026-09-13 | #16 011-evaluation | evaluation | `measurable` | Keyless gold-scenario harness | gold scenarios passing | The gold set has since grown to 12 | — | localized to `evals/run.py` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/run.py` |
-| 2026-09-13 | #17 012-knowledge-retrieval | retrieval | `measurable` | Keyless TF-IDF retrieval over policy docs | retrieval hit-rate@3 (tfidf) | Measured later by the 022 benchmark | — | localized to `evals/bench.py` (area: retrieval) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
+| 2026-09-13 | #16 011-evaluation | evaluation | `measurable` | Keyless gold-scenario harness | gold scenarios passing | The gold set has since grown to 12 | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/run.py` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/run.py` |
+| 2026-09-13 | #17 012-knowledge-retrieval | retrieval | `measurable` | Keyless TF-IDF retrieval over policy docs | retrieval hit-rate@3 (tfidf) | Measured later by the 022 benchmark | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/bench.py` (area: retrieval) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
 | 2026-09-13 | #18 013-customer-memory | memory | `measurable` | Cross-session customer memory | gold pass rate (ablation) | 0.75 → 0.917 | 0 ungrounded | localized to `evals/ablation.py` (area: memory) | git revert the squash-merge commit; no destructive migration | accepted | `evals/ablation.py` |
 | 2026-09-13 | #19 014-post-purchase | orders | `unmeasured` | Order status and policy-gated returns | — | No benchmark existed at the time | — | localized to `specs/014-post-purchase` (area: orders) | git revert the squash-merge commit; no destructive migration | accepted | `specs/014-post-purchase` |
-| 2026-09-13 | #20 015-deployment-hardening | deployment | `measurable` | Config contract + keyless container smoke | container smoke (pass=1) | 0 → 1 | — | localized to `specs/015-deployment-hardening/checkpoint.md` (area: deployment) | git revert the squash-merge commit; no destructive migration | accepted | `specs/015-deployment-hardening/checkpoint.md` |
-| 2026-09-13 | #21 016-scenario-runner | evaluation | `measurable` | Web Scenario Runner | gold scenarios passing | — | — | localized to `evals/runner.py` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/runner.py` |
+| 2026-09-13 | #20 015-deployment-hardening | deployment | `measurable` | Config contract + keyless container smoke | container smoke (pass=1) | 0 → 1 | not compared at the time (pre-036); see docs/guardrails.md | localized to `specs/015-deployment-hardening/checkpoint.md` (area: deployment) | git revert the squash-merge commit; no destructive migration | accepted | `specs/015-deployment-hardening/checkpoint.md` |
+| 2026-09-13 | #21 016-scenario-runner | evaluation | `measurable` | Web Scenario Runner | gold scenarios passing | — | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/runner.py` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/runner.py` |
 | 2026-09-13 | #22 017-metrics-dashboard | observability | `unmeasured` | Metrics view (latency, tokens, cost, tools) | — | Adds observability; no quality delta measured | — | localized to `specs/017-metrics-dashboard` (area: observability) | git revert the squash-merge commit; no destructive migration | accepted | `specs/017-metrics-dashboard` |
 | 2026-09-13 | #23 chore build-mirrors | deployment | `no-behavior` | Opt-in npm/PyPI build mirrors | — | Build-only; enabled the 015 smoke | — | deployment only | git revert the squash-merge commit; no destructive migration | accepted | `Dockerfile` |
 | 2026-09-13 | #24 018-dense-retrieval | retrieval | `measurable` | Dense retrieval behind the Retriever port | hard-query hit-rate@3 | 0.8 → 1.0 | latency ok | localized to `evals/bench.py` (area: retrieval) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
-| 2026-09-13 | #25 019-skills | agent | `measurable` | Skills catalog + use_skill tool | gold pass rate (ablation) | 0.75 → 0.833 | — | localized to `evals/ablation.py` (area: agent) | git revert the squash-merge commit; no destructive migration | accepted | `evals/ablation.py` |
+| 2026-09-13 | #25 019-skills | agent | `measurable` | Skills catalog + use_skill tool | gold pass rate (ablation) | 0.75 → 0.833 | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/ablation.py` (area: agent) | git revert the squash-merge commit; no destructive migration | accepted | `evals/ablation.py` |
 | 2026-09-13 | #26 020-gates | agent | `no-behavior` | Extract guardrails into app/gates | — | Behavior-preserving refactor | — | localized to `tests/unit/test_gates.py` (area: agent) | git revert the squash-merge commit; no destructive migration | accepted | `tests/unit/test_gates.py` |
-| 2026-09-13 | #27 021-chroma-vector-store | retrieval | `measurable` | Persistent Chroma vector store | dense-chroma hit-rate@3 | Parity with the in-memory store | — | localized to `evals/bench.py` (area: retrieval) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
-| 2026-09-13 | #28 022-retrieval-benchmark | evaluation | `measurable` | Keyless retrieval benchmark and ablation | retrieval hit-rate@3 (tfidf -> dense) | 0.963 → 1.0 | — | localized to `evals/bench.py` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
+| 2026-09-13 | #27 021-chroma-vector-store | retrieval | `measurable` | Persistent Chroma vector store | dense-chroma hit-rate@3 | Parity with the in-memory store | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/bench.py` (area: retrieval) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
+| 2026-09-13 | #28 022-retrieval-benchmark | evaluation | `measurable` | Keyless retrieval benchmark and ablation | retrieval hit-rate@3 (tfidf -> dense) | 0.963 → 1.0 | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/bench.py` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/bench.py` |
 | 2026-09-13 | #29 023-agent-evaluation | evaluation | `measurable` | Process metrics, attribution, Pass@k/Pass^k, judge, ablation | real Pass@1 | Pass^k 0.667; 0 vetoes | 0 ungrounded | localized to `evals/report.md` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/report.md` |
-| 2026-09-13 | #30 024-parameterized-cases | evaluation | `measurable` | Seeded, harder real-eval cases | real Pass@k | 0.833 → 1.0 | — | localized to `evals/report.md` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/report.md` |
+| 2026-09-13 | #30 024-parameterized-cases | evaluation | `measurable` | Seeded, harder real-eval cases | real Pass@k | 0.833 → 1.0 | not compared at the time (pre-036); see docs/guardrails.md | localized to `evals/report.md` (area: evaluation) | git revert the squash-merge commit; no destructive migration | accepted | `evals/report.md` |
 | 2026-09-13 | #31 025-eval-report-view | web | `no-behavior` | Browser evaluation report view | — | UI view; no metric | — | localized to `specs/025-eval-report-view` (area: web) | git revert the squash-merge commit; no destructive migration | accepted | `specs/025-eval-report-view` |
 | 2026-09-13 | #32 results-in-specs | process | `docs` | Record all key metrics in the specs, gate-checked | — | — | — | localized to `specs/RESULTS.md` (area: process) | git revert the squash-merge commit; no destructive migration | accepted | `specs/RESULTS.md` |
 | 2026-09-13 | #33 production-constraints | process | `docs` | Constitution RW/SC/EV clauses + production audit | — | — | — | localized to `docs/production-audit.md` (area: process) | git revert the squash-merge commit; no destructive migration | accepted | `docs/production-audit.md` |
@@ -212,3 +226,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #45 033-regression-pipeline | process | `measurable` | Failure-to-regression pipeline: registry, promotion, keyless runner in the gate | named root-caused regressions enforced (count) | 0 → 5 | unknown check or a failed regression fails the gate; promotion requires a root cause | evals/regressions.json, evals/regressions.py, gate, report (no runtime) | git revert the squash-merge commit | accepted | `docs/regressions.md` |
 | 2026-09-13 | #46 034-audit-closeout | docs | `docs` | Re-run the production audit: per-clause current status, evidence, and residual gaps | — | Docs only; 9 of 14 clauses now Met, residual gaps named | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
 | 2026-09-13 | #47 035-edge-cases | docs | `docs` | Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps | — | Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed | spec_review fails a missing/short coverage bullet; corpus test enforces all specs | docs/edge-cases.md, spec_review, specs' coverage notes | git revert the squash-merge commit | accepted | `docs/edge-cases.md` |
+| 2026-09-13 | #48 036-guardrails | process | `no-behavior` | Declare guardrail metrics with floors; aggregate them in the gate; require a guardrail statement per measurable change | — | Tooling/docs; 7 guardrails aggregated, 9 old measurable entries backfilled | the feature is the guardrail comparison (EV-3) | evals/guardrails.py, docs/guardrails.md, gate, change-log schema | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
