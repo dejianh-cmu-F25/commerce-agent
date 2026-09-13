@@ -61,6 +61,9 @@ uv run python evals/data_quality.py
 step "Python: adversarial input (keyless)"
 uv run python evals/adversarial.py
 
+step "Python: scale envelope & SLOs (keyless)"
+uv run python evals/scale.py
+
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
 

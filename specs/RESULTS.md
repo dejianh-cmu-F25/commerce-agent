@@ -22,8 +22,8 @@ auditable record is the **change log** below. Each feature spec carries a
 **Reproduce**
 
 - Keyless (in the gate): `make ci-fast` runs `evals/bench.py`,
-  `evals/ablation.py`, `evals/data_quality.py`, and `evals/adversarial.py`, then
-  renders `evals/report.md` via
+  `evals/ablation.py`, `evals/data_quality.py`, `evals/adversarial.py`, and
+  `evals/scale.py`, then renders `evals/report.md` via
   `uv run python evals/report.py --write` (which also refreshes the change log
   below).
 - Real model (opt-in, snapshot): `uv run python evals/agent_eval.py --real
@@ -46,8 +46,11 @@ auditable record is the **change log** below. Each feature spec carries a
 - **Adversarial input**: labeled hostile/benign set **17/17** (safe-handling
   **1.000**, from **0.412** without the guard) — injection, prompt extraction,
   unicode obfuscation, oversize.
+- **Scale & SLOs** (keyless, `docs/scale.md`): at concurrency 16, retrieval p95
+  **7.8 µs**, turn p95 **15.2 µs**, 0 errors — far inside the declared budgets
+  (2000 / 10000 µs); error rate 0.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 152 tests, gold scenarios 12/12, 21 Agent Notes.
+- **Gate**: 156 tests, gold scenarios 12/12, 22 Agent Notes.
 
 ## Change log
 
@@ -98,4 +101,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |
 | 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |
 | 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
+| 2026-09-13 | #41 029-scale-slo | ops | `no-behavior` | Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach | — | Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md | SLO breach fails the gate | accepted | `docs/scale.md` |
 <!-- change-log:end -->

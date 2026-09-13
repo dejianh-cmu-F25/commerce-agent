@@ -24,6 +24,7 @@ RETRIEVAL_HEADING = "## Retrieval benchmark"
 ABLATION_HEADING = "## Feature ablation"
 DATA_QUALITY_HEADING = "## Data quality"
 ADVERSARIAL_HEADING = "## Adversarial input"
+SCALE_HEADING = "## Scale & SLOs"
 REQUIRED_FIELDS = ("date", "change", "area", "class", "what", "verdict", "evidence")
 VALID_CLASSES = {"measurable", "unmeasured", "no-behavior", "docs"}
 
@@ -119,6 +120,19 @@ def _check_report(artifacts: dict) -> list[str]:
             )
             if expected not in section:
                 failures.append(f"adversarial: expected row {expected!r} in the report")
+
+    # Scale numbers are wall-clock timings, not reproducible run to run; check
+    # that the section and the target row exist, not their exact values. The SLO
+    # budget itself is enforced by evals/scale.py (SC-3).
+    scale = artifacts.get("scale", {})
+    if scale and scale.get("levels"):
+        section = _section(text, SCALE_HEADING)
+        if not section:
+            failures.append("report.md has no scale section")
+        else:
+            target = scale["envelope"]["target_concurrency"]
+            if f"| {target} |" not in section:
+                failures.append(f"scale: no row for concurrency {target}")
     return failures
 
 

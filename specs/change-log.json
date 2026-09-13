@@ -573,6 +573,20 @@
       "guardrails": "refusal recorded in the log; no model/tool call",
       "verdict": "accepted",
       "evidence": "app/safety/input_guard.py"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#41 029-scale-slo",
+      "area": "ops",
+      "class": "no-behavior",
+      "what": "Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md",
+      "guardrails": "SLO breach fails the gate",
+      "verdict": "accepted",
+      "evidence": "docs/scale.md"
     }
   ]
 }
