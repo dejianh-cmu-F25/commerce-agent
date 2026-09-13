@@ -118,3 +118,11 @@ A new **Report** view (a tab beside Chat / Traces / Merchant / Memory / Scenario
 
 - The report is a static committed artifact; the view does not regenerate it.
 - Rendering reuses the existing sanitizing markdown renderer.
+
+## Measured Results
+
+- Browser checkpoint **PASS**: the Report tab renders `evals/report.md`
+  (retrieval, ablation, reliability, process, failure, judge tables); no
+  page-level horizontal scroll at 375px; 0 console errors.
+- Source: `specs/025-eval-report-view/checkpoint.md`; aggregate:
+  [`specs/RESULTS.md`](../RESULTS.md).

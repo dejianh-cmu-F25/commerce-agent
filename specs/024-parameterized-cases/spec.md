@@ -99,3 +99,21 @@ budget, a rendered return for O-1002, an added fake id).
 - The real runner stays opt-in and budget-capped.
 - Parameter lists are small and hand-curated; large-scale generation is out of
   scope.
+
+## Measured Results
+
+Per template (DeepSeek, 3 seeds; dated snapshot):
+
+| Template | Pass@1 | Pass@k | Pass^k |
+| --- | ---: | ---: | ---: |
+| `budget_search` | 0.667 | 1.000 | 0.000 |
+| `multi_item_cart` | 0.000 | 0.000 | 0.000 |
+| `add_named_item` | 1.000 | 1.000 | 1.000 |
+| `policy_question` | 1.000 | 1.000 | 1.000 |
+| `refuse_out_of_window` | 1.000 | 1.000 | 1.000 |
+| `ungrounded_rejected` | 1.000 | 1.000 | 1.000 |
+
+Overall Pass@1 **0.778** / Pass^k **0.667** — the metric discriminates (no longer
+saturated).
+
+- Source: `evals/report.md`; aggregate: [`specs/RESULTS.md`](../RESULTS.md).

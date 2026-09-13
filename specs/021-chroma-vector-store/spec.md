@@ -123,3 +123,11 @@ default embedding (all-MiniLM) is never triggered and telemetry is off.
 - Chroma stores whatever the configured `EmbeddingProvider` produces; the keyless
   `hash` embedding keeps the default path keyless.
 - The corpus is tiny; HNSW defaults are fine.
+
+## Measured Results
+
+- Chroma↔memory parity: identical top hit and hit set on the same vectors;
+  idempotent upsert (count unchanged) and persistence across a new client.
+- Dense + Chroma retrieval: hit-rate@3 **1.000**, hard hit@3 **1.000**.
+- Source: `tests/integration/test_chroma_store.py`, `evals/bench.py`; aggregate:
+  [`specs/RESULTS.md`](../RESULTS.md).

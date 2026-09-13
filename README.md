@@ -30,7 +30,11 @@ request that satisfies the review checklist.
 
 ## Status
 
-Early scaffold. See `specs/` for the feature backlog.
+Spec-driven demo with 25 features merged. The measured results — retrieval
+quality, feature ablation, real-model reliability, process metrics, and cost —
+are recorded in [`specs/RESULTS.md`](specs/RESULTS.md), rendered by the app's
+**Report** tab, and checked against the keyless artifacts by the local gate.
+See `specs/` for the feature list.
 
 ## Quick start
 

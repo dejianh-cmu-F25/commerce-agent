@@ -175,3 +175,12 @@ chat turn. No component, state, or style changes.
   of Compose availability; compose is validated separately.
 - A keyless mock model is sufficient to prove the container runs; real-provider
   behavior is unchanged and covered by the browser checkpoints.
+
+## Measured Results
+
+- Keyless container smoke **PASS**: `healthz: ok`,
+  `readyz: {"status":"ready","storefront":"memory","memory":"memory"}`,
+  `spa: ok`, `chat: ok`, `user: uid 10001 (non-root)`.
+- `make ci-fast` is unaffected (Docker-free).
+- Source: `specs/015-deployment-hardening/checkpoint.md`; aggregate:
+  [`specs/RESULTS.md`](../RESULTS.md).
