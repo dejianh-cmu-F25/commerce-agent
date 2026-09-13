@@ -25,13 +25,10 @@ cannot be localized, and changes justified by reputation rather than evidence.
 
 ## Decision
 
-- **Three new constitution clauses (v1.3.0):** **RW** (Real-World Fitness: input
-  distribution, data quality, edge/failure modes, no patchwork, degradation),
-  **SC** (Scale & Operability: scale envelope, diagnosability, SLOs, change
-  safety), and **EV** (Evidence-Backed Change: no unmeasured change, paired
-  significance, guardrails, versioning, regression sets). Definition of done
-  extended so a model/prompt/retrieval/module change requires before/after
-  evidence.
+- **Three constitution clauses: RW / SC / EV** (the constitution is the normative
+  source). RW = Real-World Fitness, SC = Scale & Operability, EV =
+  Evidence-Backed Change. The definition of done for a change now requires an
+  auditable change-log entry with a quantified before/after (EV-1 / EV-6).
 - **A spec template section** `## Real-World Coverage` makes the per-feature
   obligation concrete.
 - **A checklist doc** `docs/production-conventions.md`, the sibling of

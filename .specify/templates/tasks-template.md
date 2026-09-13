@@ -21,10 +21,11 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- Python: `app/`, `web/`, `evals/`, `tests/`
+- Frontend: `frontend/src/`
+- Specs: `specs/<NNN>-<name>/`
+- Every feature ships tests, and an eval scenario when behavior changes (P7);
+  record the change in `specs/change-log.json` (EV).
 
 <!--
   ============================================================================

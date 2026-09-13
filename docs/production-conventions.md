@@ -1,9 +1,10 @@
 # Production Conventions
 
 Guide for the clauses **RW (Real-World Fitness)**, **SC (Scale & Operability)**,
-and **EV (Evidence-Backed Change)** in the constitution (v1.3.0). This is the
-sibling of `docs/ui-conventions.md`: the constitution states the rule, this file
-holds the detail and the review checklist.
+and **EV (Evidence-Backed Change)** in the constitution (v1.3.1). The
+**constitution is the normative source**; this file is the how-to and the review
+checklist (the sibling of `docs/ui-conventions.md`), and it references clause IDs
+rather than restating them.
 
 The goal is simple: this project must be **genuinely useful**, not a demo that
 collapses under real traffic. That means covering real phrasing and dirty data,

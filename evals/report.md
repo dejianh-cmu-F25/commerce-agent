@@ -15,7 +15,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
 | `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
@@ -123,3 +123,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #33 production-constraints | process | `docs` | Constitution RW/SC/EV clauses + production audit | — | — | — | accepted | `docs/production-audit.md` |
 | 2026-09-13 | #34 027-change-audit | process | `no-behavior` | Auditable change log + evidence gate + constitution consolidation | — | Tooling/process; no app behavior change | — | accepted | `specs/change-log.json` |
 | 2026-09-13 | #35 028-spec-structure | process | `docs` | Normalize the spec structure across all 25 features; complete the spec template | — | — | — | accepted | `.specify/templates/spec-template.md` |
+| 2026-09-13 | #36 029-docs-dedup | process | `docs` | Deduplicate the spec corpus: README, conventions, templates, notes | — | — | — | accepted | `docs/architecture.md` |
