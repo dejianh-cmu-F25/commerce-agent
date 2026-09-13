@@ -16,6 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 KEYLESS = ROOT / "evals" / "results-keyless.json"
 REAL = ROOT / "evals" / "results-real.json"
 REPORT = ROOT / "evals" / "report.md"
+CHANGE_LOG = ROOT / "specs" / "change-log.json"
+RESULTS = ROOT / "specs" / "RESULTS.md"
+CHANGE_LOG_START = "<!-- change-log:start -->"
+CHANGE_LOG_END = "<!-- change-log:end -->"
 
 
 def _load(path: Path) -> dict:
@@ -173,6 +177,33 @@ def _agent_section(agent: dict) -> list[str]:
     return lines
 
 
+def _change_log_table(entries: list[dict]) -> str:
+    lines = [
+        "| Date | Change | Area | Class | What changed | Metric | Before → After "
+        "| Guardrails | Verdict | Evidence |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for entry in entries:
+        before, after = entry.get("before"), entry.get("after")
+        if before is not None and after is not None:
+            delta = f"{before} → {after}"
+        else:
+            delta = entry.get("note") or "—"
+        lines.append(
+            f"| {entry['date']} | {entry['change']} | {entry['area']} | "
+            f"`{entry['class']}` | {entry['what']} | {entry.get('metric') or '—'} | "
+            f"{delta} | {entry.get('guardrails') or '—'} | {entry['verdict']} | "
+            f"`{entry['evidence']}` |"
+        )
+    return "\n".join(lines)
+
+
+def _change_log_section(entries: list[dict]) -> list[str]:
+    if not entries:
+        return []
+    return ["## Change log", "", _change_log_table(entries), ""]
+
+
 def render() -> str:
     keyless = _load(KEYLESS)
     real = _load(REAL)
@@ -190,7 +221,21 @@ def render() -> str:
     lines += _retrieval_section(keyless.get("retrieval", {}))
     lines += _ablation_section(keyless.get("ablation", {}))
     lines += _agent_section(real.get("agent", {}))
+    lines += _change_log_section(_load(CHANGE_LOG).get("entries", []))
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _update_results_change_log(entries: list[dict]) -> None:
+    """Refresh the generated change-log block inside specs/RESULTS.md."""
+    if not RESULTS.exists():
+        return
+    text = RESULTS.read_text()
+    if CHANGE_LOG_START not in text or CHANGE_LOG_END not in text:
+        return
+    start = text.index(CHANGE_LOG_START) + len(CHANGE_LOG_START)
+    end = text.index(CHANGE_LOG_END)
+    block = "\n" + _change_log_table(entries) + "\n"
+    RESULTS.write_text(text[:start] + block + text[end:])
 
 
 def main() -> int:
@@ -200,7 +245,8 @@ def main() -> int:
     text = render()
     if args.write:
         REPORT.write_text(text)
-        print(f"wrote {REPORT}")
+        _update_results_change_log(_load(CHANGE_LOG).get("entries", []))
+        print(f"wrote {REPORT} and refreshed the change log in {RESULTS}")
     else:
         print(text)
     return 0

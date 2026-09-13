@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Gate for measured results (constitution P1, P7).
+"""Gate for measured results and the change log (constitution P1, P7, EV).
 
-Verifies that the keyless numbers recorded in ``specs/RESULTS.md`` match the
-freshly generated artifacts (``evals/results-keyless.json``, written by
-``evals/bench.py`` and ``evals/ablation.py``). Real-model numbers are dated
-snapshots and are not checked (the gate does not re-run the real model).
+- Verifies the keyless numbers in ``evals/report.md`` match the freshly generated
+  artifacts (``evals/results-keyless.json``).
+- Verifies every ``specs/change-log.json`` entry is well-formed: a ``measurable``
+  entry carries a metric and a result (``after``).
+
+Real-model numbers are dated snapshots and are not checked.
 """
 
 from __future__ import annotations
@@ -15,10 +17,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "evals" / "results-keyless.json"
-RESULTS = ROOT / "specs" / "RESULTS.md"
+REPORT = ROOT / "evals" / "report.md"
+CHANGE_LOG = ROOT / "specs" / "change-log.json"
 
 RETRIEVAL_HEADING = "## Retrieval benchmark"
 ABLATION_HEADING = "## Feature ablation"
+REQUIRED_FIELDS = ("date", "change", "area", "class", "what", "verdict", "evidence")
+VALID_CLASSES = {"measurable", "unmeasured", "no-behavior", "docs"}
 
 
 def _section(text: str, heading: str) -> str:
@@ -31,7 +36,6 @@ def _section(text: str, heading: str) -> str:
 
 
 def _row(section: str, config: str) -> list[str] | None:
-    """Return the cells of the table row whose first cell is ``config``."""
     for line in section.splitlines():
         stripped = line.strip()
         if stripped.startswith(f"| `{config}` |"):
@@ -48,24 +52,17 @@ def _load(path: Path) -> dict:
         return {}
 
 
-def main() -> int:
-    if not RESULTS.exists():
-        print("FAIL: specs/RESULTS.md is missing.")
-        return 1
-
-    artifacts = _load(ARTIFACTS)
-    if not artifacts:
-        print("SKIP: no keyless artifacts yet (run evals/bench.py and evals/ablation.py).")
-        return 0
-
-    text = RESULTS.read_text()
+def _check_report(artifacts: dict) -> list[str]:
     failures: list[str] = []
+    if not REPORT.exists():
+        return ["evals/report.md is missing"]
+    text = REPORT.read_text()
 
     retrieval = artifacts.get("retrieval", {})
     if retrieval:
         section = _section(text, RETRIEVAL_HEADING)
         if not section:
-            failures.append("RESULTS.md has no retrieval section")
+            failures.append("report.md has no retrieval section")
         for config, metrics in retrieval["configs"].items():
             row = _row(section, config)
             if row is None:
@@ -76,15 +73,14 @@ def main() -> int:
                 f"{metrics['recall']:.3f}",
                 f"{metrics['mrr']:.3f}",
             ]
-            actual = row[1:4]
-            if actual != expected:
-                failures.append(f"retrieval {config}: {actual} != {expected}")
+            if row[1:4] != expected:
+                failures.append(f"retrieval {config}: {row[1:4]} != {expected}")
 
     ablation = artifacts.get("ablation", {})
     if ablation:
         section = _section(text, ABLATION_HEADING)
         if not section:
-            failures.append("RESULTS.md has no ablation section")
+            failures.append("report.md has no ablation section")
         for config, metrics in ablation["configs"].items():
             row = _row(section, config)
             if row is None:
@@ -93,15 +89,45 @@ def main() -> int:
             expected = f"{metrics['pass_rate']:.3f}"
             if row[2] != expected:
                 failures.append(f"ablation {config}: pass rate {row[2]} != {expected}")
+    return failures
 
-    if "## Agent reliability" not in text:
-        failures.append("RESULTS.md has no real-model snapshot section")
+
+def _check_change_log() -> list[str]:
+    failures: list[str] = []
+    if not CHANGE_LOG.exists():
+        return ["specs/change-log.json is missing"]
+    entries = json.loads(CHANGE_LOG.read_text()).get("entries", [])
+    if not entries:
+        return ["specs/change-log.json has no entries"]
+    for entry in entries:
+        name = entry.get("change", "?")
+        for field in REQUIRED_FIELDS:
+            if not entry.get(field):
+                failures.append(f"change-log {name!r}: missing {field!r}")
+        classification = entry.get("class")
+        if classification not in VALID_CLASSES:
+            failures.append(f"change-log {name!r}: invalid class {classification!r}")
+        if classification == "measurable" and (
+            entry.get("metric") is None or entry.get("after") is None
+        ):
+            failures.append(f"change-log {name!r}: measurable entry needs metric + after")
+    return failures
+
+
+def main() -> int:
+    artifacts = _load(ARTIFACTS)
+    failures: list[str] = []
+    if artifacts:
+        failures += _check_report(artifacts)
+    else:
+        print("SKIP: no keyless artifacts yet (run evals/bench.py and evals/ablation.py).")
+    failures += _check_change_log()
 
     if failures:
         for failure in failures:
             print(f"FAIL: {failure}")
         return 1
-    print("OK: specs/RESULTS.md matches the keyless artifacts.")
+    print("OK: report.md matches the keyless artifacts; the change log is well-formed.")
     return 0
 
 
