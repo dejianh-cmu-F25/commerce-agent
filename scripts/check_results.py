@@ -92,6 +92,14 @@ def _check_report(artifacts: dict) -> list[str]:
             ]
             if row[1:4] != expected:
                 failures.append(f"retrieval {config}: {row[1:4]} != {expected}")
+        multilingual = retrieval.get("multilingual")
+        if multilingual:
+            langs = " / ".join(
+                f"{language} {rate:.3f}" for language, rate in multilingual["by_language"].items()
+            )
+            expected = f"hit-rate@{multilingual['k']} {langs} over {multilingual['cases']} queries."
+            if expected not in section:
+                failures.append(f"retrieval multilingual: expected {expected!r} in the report")
 
     ablation = artifacts.get("ablation", {})
     if ablation:

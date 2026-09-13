@@ -72,6 +72,17 @@ def _retrieval_section(retrieval: dict) -> list[str]:
             )
             lines.append(f"| `{config}` | {cells} |")
         lines.append("")
+
+    multilingual = retrieval.get("multilingual")
+    if multilingual:
+        langs = " / ".join(
+            f"{language} {rate:.3f}" for language, rate in multilingual["by_language"].items()
+        )
+        lines += [
+            f"Multilingual (not gated — a measured gap; the corpus is English): "
+            f"hit-rate@{multilingual['k']} {langs} over {multilingual['cases']} queries.",
+            "",
+        ]
     return lines
 
 

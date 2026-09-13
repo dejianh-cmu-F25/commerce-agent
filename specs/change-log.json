@@ -831,6 +831,22 @@
       "rollback": "git revert the squash-merge commit; or unset llm.fallback_provider",
       "verdict": "accepted",
       "evidence": "docs/degradation.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#52 040-multilingual-retrieval",
+      "area": "evaluation",
+      "class": "no-behavior",
+      "what": "Measure non-English retrieval over the English corpus; report the gap (not gated)",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Measurement/reporting; es/fr/de/zh hit-rate@3 0.000-0.500 (a documented gap)",
+      "guardrails": "the English hit-rate gate is unchanged; no guardrail regression",
+      "blast_radius": "evals/retrieval_set.py, evals/bench.py, report (no runtime)",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/clarify-vs-refuse.md"
     }
   ]
 }

@@ -49,3 +49,28 @@ RETRIEVAL_SET: list[RetrievalCase] = [
     RetrievalCase("are approved claims repaired or replaced?", "warranty.md", "medium"),
     RetrievalCase("my jacket seam came apart, is that covered?", "warranty.md", "hard"),
 ]
+
+
+@dataclass(frozen=True)
+class MultilingualCase:
+    """A non-English query against the English corpus (feature 040, RW-1).
+
+    Measured and reported as a gap; not gated, because the keyless lexical
+    retriever cannot cross languages.
+    """
+
+    query: str
+    expected_source: str
+    language: str
+
+
+MULTILINGUAL_SET: list[MultilingualCase] = [
+    MultilingualCase("¿Cuántos días tengo para devolver un artículo?", "returns.md", "es"),
+    MultilingualCase("¿Cuánto cuesta el envío estándar?", "shipping.md", "es"),
+    MultilingualCase("Combien de temps ai-je pour retourner un article ?", "returns.md", "fr"),
+    MultilingualCase("Quel est le délai de livraison standard ?", "shipping.md", "fr"),
+    MultilingualCase("Wie lange ist die Herstellergarantie?", "warranty.md", "de"),
+    MultilingualCase("Wie viel kostet der Standardversand?", "shipping.md", "de"),
+    MultilingualCase("退货需要多少天？", "returns.md", "zh"),
+    MultilingualCase("标准运费是多少？", "shipping.md", "zh"),
+]

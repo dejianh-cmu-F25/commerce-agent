@@ -20,7 +20,7 @@ from app.adapters.vector_memory import InMemoryVectorStore
 from app.evaluation.retrieval_metrics import evaluate_retrieval
 from app.knowledge.ingest import load_chunks
 from app.ports.retriever import Retriever
-from evals.retrieval_set import RETRIEVAL_SET
+from evals.retrieval_set import MULTILINGUAL_SET, RETRIEVAL_SET
 
 ROOT = Path(__file__).resolve().parents[1]
 KNOWLEDGE_DIR = str(ROOT / "config" / "knowledge")
@@ -78,7 +78,35 @@ def run_bench() -> dict:
                     for level, items in by_difficulty.items()
                 },
             }
+    result["multilingual"] = run_multilingual()
     return result
+
+
+def run_multilingual() -> dict:
+    """Measure non-English queries over the English corpus (feature 040, RW-1).
+
+    Reported as a gap, not gated: the keyless lexical retriever cannot cross
+    languages, so a low number is expected and must not fail the English gate.
+    """
+    retriever = _build("tfidf", "")
+    pairs: list[tuple[list[str], set[str]]] = []
+    by_language: dict[str, list[tuple[list[str], set[str]]]] = {}
+    for case in MULTILINGUAL_SET:
+        hits = retriever.retrieve(case.query, K)
+        pair = ([hit.source for hit in hits], {case.expected_source})
+        pairs.append(pair)
+        by_language.setdefault(case.language, []).append(pair)
+    metrics = evaluate_retrieval(pairs, K)
+    return {
+        "cases": len(MULTILINGUAL_SET),
+        "k": K,
+        "hit_rate": metrics.hit_rate,
+        "by_language": {
+            language: evaluate_retrieval(items, K).hit_rate
+            for language, items in sorted(by_language.items())
+        },
+        "gated": False,
+    }
 
 
 def write_keyless(result: dict) -> None:
