@@ -27,6 +27,7 @@ DATA_QUALITY_HEADING = "## Data quality"
 ADVERSARIAL_HEADING = "## Adversarial input"
 SCALE_HEADING = "## Scale & SLOs"
 FALLBACKS_HEADING = "## Dependency fallbacks"
+REGRESSIONS_HEADING = "## Regressions"
 REQUIRED_FIELDS = (
     "date",
     "change",
@@ -146,6 +147,19 @@ def _check_report(artifacts: dict) -> list[str]:
             )
             if expected not in section:
                 failures.append(f"adversarial: expected row {expected!r} in the report")
+
+    regressions = artifacts.get("regressions", {})
+    if regressions:
+        section = _section(text, REGRESSIONS_HEADING)
+        if not section:
+            failures.append("report.md has no regressions section")
+        else:
+            expected = (
+                f"| {regressions['cases']} | {regressions['passed']} | "
+                f"{regressions['coverage']:.3f} |"
+            )
+            if expected not in section:
+                failures.append(f"regressions: expected row {expected!r} in the report")
 
     fallbacks = artifacts.get("fallbacks", {})
     if fallbacks:

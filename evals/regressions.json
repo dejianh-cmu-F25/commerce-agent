@@ -1,0 +1,34 @@
+{
+  "regressions": [
+    {
+      "id": "ungrounded_id_rejected",
+      "source": "gold set / feature 012",
+      "root_cause": "the model could act on a product id it never retrieved",
+      "check": "ungrounded_id_rejected"
+    },
+    {
+      "id": "return_out_of_window_refused",
+      "source": "feature 014",
+      "root_cause": "a return outside the policy window was not gated",
+      "check": "return_window_enforced"
+    },
+    {
+      "id": "prompt_injection_refused",
+      "source": "audit RW-1 / feature 028",
+      "root_cause": "hostile input reached the model as instructions",
+      "check": "injection_refused"
+    },
+    {
+      "id": "dirty_price_normalized",
+      "source": "audit RW-2 / feature 027",
+      "root_cause": "a price with a currency symbol crashed the boundary",
+      "check": "dirty_price_normalized"
+    },
+    {
+      "id": "dense_outage_falls_back",
+      "source": "audit RD-1 / feature 031",
+      "root_cause": "a vector-store outage raised out of the knowledge tool",
+      "check": "dense_failure_falls_back"
+    }
+  ]
+}

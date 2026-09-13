@@ -174,6 +174,22 @@ def _adversarial_section(adversarial: dict) -> list[str]:
     ]
 
 
+def _regressions_section(regressions: dict) -> list[str]:
+    if not regressions:
+        return []
+    return [
+        "## Regressions (keyless)",
+        "",
+        "Named, root-caused regressions for past failures (`docs/regressions.md`); "
+        "the gate runs each so a fixed failure cannot silently return.",
+        "",
+        "| Regressions | Passed | Coverage |",
+        "| ---: | ---: | ---: |",
+        f"| {regressions['cases']} | {regressions['passed']} | {regressions['coverage']:.3f} |",
+        "",
+    ]
+
+
 def _fallbacks_section(fallbacks: dict) -> list[str]:
     if not fallbacks:
         return []
@@ -350,6 +366,7 @@ def render() -> str:
     lines += _segments_section(keyless.get("segments", {}))
     lines += _data_quality_section(keyless.get("data_quality", {}))
     lines += _adversarial_section(keyless.get("adversarial", {}))
+    lines += _regressions_section(keyless.get("regressions", {}))
     lines += _fallbacks_section(keyless.get("fallbacks", {}))
     lines += _scale_section(keyless.get("scale", {}))
     lines += _agent_section(real.get("agent", {}))
