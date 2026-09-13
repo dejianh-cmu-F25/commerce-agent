@@ -31,25 +31,39 @@ useful.
 
 ## Remediation status (2026-09-13)
 
-The roadmap below was executed as features 026–033. The original summary above is
-the **as-found** snapshot; this table is the current status.
+The roadmap below was executed as features 026–043. The original summary above is
+the **as-found** snapshot; this table is the current status. **All fourteen
+clauses are now Met**; the residual gaps are named, measured where possible, and
+are the honest boundary of what this project claims.
 
 | Clause | As found | Now | Evidence | Residual gap |
 | --- | --- | --- | --- | --- |
-| RW-1 Input distribution | Partial | **Met** | `evals/adversarial.py` (17 cases, 1.000) | English-only; clarify-vs-refuse still unspecified |
-| RW-2 Data quality | Gap | **Met** | `app/data/quality.py`, `evals/data_quality.py` (0.100 → 1.000) | large-catalog scale untested |
-| RW-3 Edge & failure modes | Partial | Partial | `## Real-World Coverage` in every spec | enumeration still uneven |
-| RW-4 No patchwork | Partial | **Met** | `evals/regressions.json` + promotion script | promotion is manual |
-| RD-1 Fallback (was RW-5) | Partial | **Met** | `app/core/resilience.py`, `evals/fallbacks.py` (0.400 → 1.000) | no second LLM provider |
-| SC-1 Scale envelope | Gap | **Met** | `docs/scale.md`, `evals/scale.py` | no multi-tenant / long-session / large-corpus test |
+| RW-1 Input distribution | Partial | **Met** | `evals/adversarial.py` (23 cases, 1.000); `docs/clarify-vs-refuse.md`; `evals/bench.py` multilingual | corpus is English (non-English hit-rate 0.000–0.500, measured) |
+| RW-2 Data quality | Gap | **Met** | `app/data/quality.py` (0.100 → 1.000); `evals/scale.py` large catalog | catalogs >5,000 products untested |
+| RW-3 Edge & failure modes | Partial | **Met** | `docs/edge-cases.md` (16 boundaries); six-bullet coverage enforced by review + corpus test | enumeration grows with features |
+| RW-4 No patchwork | Partial | **Met** | `evals/regressions.json` + `scripts/promote_regression.py` | root-cause + promotion stay human |
+| RD-1 Fallback (was RW-5) | Partial | **Met** | `app/core/resilience.py`, `evals/fallbacks.py` (0.286 → 1.000) | fallback off unless configured; degradations in-process |
+| SC-1 Scale envelope | Gap | **Met** | `docs/scale.md`, `evals/scale.py` (concurrency, 10k corpus, 5k catalog, 100 turns) | concurrency >64 untested; no multi-tenant isolation test |
 | SC-2 Diagnosability | Partial | **Met** | `app/evaluation/segments.py` (intent + tool) | model/tenant single-valued; not measured under load |
-| SC-3 SLOs | Gap | **Met** | `docs/scale.md` budgets, enforced by the gate | budgets are regression guards, not tight targets |
+| SC-3 SLOs | Gap | **Met** | `docs/scale.md` budgets, enforced by the gate | budgets are regression guards, not capacity targets |
 | SC-4 Change safety | Partial | **Met** | `blast_radius`/`rollback` per change, gated; `docs/change-safety.md` | rollback is manual revert (no canary) |
 | EV-1 No unmeasured change | Met | Met | `scripts/check_change_evidence.py` | — |
-| EV-2 Paired & significant | Partial | **Met** | `app/evaluation/significance.py` (CI + McNemar) | wide CIs on 12 scenarios (small set) |
-| EV-3 Guardrails | Partial | Partial | judge veto, budget, input guard | guardrails not formally compared per change |
+| EV-2 Paired & significant | Partial | **Met** | `app/evaluation/significance.py` (CI + McNemar) | wide CIs on the small gold set |
+| EV-3 Guardrails | Partial | **Met** | `docs/guardrails.md` (7 floors, gated); `evals/guardrail-history.jsonl` trend | recording is manual; no scheduler |
 | EV-4 Versioning | Met | Met | model + prompt hash in `evals/report.md` | — |
-| EV-5 Regression sets | Partial | **Met** | `evals/regressions.py` (5 named) | small set; manual promotion |
+| EV-5 Regression sets | Partial | **Met** | `evals/regressions.py` (5 named); `scripts/export_regression_candidates.py` | registry small; export after an opt-in run |
+
+### Residual gaps (the honest boundary)
+
+These are measured where possible and not claimed as solved:
+
+- **Multi-tenant isolation** is untested (single tenant).
+- **Concurrency > 64** and **catalogs > 5,000** are not measured.
+- **Non-English retrieval** is weak (measured 0.000–0.500 hit-rate@3); closing it
+  needs multilingual embeddings.
+- **Adversarial retrieval** (a poisoned corpus document) is not covered.
+- **Rollback** is a manual `git revert` + rebuild; there is no canary/blue-green.
+- **Guardrail recording** and **real-eval promotion** are manual steps.
 
 ## Detail
 
@@ -124,6 +138,19 @@ failure-to-regression pipeline (EV-5). Model and rendered-prompt versioning
 | P2 | Failure-to-regression pipeline; grow trajectory-prefix set | RW-4, EV-5 | ✅ 033 |
 | P2 | Declared fallback per dependency | RD-1 | ✅ 031 |
 | P2 | Blast radius / rollback in the PR | SC-4 | ✅ 032 |
+
+### Follow-up (residual-closing features)
+
+| Item | Clause | Feature |
+| --- | --- | --- |
+| Edge/failure enumeration enforced | RW-3 | ✅ 035 |
+| Guardrails declared, gated, and trended | EV-3 | ✅ 036, 042 |
+| Large corpus + long session measured | SC-1 | ✅ 037 |
+| Clarify-vs-refuse specified; multilingual guard | RW-1 | ✅ 038 |
+| LLM provider fallback | RD-1 | ✅ 039 |
+| Non-English retrieval measured (gap) | RW-1 | ✅ 040 |
+| Large catalog measured | RW-2, SC-1 | ✅ 041 |
+| Real-eval failures export to candidates | EV-5 | ✅ 043 |
 
 This audit is itself the demonstration that the project can name its own gaps —
 the first requirement of being trustworthy at scale.
