@@ -38,7 +38,7 @@
 - [ ] Dirty / missing / conflicting data has defined behavior and a repair path (RW-2)
 - [ ] Edge and failure modes enumerated with a behavior each (RW-3)
 - [ ] Fixes are root-caused and ship with a regression (RW-4)
-- [ ] External dependencies have an observable, config-gated fallback (RW-5)
+- [ ] External dependencies have an observable, config-gated fallback (RD-1)
 - [ ] Scale envelope declared and measured at the stated boundary (SC-1)
 - [ ] Failures attributable; metrics segmentable (intent / tool / model / tenant) (SC-2)
 - [ ] Latency / cost / error budgets declared and tracked (SC-3)
@@ -61,5 +61,10 @@
 ## Decision record
 
 - [ ] Agent Note added/updated under `docs/notes/` (DR-1) — or the change is trivial
+
+## Blast radius & rollback (SC-4)
+
+- Blast radius: <!-- which module/seam/data/surface can this affect? -->
+- Rollback: <!-- git revert + rebuild? a config toggle? a migration? -->
 
 ## Risks / follow-ups

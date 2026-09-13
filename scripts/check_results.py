@@ -27,7 +27,17 @@ DATA_QUALITY_HEADING = "## Data quality"
 ADVERSARIAL_HEADING = "## Adversarial input"
 SCALE_HEADING = "## Scale & SLOs"
 FALLBACKS_HEADING = "## Dependency fallbacks"
-REQUIRED_FIELDS = ("date", "change", "area", "class", "what", "verdict", "evidence")
+REQUIRED_FIELDS = (
+    "date",
+    "change",
+    "area",
+    "class",
+    "what",
+    "blast_radius",
+    "rollback",
+    "verdict",
+    "evidence",
+)
 VALID_CLASSES = {"measurable", "unmeasured", "no-behavior", "docs"}
 
 
