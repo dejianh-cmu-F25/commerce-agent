@@ -9,6 +9,12 @@ llm:
   api_key: ""               # set LLM_API_KEY in .env
   temperature: 0.0
   max_tokens: 4096
+  # Fallback provider (feature 039, RD-1). Empty disables the fallback; set it to
+  # a second provider/model to serve a turn when the primary fails before emitting.
+  fallback_provider: ""      # "" (off) | deepseek | openai | anthropic | mock
+  fallback_model: ""
+  fallback_base_url: ""
+  fallback_api_key: ""
 
 agent:
   max_tool_iterations: 8

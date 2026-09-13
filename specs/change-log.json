@@ -815,6 +815,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/clarify-vs-refuse.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#51 039-llm-fallback",
+      "area": "resilience",
+      "class": "measurable",
+      "what": "Config-gated LLM provider fallback (serves when the primary fails before emitting)",
+      "metric": "dependency fallback coverage (labeled set)",
+      "before": 0.286,
+      "after": 1.0,
+      "note": "Labeled set grew to 7 cases; the LLM fallback and mid-stream rule are covered",
+      "guardrails": "fallback coverage 1.0; no guardrail regression",
+      "blast_radius": "app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval",
+      "rollback": "git revert the squash-merge commit; or unset llm.fallback_provider",
+      "verdict": "accepted",
+      "evidence": "docs/degradation.md"
     }
   ]
 }

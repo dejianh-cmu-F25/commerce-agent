@@ -14,14 +14,15 @@ from pathlib import Path
 
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cli_sink import ListSink
+from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.core import events as ev
 from app.core.loop import Agent
-from app.core.resilience import FallbackRetriever
+from app.core.resilience import FallbackLLM, FallbackRetriever
 from app.core.session import Session
 from app.core.settings import AgentSettings
-from app.core.types import Chunk, LLMEvent, Message, ToolSpec
+from app.core.types import Chunk, LLMEvent, Message, TextDelta, ToolSpec
 from app.knowledge.ingest import load_chunks
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
@@ -51,6 +52,14 @@ class FailingLLM:
     ) -> AsyncIterator[LLMEvent]:
         raise RuntimeError("provider unavailable")
         yield  # pragma: no cover - makes this an async generator
+
+
+class MidstreamFailingLLM:
+    async def stream(
+        self, messages: Sequence[Message], tools: Sequence[ToolSpec] = ()
+    ) -> AsyncIterator[LLMEvent]:
+        yield TextDelta("partial")
+        raise RuntimeError("provider failed mid-stream")
 
 
 async def _retriever_fallback() -> bool:
@@ -90,6 +99,22 @@ async def _knowledge_missing() -> bool:
     return load_chunks(str(ROOT / "does-not-exist")) == []
 
 
+async def _llm_fallback() -> bool:
+    wrapper = FallbackLLM(FailingLLM(), MockLLMClient([text_turn("fallback reply")]))
+    events = [event async for event in wrapper.stream([])]
+    text = "".join(event.text for event in events if isinstance(event, TextDelta))
+    return "fallback reply" in text and wrapper.degraded and len(wrapper.degradations) == 1
+
+
+async def _llm_midstream_propagates() -> bool:
+    wrapper = FallbackLLM(MidstreamFailingLLM(), MockLLMClient([text_turn("should not appear")]))
+    try:
+        _ = [event async for event in wrapper.stream([])]
+    except RuntimeError:
+        return not wrapper.degraded  # a partial response is not retried
+    return False
+
+
 async def _llm_failure_surfaces() -> bool:
     registry = ToolRegistry()
     register_catalog_tools(registry, InMemoryStorefront(SEED_PRODUCTS))
@@ -109,6 +134,8 @@ CASES: list[tuple[str, object, bool]] = [
     ("retriever_fallback", _retriever_fallback, True),
     ("retriever_healthy", _retriever_healthy, True),
     ("retriever_disabled", _retriever_disabled, True),
+    ("llm_fallback", _llm_fallback, True),
+    ("llm_midstream_propagates", _llm_midstream_propagates, True),
     ("knowledge_missing", _knowledge_missing, False),
     ("llm_failure_surfaces", _llm_failure_surfaces, False),
 ]

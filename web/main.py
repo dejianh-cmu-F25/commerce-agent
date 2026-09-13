@@ -40,7 +40,7 @@ from app.core import events as ev
 from app.core.loop import Agent
 from app.core.metrics import summarize
 from app.core.prompts import load_prompt
-from app.core.resilience import FallbackRetriever
+from app.core.resilience import FallbackLLM, FallbackRetriever
 from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
 from app.core.types import Message
@@ -67,8 +67,9 @@ APP_DIR = STATIC_DIR / "app"
 REPORT_PATH = Path(__file__).resolve().parents[1] / "evals" / "report.md"
 
 
-def build_llm(settings: Settings):
-    provider = settings.llm.provider
+def _build_llm_client(
+    settings: Settings, *, provider: str, model: str, base_url: str, api_key: str
+):
     if provider == "mock":
         return MockLLMClient(
             [
@@ -78,7 +79,36 @@ def build_llm(settings: Settings):
                 )
             ]
         )
-    return DeepSeekClient(settings.llm)
+    llm = settings.llm.model_copy(
+        update={
+            "provider": provider,
+            "model": model or settings.llm.model,
+            "base_url": base_url or settings.llm.base_url,
+            "api_key": api_key or settings.llm.api_key,
+        }
+    )
+    return DeepSeekClient(llm)
+
+
+def build_llm(settings: Settings):
+    """Resolve the LLM client, optionally wrapped with a fallback (feature 039)."""
+    primary = _build_llm_client(
+        settings,
+        provider=settings.llm.provider,
+        model=settings.llm.model,
+        base_url=settings.llm.base_url,
+        api_key=settings.llm.api_key,
+    )
+    if not settings.llm.fallback_provider:
+        return primary
+    secondary = _build_llm_client(
+        settings,
+        provider=settings.llm.fallback_provider,
+        model=settings.llm.fallback_model,
+        base_url=settings.llm.fallback_base_url,
+        api_key=settings.llm.fallback_api_key,
+    )
+    return FallbackLLM(primary, secondary)
 
 
 def build_storefront(settings: Settings) -> StorefrontBackend:
