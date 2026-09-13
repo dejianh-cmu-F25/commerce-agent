@@ -39,6 +39,11 @@ _INJECTION_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
         r"\b(new|updated|revised)\s+(instruction|prompt|rule)s?\b",
         r"\boverride\s+(your|the)\s+(instruction|prompt|rule|safety)s?\b",
         r"\bfrom\s+now\s+on\s+you\s+(will|must|should)\b",
+        # Non-English instruction override (es / fr / de / zh).
+        r"\bignora\s+(todas\s+)?(las\s+)?(instrucciones|reglas|indicaciones)\b",
+        r"\bignorez\s+(toutes\s+)?(les\s+)?(instructions|r[eè]gles|consignes)\b",
+        r"\bignoriere\s+(alle\s+)?(vorherigen\s+)?(anweisungen|regeln)\b",
+        r"忽略(之前|先前|上面|以前)的?(指令|指示|规则|提示)",
     )
 )
 

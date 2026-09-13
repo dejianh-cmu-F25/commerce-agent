@@ -15,7 +15,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
 | `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
@@ -32,11 +32,11 @@ Each configuration runs the same gold scenarios (scripted model); the delta is v
 
 | Config | Passed | Pass rate | Delta vs naked | 95% CI | p (McNemar) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `naked` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
-| `+memory` | 11/12 | 0.917 | +0.167 | [0.000, 0.417] | 0.500 |
-| `+skills` | 10/12 | 0.833 | +0.083 | [0.000, 0.250] | 1.000 |
-| `+dense-hash` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
-| `+dense-chroma` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
+| `naked` | 10/13 | 0.769 | +0.000 | [0.000, 0.000] | 1.000 |
+| `+memory` | 12/13 | 0.923 | +0.154 | [0.000, 0.385] | 0.500 |
+| `+skills` | 11/13 | 0.846 | +0.077 | [0.000, 0.231] | 1.000 |
+| `+dense-hash` | 10/13 | 0.769 | +0.000 | [0.000, 0.000] | 1.000 |
+| `+dense-chroma` | 10/13 | 0.769 | +0.000 | [0.000, 0.000] | 1.000 |
 
 ## Segmented metrics (keyless)
 
@@ -48,6 +48,7 @@ By intent:
 | --- | ---: | ---: |
 | `cart` | 2/2 | 1.000 |
 | `checkout` | 1/1 | 1.000 |
+| `clarify` | 1/1 | 1.000 |
 | `knowledge` | 1/1 | 1.000 |
 | `memory` | 2/2 | 1.000 |
 | `merchant` | 1/1 | 1.000 |
@@ -84,7 +85,7 @@ The deterministic input guard, scored against a labeled set of hostile and benig
 
 | Cases | Before (no guard) | After (guarded) |
 | ---: | ---: | ---: |
-| 17 | 0.412 | 1.000 |
+| 23 | 0.391 | 1.000 |
 
 ## Guardrails (keyless)
 
@@ -97,7 +98,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.0 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 15.1 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 0.6562 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -122,14 +123,14 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.1/9.0 | 13.2/21.2 | 31930 | 0 |
-| 4 | 5.9/7.9 | 14.0/14.4 | 60200 | 0 |
-| 16 | 6.6/9.3 | 14.5/17.0 | 53765 | 0 |
-| 64 | 6.0/7.9 | 14.3/15.7 | 57343 | 0 |
+| 1 | 6.4/8.9 | 14.3/18.4 | 52436 | 0 |
+| 4 | 6.1/7.6 | 14.2/16.6 | 54783 | 0 |
+| 16 | 5.8/7.7 | 14.2/15.1 | 58403 | 0 |
+| 64 | 5.9/7.9 | 14.3/15.0 | 58175 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5324.5/7120.5 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5239.9/7109.0 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -232,3 +233,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #47 035-edge-cases | docs | `docs` | Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps | — | Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed | spec_review fails a missing/short coverage bullet; corpus test enforces all specs | docs/edge-cases.md, spec_review, specs' coverage notes | git revert the squash-merge commit | accepted | `docs/edge-cases.md` |
 | 2026-09-13 | #48 036-guardrails | process | `no-behavior` | Declare guardrail metrics with floors; aggregate them in the gate; require a guardrail statement per measurable change | — | Tooling/docs; 7 guardrails aggregated, 9 old measurable entries backfilled | the feature is the guardrail comparison (EV-3) | evals/guardrails.py, docs/guardrails.md, gate, change-log schema | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
 | 2026-09-13 | #49 037-scale-boundaries | ops | `no-behavior` | Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them | — | Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md) | breach of either budget fails the gate; SL-1 asserted | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
+| 2026-09-13 | #50 038-clarify-multilingual | safety | `measurable` | Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns | non-English injection cases blocked (labeled) | 0 → 4 | gold 13/13; adversarial safe-rate 1.0; no guardrail regression | config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |

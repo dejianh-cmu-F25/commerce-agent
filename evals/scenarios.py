@@ -103,6 +103,20 @@ SCENARIOS: list[Scenario] = [
         expect_components=[],
     ),
     Scenario(
+        name="ambiguous_request_clarifies",
+        intent="clarify",
+        user_text="I want the cheaper one",
+        turns=[
+            text_turn(
+                "Which product are you comparing? Tell me the two you're considering "
+                "and I'll point to the cheaper one."
+            )
+        ],
+        expect_tools=[],
+        expect_components=[],
+        expect_cart=[],
+    ),
+    Scenario(
         name="memory_extract",
         intent="memory",
         user_text="I usually wear size M",
