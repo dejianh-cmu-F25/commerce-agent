@@ -22,6 +22,7 @@ CHANGE_LOG = ROOT / "specs" / "change-log.json"
 
 RETRIEVAL_HEADING = "## Retrieval benchmark"
 ABLATION_HEADING = "## Feature ablation"
+SEGMENTS_HEADING = "## Segmented metrics"
 DATA_QUALITY_HEADING = "## Data quality"
 ADVERSARIAL_HEADING = "## Adversarial input"
 SCALE_HEADING = "## Scale & SLOs"
@@ -92,6 +93,20 @@ def _check_report(artifacts: dict) -> list[str]:
             expected = f"{metrics['pass_rate']:.3f}"
             if row[2] != expected:
                 failures.append(f"ablation {config}: pass rate {row[2]} != {expected}")
+
+    segments = artifacts.get("segments", {})
+    if segments.get("by_intent"):
+        section = _section(text, SEGMENTS_HEADING)
+        if not section:
+            failures.append("report.md has no segmented-metrics section")
+        else:
+            for intent, metrics in segments["by_intent"].items():
+                expected = (
+                    f"| `{intent}` | {metrics['passed']:.0f}/{metrics['total']:.0f} | "
+                    f"{metrics['pass_rate']:.3f} |"
+                )
+                if expected not in section:
+                    failures.append(f"segments: expected intent row {expected!r} in the report")
 
     data_quality = artifacts.get("data_quality", {})
     if data_quality:
