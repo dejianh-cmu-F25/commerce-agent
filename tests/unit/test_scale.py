@@ -51,6 +51,14 @@ def test_large_corpus_breach_fails() -> None:
     assert evaluate_slo(result)
 
 
+def test_large_catalog_within_and_over_budget() -> None:
+    result = _base()
+    result["large_catalog"] = {"p95_us": 15000.0}
+    assert evaluate_slo(result) == []
+    result["large_catalog"] = {"p95_us": SLO["large_catalog_p95_us"] + 1}
+    assert evaluate_slo(result)
+
+
 def test_long_session_breach_and_unreconstructable_fail() -> None:
     result = _base()
     result["long_session"] = {"elapsed_ms": SLO["long_session_ms"] + 1, "reconstructable": False}

@@ -50,8 +50,9 @@ auditable record is the **change log** below. Each feature spec carries a
   unicode obfuscation, oversize, and non-English (es/fr/de/zh) override.
 - **Scale & SLOs** (keyless, `docs/scale.md`): at concurrency 16, retrieval p95
   **7.8 µs**, turn p95 **15.2 µs**, 0 errors — far inside the declared budgets
-  (2000 / 10000 µs). Large corpus (10k chunks) retrieval p95 **~7 ms**; long
-  session (100 turns) **~7 ms**, reconstructable (SL-1).
+  (2000 / 10000 µs). Large corpus (10k chunks) retrieval p95 **~7 ms**; large
+  catalog (5k products) search p95 **~15 ms**; long session (100 turns) **~7 ms**,
+  reconstructable (SL-1).
 - **Diagnosability**: metrics segment by **intent** (10) and by **tool** (9) — a
   failure is attributable, not just an aggregate pass rate.
 - **Fallbacks**: dependency fallback coverage **7/7** (from **0.286** without the
@@ -65,7 +66,7 @@ auditable record is the **change log** below. Each feature spec carries a
 - **Guardrails**: 7 metrics (quality, safety, data, resilience, latency, cost)
   aggregated against declared floors and enforced in the gate (EV-3).
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 180 tests, gold scenarios 13/13, 32 Agent Notes.
+- **Gate**: 181 tests, gold scenarios 13/13, 33 Agent Notes.
 
 ## Change log
 
@@ -128,4 +129,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #50 038-clarify-multilingual | safety | `measurable` | Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns | non-English injection cases blocked (labeled) | 0 → 4 | gold 13/13; adversarial safe-rate 1.0; no guardrail regression | config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
 | 2026-09-13 | #51 039-llm-fallback | resilience | `measurable` | Config-gated LLM provider fallback (serves when the primary fails before emitting) | dependency fallback coverage (labeled set) | 0.286 → 1.0 | fallback coverage 1.0; no guardrail regression | app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval | git revert the squash-merge commit; or unset llm.fallback_provider | accepted | `docs/degradation.md` |
 | 2026-09-13 | #52 040-multilingual-retrieval | evaluation | `no-behavior` | Measure non-English retrieval over the English corpus; report the gap (not gated) | — | Measurement/reporting; es/fr/de/zh hit-rate@3 0.000-0.500 (a documented gap) | the English hit-rate gate is unchanged; no guardrail regression | evals/retrieval_set.py, evals/bench.py, report (no runtime) | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
+| 2026-09-13 | #53 041-large-catalog | ops | `no-behavior` | Measure storefront search over a 5k-product catalog; gate the budget | — | Measurement; search p95 ~15ms over 5k products (see evals/report.md) | a breach of the budget fails the gate; no guardrail regression | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 <!-- change-log:end -->

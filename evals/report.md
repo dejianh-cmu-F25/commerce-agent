@@ -15,7 +15,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
 | `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 18.5 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 15.9 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 0.6562 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -125,14 +125,16 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.5/8.9 | 14.8/19.1 | 50792 | 0 |
-| 4 | 6.3/7.8 | 14.8/16.4 | 55652 | 0 |
-| 16 | 6.3/7.9 | 15.2/18.5 | 47994 | 0 |
-| 64 | 6.2/7.8 | 15.0/17.8 | 53798 | 0 |
+| 1 | 6.6/9.7 | 14.6/20.2 | 51275 | 0 |
+| 4 | 6.3/7.8 | 14.3/17.0 | 56811 | 0 |
+| 16 | 6.1/7.7 | 14.2/15.9 | 57569 | 0 |
+| 64 | 6.7/9.3 | 14.8/18.5 | 52275 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5201.3/7108.3 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5262.5/6908.0 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12139.8/14965.3 µs** (budget 50000 µs).
+
+Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -238,3 +240,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #50 038-clarify-multilingual | safety | `measurable` | Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns | non-English injection cases blocked (labeled) | 0 → 4 | gold 13/13; adversarial safe-rate 1.0; no guardrail regression | config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
 | 2026-09-13 | #51 039-llm-fallback | resilience | `measurable` | Config-gated LLM provider fallback (serves when the primary fails before emitting) | dependency fallback coverage (labeled set) | 0.286 → 1.0 | fallback coverage 1.0; no guardrail regression | app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval | git revert the squash-merge commit; or unset llm.fallback_provider | accepted | `docs/degradation.md` |
 | 2026-09-13 | #52 040-multilingual-retrieval | evaluation | `no-behavior` | Measure non-English retrieval over the English corpus; report the gap (not gated) | — | Measurement/reporting; es/fr/de/zh hit-rate@3 0.000-0.500 (a documented gap) | the English hit-rate gate is unchanged; no guardrail regression | evals/retrieval_set.py, evals/bench.py, report (no runtime) | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
+| 2026-09-13 | #53 041-large-catalog | ops | `no-behavior` | Measure storefront search over a 5k-product catalog; gate the budget | — | Measurement; search p95 ~15ms over 5k products (see evals/report.md) | a breach of the budget fails the gate; no guardrail regression | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |

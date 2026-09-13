@@ -847,6 +847,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/clarify-vs-refuse.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#53 041-large-catalog",
+      "area": "ops",
+      "class": "no-behavior",
+      "what": "Measure storefront search over a 5k-product catalog; gate the budget",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Measurement; search p95 ~15ms over 5k products (see evals/report.md)",
+      "guardrails": "a breach of the budget fails the gate; no guardrail regression",
+      "blast_radius": "evals/scale.py, docs/scale.md, report (no runtime)",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/scale.md"
     }
   ]
 }

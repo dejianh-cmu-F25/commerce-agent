@@ -37,6 +37,8 @@ empty.
 - **Long-session memory** (100+ turns) is untested.
 - **Large corpus** is measured at 10,000 chunks (`docs/scale.md`); beyond that is
   untested.
+- **Large catalog** is measured at 5,000 products (`docs/scale.md`); beyond that
+  is untested.
 - **Long session** is measured at 100 turns (`docs/scale.md`); longer is untested.
 - **Adversarial retrieval queries** (poisoned corpus) are not covered.
 - **Non-English retrieval** is measured at 0.000 hit-rate@3 over the English

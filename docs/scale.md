@@ -10,7 +10,7 @@ and the gate enforces it.
 
 | Dimension | Tested value | Source |
 | --- | ---: | --- |
-| Catalog products | 5 | `app/adapters/catalog_seed.py` |
+| Catalog products | 5 (and a synthetic **5,000**) | `app/adapters/catalog_seed.py`, `evals/scale.py` |
 | Knowledge chunks | 9 (and a synthetic **10,000**) | `config/knowledge/`, `evals/scale.py` |
 | Concurrent operations | 1 / 4 / 16 / 64 | `evals/scale.py` |
 | Ops per level | 64 | `evals/scale.py` |
@@ -27,6 +27,7 @@ explicit, documented gap (see "Boundary" below).
 | Retrieval latency | p95 ≤ **2000 µs** | TF-IDF, in-process |
 | Turn latency | p95 ≤ **10000 µs** | full scripted agent turn |
 | Large-corpus retrieval | p95 ≤ **50000 µs** | TF-IDF over 10,000 chunks |
+| Large-catalog search | p95 ≤ **50000 µs** | SQLite storefront, 5,000 products |
 | Long-session | ≤ **5000 ms** | 100 turns, reconstructable log (SL-1) |
 | Error rate | **0.00** | failed ops / total |
 | Cost | **¥10.00** | harness-enforced (HR-12) |
@@ -55,6 +56,9 @@ uv run python evals/scale.py
 - **Data volume**: retrieval over 10,000 chunks is ~7 ms p95 vs ~8 µs over 9 —
   the cost is in the in-process scan, so a large corpus is the first thing to feel
   the boundary. A vector store (dense retrieval) is the intended answer at volume.
+- **Catalog volume**: storefront search over 5,000 products is ~15 ms p95 — the
+  search reads, normalizes, and ranks the whole catalog per query (O(catalog)); a
+  large catalog is the second boundary. An index (FTS/SQL filter) is the answer.
 - **Session length**: 100 turns complete in ~7 ms with a reconstructable log; the
   log grows linearly (2 events/turn) and there is no O(n²) re-derivation.
 - **Beyond it**: throughput is capped by a single process/GIL; the web server
