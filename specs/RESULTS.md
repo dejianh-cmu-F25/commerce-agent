@@ -85,4 +85,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #34 027-change-audit | process | `no-behavior` | Auditable change log + evidence gate + constitution consolidation | — | Tooling/process; no app behavior change | — | accepted | `specs/change-log.json` |
 | 2026-09-13 | #35 028-spec-structure | process | `docs` | Normalize the spec structure across all 25 features; complete the spec template | — | — | — | accepted | `.specify/templates/spec-template.md` |
 | 2026-09-13 | #36 029-docs-dedup | process | `docs` | Deduplicate the spec corpus: README, conventions, templates, notes | — | — | — | accepted | `docs/architecture.md` |
+| 2026-09-13 | #37 030-evidence-main-skip | process | `no-behavior` | Skip the change-evidence gate on the base branch | — | Gate-only fix; running the gate on main has no change to audit | — | accepted | `scripts/check_change_evidence.py` |
 <!-- change-log:end -->

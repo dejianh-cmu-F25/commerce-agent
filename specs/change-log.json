@@ -517,6 +517,20 @@
       "guardrails": null,
       "verdict": "accepted",
       "evidence": "docs/architecture.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#37 030-evidence-main-skip",
+      "area": "process",
+      "class": "no-behavior",
+      "what": "Skip the change-evidence gate on the base branch",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Gate-only fix; running the gate on main has no change to audit",
+      "guardrails": null,
+      "verdict": "accepted",
+      "evidence": "scripts/check_change_evidence.py"
     }
   ]
 }
