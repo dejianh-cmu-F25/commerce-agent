@@ -49,7 +49,8 @@ auditable record is the **change log** below. Each feature spec carries a
   unicode obfuscation, oversize.
 - **Scale & SLOs** (keyless, `docs/scale.md`): at concurrency 16, retrieval p95
   **7.8 µs**, turn p95 **15.2 µs**, 0 errors — far inside the declared budgets
-  (2000 / 10000 µs); error rate 0.
+  (2000 / 10000 µs). Large corpus (10k chunks) retrieval p95 **~7 ms**; long
+  session (100 turns) **~7 ms**, reconstructable (SL-1).
 - **Diagnosability**: metrics segment by **intent** (9) and by **tool** (9) — a
   failure is attributable, not just an aggregate pass rate.
 - **Fallbacks**: dependency fallback coverage **5/5** (from **0.400** without the
@@ -62,7 +63,7 @@ auditable record is the **change log** below. Each feature spec carries a
 - **Guardrails**: 7 metrics (quality, safety, data, resilience, latency, cost)
   aggregated against declared floors and enforced in the gate (EV-3).
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 172 tests, gold scenarios 12/12, 28 Agent Notes.
+- **Gate**: 175 tests, gold scenarios 12/12, 29 Agent Notes.
 
 ## Change log
 
@@ -121,4 +122,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #46 034-audit-closeout | docs | `docs` | Re-run the production audit: per-clause current status, evidence, and residual gaps | — | Docs only; 9 of 14 clauses now Met, residual gaps named | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
 | 2026-09-13 | #47 035-edge-cases | docs | `docs` | Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps | — | Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed | spec_review fails a missing/short coverage bullet; corpus test enforces all specs | docs/edge-cases.md, spec_review, specs' coverage notes | git revert the squash-merge commit | accepted | `docs/edge-cases.md` |
 | 2026-09-13 | #48 036-guardrails | process | `no-behavior` | Declare guardrail metrics with floors; aggregate them in the gate; require a guardrail statement per measurable change | — | Tooling/docs; 7 guardrails aggregated, 9 old measurable entries backfilled | the feature is the guardrail comparison (EV-3) | evals/guardrails.py, docs/guardrails.md, gate, change-log schema | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
+| 2026-09-13 | #49 037-scale-boundaries | ops | `no-behavior` | Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them | — | Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md) | breach of either budget fails the gate; SL-1 asserted | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 <!-- change-log:end -->

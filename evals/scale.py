@@ -19,8 +19,9 @@ from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.core.loop import Agent
-from app.core.session import Session
+from app.core.session import Session, derive_messages
 from app.core.settings import AgentSettings, SafetySettings
+from app.core.types import Chunk
 from app.knowledge.ingest import load_chunks
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
@@ -33,15 +34,19 @@ RESULTS_PATH = ROOT / "evals" / "results-keyless.json"
 LEVELS = (1, 4, 16, 64)
 TARGET_CONCURRENCY = 16
 OPS_PER_LEVEL = 64
+LARGE_CORPUS_CHUNKS = 10_000
+LONG_SESSION_TURNS = 100
 
-# Declared budgets (SC-3); see docs/scale.md. Generous regression guards.
-# Declared budgets (SC-3); see docs/scale.md. Generous regression guards:
-# measured p95 is ~10 us, so these catch an order-of-magnitude regression
-# (e.g. an accidental network call or sleep) without flaking on a loaded host.
+# Declared budgets (SC-3); see docs/scale.md. Generous regression guards: the
+# measured p95 is tens of microseconds, so these catch an order-of-magnitude
+# regression (e.g. an accidental network call or sleep) without flaking on a
+# loaded host.
 SLO = {
     "retrieval_p95_us": 2000.0,
     "turn_p95_us": 10000.0,
     "error_rate": 0.0,
+    "large_corpus_p95_us": 50_000.0,
+    "long_session_ms": 5_000.0,
 }
 
 
@@ -112,6 +117,58 @@ async def _measure(op: Callable[[], Awaitable[None]], concurrency: int, total: i
     }
 
 
+def _synthetic_chunks(count: int) -> list[Chunk]:
+    """A deterministic, representative corpus of ``count`` chunks (SC-1 volume)."""
+    base = load_chunks(KNOWLEDGE_DIR)
+    return [
+        Chunk(
+            id=f"syn-{i}",
+            text=f"{base[i % len(base)].text} (variant {i})",
+            source=base[i % len(base)].source,
+        )
+        for i in range(count)
+    ]
+
+
+async def _large_corpus_retrieval() -> dict:
+    retriever = InMemoryRetriever()
+    retriever.add(_synthetic_chunks(LARGE_CORPUS_CHUNKS))
+    queries = [case.query for case in RETRIEVAL_SET]
+    counter = {"i": 0}
+
+    async def op() -> None:
+        query = queries[counter["i"] % len(queries)]
+        counter["i"] += 1
+        retriever.retrieve(query, 3)
+
+    return await _measure(op, TARGET_CONCURRENCY, OPS_PER_LEVEL)
+
+
+async def _long_session() -> dict:
+    registry = ToolRegistry()
+    register_catalog_tools(registry, InMemoryStorefront(SEED_PRODUCTS))
+    agent = Agent(
+        llm=MockLLMClient([text_turn("Here is a tent.")]),
+        tools=registry,
+        settings=AgentSettings(max_turns=6),
+        system_prompt="You are a test assistant.",
+        safety=SafetySettings(),
+    )
+    session = Session(id="long-session")
+    sink = ListSink()
+    started = time.perf_counter()
+    for _ in range(LONG_SESSION_TURNS):
+        await agent.stream_turn(session, "I need a tent", sink)
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    messages = derive_messages(session, "You are a test assistant.")  # SL-1
+    return {
+        "turns": LONG_SESSION_TURNS,
+        "elapsed_ms": round(elapsed_ms, 2),
+        "events": len(session.events),
+        "reconstructable": len(messages) >= 1,
+    }
+
+
 async def run_scale() -> dict:
     result: dict = {
         "levels": [],
@@ -122,6 +179,8 @@ async def run_scale() -> dict:
             "concurrency_tested": list(LEVELS),
             "ops_per_level": OPS_PER_LEVEL,
             "target_concurrency": TARGET_CONCURRENCY,
+            "large_corpus_chunks": LARGE_CORPUS_CHUNKS,
+            "long_session_turns": LONG_SESSION_TURNS,
         },
     }
     for level in LEVELS:
@@ -132,6 +191,8 @@ async def run_scale() -> dict:
                 "turn": await _measure(_turn_op(), level, OPS_PER_LEVEL),
             }
         )
+    result["large_corpus"] = await _large_corpus_retrieval()
+    result["long_session"] = await _long_session()
     return result
 
 
@@ -150,6 +211,17 @@ def evaluate_slo(result: dict) -> list[str]:
         failures.append(f"turn p95 {level['turn']['p95_us']}us > {SLO['turn_p95_us']}us")
     if level["turn"]["error_rate"] > SLO["error_rate"]:
         failures.append(f"error rate {level['turn']['error_rate']} > {SLO['error_rate']}")
+
+    large_corpus = result.get("large_corpus", {})
+    if large_corpus and large_corpus.get("p95_us", 0.0) > SLO["large_corpus_p95_us"]:
+        failures.append(
+            f"large-corpus p95 {large_corpus['p95_us']}us > {SLO['large_corpus_p95_us']}us"
+        )
+    long_session = result.get("long_session", {})
+    if long_session and long_session.get("elapsed_ms", 0.0) > SLO["long_session_ms"]:
+        failures.append(f"long-session {long_session['elapsed_ms']}ms > {SLO['long_session_ms']}ms")
+    if long_session and not long_session.get("reconstructable"):
+        failures.append("long-session log is not reconstructable (SL-1)")
     return failures
 
 
@@ -179,6 +251,16 @@ def main() -> int:
             f"turn p50/p95={turn['p50_us']:.1f}/{turn['p95_us']:.1f}us  "
             f"throughput={turn['throughput_ops_s']:.0f}ops/s  errors={turn['errors']}"
         )
+    large_corpus = result["large_corpus"]
+    long_session = result["long_session"]
+    print(
+        f"  large corpus ({envelope['large_corpus_chunks']} chunks, c={TARGET_CONCURRENCY}): "
+        f"p50/p95={large_corpus['p50_us']:.1f}/{large_corpus['p95_us']:.1f}us"
+    )
+    print(
+        f"  long session ({long_session['turns']} turns): {long_session['elapsed_ms']:.1f}ms, "
+        f"{long_session['events']} events, reconstructable={long_session['reconstructable']}"
+    )
     write_keyless(result)
     failures = evaluate_slo(result)
     if failures:

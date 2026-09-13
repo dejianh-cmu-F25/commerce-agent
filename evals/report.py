@@ -257,6 +257,24 @@ def _scale_section(scale: dict) -> list[str]:
             f"{turn['throughput_ops_s']:.0f} | {turn['errors']} |"
         )
     lines.append("")
+    large_corpus = scale.get("large_corpus", {})
+    if large_corpus:
+        lines += [
+            f"Large corpus ({envelope.get('large_corpus_chunks', '?')} chunks, "
+            f"concurrency {envelope.get('target_concurrency', '?')}): retrieval p50/p95 "
+            f"**{large_corpus['p50_us']:.1f}/{large_corpus['p95_us']:.1f} µs** "
+            f"(budget {slo.get('large_corpus_p95_us', 0):.0f} µs).",
+            "",
+        ]
+    long_session = scale.get("long_session", {})
+    if long_session:
+        lines += [
+            f"Long session ({long_session['turns']} turns): "
+            f"**{long_session['elapsed_ms']:.1f} ms**, {long_session['events']} events, "
+            f"reconstructable={long_session['reconstructable']} "
+            f"(budget {slo.get('long_session_ms', 0):.0f} ms).",
+            "",
+        ]
     return lines
 
 
