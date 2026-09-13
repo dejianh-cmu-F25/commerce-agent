@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import tempfile
 import time
 from collections.abc import Awaitable, Callable
 from pathlib import Path
@@ -18,10 +19,11 @@ from app.adapters.cli_sink import ListSink
 from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.storefront_memory import InMemoryStorefront
+from app.adapters.storefront_sqlite import SqliteStorefront
 from app.core.loop import Agent
 from app.core.session import Session, derive_messages
 from app.core.settings import AgentSettings, SafetySettings
-from app.core.types import Chunk
+from app.core.types import Chunk, Product
 from app.knowledge.ingest import load_chunks
 from app.tools.catalog import register_catalog_tools
 from app.tools.registry import ToolRegistry
@@ -36,6 +38,7 @@ TARGET_CONCURRENCY = 16
 OPS_PER_LEVEL = 64
 LARGE_CORPUS_CHUNKS = 10_000
 LONG_SESSION_TURNS = 100
+LARGE_CATALOG_PRODUCTS = 5_000
 
 # Declared budgets (SC-3); see docs/scale.md. Generous regression guards: the
 # measured p95 is tens of microseconds, so these catch an order-of-magnitude
@@ -46,6 +49,7 @@ SLO = {
     "turn_p95_us": 10000.0,
     "error_rate": 0.0,
     "large_corpus_p95_us": 50_000.0,
+    "large_catalog_p95_us": 50_000.0,
     "long_session_ms": 5_000.0,
 }
 
@@ -144,6 +148,35 @@ async def _large_corpus_retrieval() -> dict:
     return await _measure(op, TARGET_CONCURRENCY, OPS_PER_LEVEL)
 
 
+def _synthetic_products(count: int) -> list[Product]:
+    """A deterministic, representative catalog of ``count`` products (SC-1)."""
+    return [
+        Product(
+            id=f"P-{i:05d}",
+            title=f"{SEED_PRODUCTS[i % len(SEED_PRODUCTS)].title} {i}",
+            price=float(10 + i % 90),
+            stock=5,
+            tags=["synthetic"],
+        )
+        for i in range(count)
+    ]
+
+
+async def _large_catalog_search() -> dict:
+    with tempfile.TemporaryDirectory() as tmp:
+        store = SqliteStorefront(
+            str(Path(tmp) / "store.sqlite"), seed=_synthetic_products(LARGE_CATALOG_PRODUCTS)
+        )
+        queries = [case.query for case in RETRIEVAL_SET]
+        counter = {"i": 0}
+
+        async def op() -> None:
+            store.search(queries[counter["i"] % len(queries)], 5)
+            counter["i"] += 1
+
+        return await _measure(op, TARGET_CONCURRENCY, OPS_PER_LEVEL)
+
+
 async def _long_session() -> dict:
     registry = ToolRegistry()
     register_catalog_tools(registry, InMemoryStorefront(SEED_PRODUCTS))
@@ -180,6 +213,7 @@ async def run_scale() -> dict:
             "ops_per_level": OPS_PER_LEVEL,
             "target_concurrency": TARGET_CONCURRENCY,
             "large_corpus_chunks": LARGE_CORPUS_CHUNKS,
+            "large_catalog_products": LARGE_CATALOG_PRODUCTS,
             "long_session_turns": LONG_SESSION_TURNS,
         },
     }
@@ -192,6 +226,7 @@ async def run_scale() -> dict:
             }
         )
     result["large_corpus"] = await _large_corpus_retrieval()
+    result["large_catalog"] = await _large_catalog_search()
     result["long_session"] = await _long_session()
     return result
 
@@ -216,6 +251,11 @@ def evaluate_slo(result: dict) -> list[str]:
     if large_corpus and large_corpus.get("p95_us", 0.0) > SLO["large_corpus_p95_us"]:
         failures.append(
             f"large-corpus p95 {large_corpus['p95_us']}us > {SLO['large_corpus_p95_us']}us"
+        )
+    large_catalog = result.get("large_catalog", {})
+    if large_catalog and large_catalog.get("p95_us", 0.0) > SLO["large_catalog_p95_us"]:
+        failures.append(
+            f"large-catalog p95 {large_catalog['p95_us']}us > {SLO['large_catalog_p95_us']}us"
         )
     long_session = result.get("long_session", {})
     if long_session and long_session.get("elapsed_ms", 0.0) > SLO["long_session_ms"]:
@@ -256,6 +296,11 @@ def main() -> int:
     print(
         f"  large corpus ({envelope['large_corpus_chunks']} chunks, c={TARGET_CONCURRENCY}): "
         f"p50/p95={large_corpus['p50_us']:.1f}/{large_corpus['p95_us']:.1f}us"
+    )
+    large_catalog = result["large_catalog"]
+    print(
+        f"  large catalog ({LARGE_CATALOG_PRODUCTS} products, c={TARGET_CONCURRENCY}): "
+        f"search p50/p95={large_catalog['p50_us']:.1f}/{large_catalog['p95_us']:.1f}us"
     )
     print(
         f"  long session ({long_session['turns']} turns): {long_session['elapsed_ms']:.1f}ms, "

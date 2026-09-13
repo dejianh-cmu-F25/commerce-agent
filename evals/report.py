@@ -277,6 +277,15 @@ def _scale_section(scale: dict) -> list[str]:
             f"(budget {slo.get('large_corpus_p95_us', 0):.0f} µs).",
             "",
         ]
+    large_catalog = scale.get("large_catalog", {})
+    if large_catalog:
+        lines += [
+            f"Large catalog ({envelope.get('large_catalog_products', '?')} products, "
+            f"concurrency {envelope.get('target_concurrency', '?')}): search p50/p95 "
+            f"**{large_catalog['p50_us']:.1f}/{large_catalog['p95_us']:.1f} µs** "
+            f"(budget {slo.get('large_catalog_p95_us', 0):.0f} µs).",
+            "",
+        ]
     long_session = scale.get("long_session", {})
     if long_session:
         lines += [
