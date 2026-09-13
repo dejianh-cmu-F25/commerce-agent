@@ -12,7 +12,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "7944888"
+      "evidence": "7944888",
+      "blast_radius": "whole repository (initial commit)",
+      "rollback": "git revert the initial commit"
     },
     {
       "date": "2026-09-13",
@@ -26,7 +28,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/001-agent-core"
+      "evidence": "specs/001-agent-core",
+      "blast_radius": "localized to `specs/001-agent-core` (area: agent)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -40,7 +44,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "docs/ui-conventions.md"
+      "evidence": "docs/ui-conventions.md",
+      "blast_radius": "localized to `docs/ui-conventions.md` (area: docs)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -54,7 +60,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/002-web-experience"
+      "evidence": "specs/002-web-experience",
+      "blast_radius": "localized to `specs/002-web-experience` (area: web)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -68,7 +76,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/003-react-web-ui"
+      "evidence": "specs/003-react-web-ui",
+      "blast_radius": "localized to `specs/003-react-web-ui` (area: web)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -82,7 +92,9 @@
       "note": "UI-only; no metric",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "6246672"
+      "evidence": "6246672",
+      "blast_radius": "web only",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -96,7 +108,9 @@
       "note": "UI-only; no metric",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "ad7c831"
+      "evidence": "ad7c831",
+      "blast_radius": "web only",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -110,7 +124,9 @@
       "note": "Derived from the -44% reported in PR #7",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "958c4b4"
+      "evidence": "958c4b4",
+      "blast_radius": "web only",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -124,7 +140,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "scripts/ci.sh"
+      "evidence": "scripts/ci.sh",
+      "blast_radius": "localized to `scripts/ci.sh` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -138,7 +156,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/004-storefront-backend"
+      "evidence": "specs/004-storefront-backend",
+      "blast_radius": "localized to `specs/004-storefront-backend` (area: storefront)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -152,7 +172,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/005-session-persistence"
+      "evidence": "specs/005-session-persistence",
+      "blast_radius": "localized to `specs/005-session-persistence` (area: session)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -166,7 +188,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/006-browser-resume"
+      "evidence": "specs/006-browser-resume",
+      "blast_radius": "localized to `specs/006-browser-resume` (area: web)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -180,7 +204,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/007-observability"
+      "evidence": "specs/007-observability",
+      "blast_radius": "localized to `specs/007-observability` (area: observability)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -194,7 +220,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/008-trace-viewer"
+      "evidence": "specs/008-trace-viewer",
+      "blast_radius": "localized to `specs/008-trace-viewer` (area: web)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -208,7 +236,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/009-cart-checkout"
+      "evidence": "specs/009-cart-checkout",
+      "blast_radius": "localized to `specs/009-cart-checkout` (area: cart)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -222,7 +252,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/010-merchant-agent"
+      "evidence": "specs/010-merchant-agent",
+      "blast_radius": "localized to `specs/010-merchant-agent` (area: merchant)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -236,7 +268,9 @@
       "note": "The gold set has since grown to 12",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/run.py"
+      "evidence": "evals/run.py",
+      "blast_radius": "localized to `evals/run.py` (area: evaluation)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -250,7 +284,9 @@
       "note": "Measured later by the 022 benchmark",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/bench.py"
+      "evidence": "evals/bench.py",
+      "blast_radius": "localized to `evals/bench.py` (area: retrieval)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -264,7 +300,9 @@
       "note": "+0.167",
       "guardrails": "0 ungrounded",
       "verdict": "accepted",
-      "evidence": "evals/ablation.py"
+      "evidence": "evals/ablation.py",
+      "blast_radius": "localized to `evals/ablation.py` (area: memory)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -278,7 +316,9 @@
       "note": "No benchmark existed at the time",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/014-post-purchase"
+      "evidence": "specs/014-post-purchase",
+      "blast_radius": "localized to `specs/014-post-purchase` (area: orders)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -292,7 +332,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/015-deployment-hardening/checkpoint.md"
+      "evidence": "specs/015-deployment-hardening/checkpoint.md",
+      "blast_radius": "localized to `specs/015-deployment-hardening/checkpoint.md` (area: deployment)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -306,7 +348,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/runner.py"
+      "evidence": "evals/runner.py",
+      "blast_radius": "localized to `evals/runner.py` (area: evaluation)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -320,7 +364,9 @@
       "note": "Adds observability; no quality delta measured",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/017-metrics-dashboard"
+      "evidence": "specs/017-metrics-dashboard",
+      "blast_radius": "localized to `specs/017-metrics-dashboard` (area: observability)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -334,7 +380,9 @@
       "note": "Build-only; enabled the 015 smoke",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "Dockerfile"
+      "evidence": "Dockerfile",
+      "blast_radius": "deployment only",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -348,7 +396,9 @@
       "note": null,
       "guardrails": "latency ok",
       "verdict": "accepted",
-      "evidence": "evals/bench.py"
+      "evidence": "evals/bench.py",
+      "blast_radius": "localized to `evals/bench.py` (area: retrieval)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -362,7 +412,9 @@
       "note": "+0.083",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/ablation.py"
+      "evidence": "evals/ablation.py",
+      "blast_radius": "localized to `evals/ablation.py` (area: agent)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -376,7 +428,9 @@
       "note": "Behavior-preserving refactor",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "tests/unit/test_gates.py"
+      "evidence": "tests/unit/test_gates.py",
+      "blast_radius": "localized to `tests/unit/test_gates.py` (area: agent)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -390,7 +444,9 @@
       "note": "Parity with the in-memory store",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/bench.py"
+      "evidence": "evals/bench.py",
+      "blast_radius": "localized to `evals/bench.py` (area: retrieval)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -404,7 +460,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/bench.py"
+      "evidence": "evals/bench.py",
+      "blast_radius": "localized to `evals/bench.py` (area: evaluation)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -418,7 +476,9 @@
       "note": "Pass^k 0.667; 0 vetoes",
       "guardrails": "0 ungrounded",
       "verdict": "accepted",
-      "evidence": "evals/report.md"
+      "evidence": "evals/report.md",
+      "blast_radius": "localized to `evals/report.md` (area: evaluation)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -432,7 +492,9 @@
       "note": "The set now discriminates (Pass^k 0.667)",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "evals/report.md"
+      "evidence": "evals/report.md",
+      "blast_radius": "localized to `evals/report.md` (area: evaluation)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -446,7 +508,9 @@
       "note": "UI view; no metric",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/025-eval-report-view"
+      "evidence": "specs/025-eval-report-view",
+      "blast_radius": "localized to `specs/025-eval-report-view` (area: web)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -460,7 +524,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/RESULTS.md"
+      "evidence": "specs/RESULTS.md",
+      "blast_radius": "localized to `specs/RESULTS.md` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -474,7 +540,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "docs/production-audit.md"
+      "evidence": "docs/production-audit.md",
+      "blast_radius": "localized to `docs/production-audit.md` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -488,7 +556,9 @@
       "note": "Tooling/process; no app behavior change",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "specs/change-log.json"
+      "evidence": "specs/change-log.json",
+      "blast_radius": "localized to `specs/change-log.json` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -502,7 +572,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": ".specify/templates/spec-template.md"
+      "evidence": ".specify/templates/spec-template.md",
+      "blast_radius": "localized to `.specify/templates/spec-template.md` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -516,7 +588,9 @@
       "note": null,
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "docs/architecture.md"
+      "evidence": "docs/architecture.md",
+      "blast_radius": "localized to `docs/architecture.md` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -530,7 +604,9 @@
       "note": "Gate-only fix; running the gate on main has no change to audit",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "scripts/check_change_evidence.py"
+      "evidence": "scripts/check_change_evidence.py",
+      "blast_radius": "localized to `scripts/check_change_evidence.py` (area: process)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -544,7 +620,9 @@
       "note": "Evaluation tooling; states existing deltas with significance, no app behavior change",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "app/evaluation/significance.py"
+      "evidence": "app/evaluation/significance.py",
+      "blast_radius": "localized to `app/evaluation/significance.py` (area: evaluation)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -558,7 +636,9 @@
       "note": "Naive pre-change boundary vs the same labeled set: 2/20 -> 20/20",
       "guardrails": "repair skips+counts; strict fails loud",
       "verdict": "accepted",
-      "evidence": "app/data/quality.py"
+      "evidence": "app/data/quality.py",
+      "blast_radius": "localized to `app/data/quality.py` (area: data)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -572,7 +652,9 @@
       "note": "No guard: the naive baseline allows every hostile input (7/17 benign)",
       "guardrails": "refusal recorded in the log; no model/tool call",
       "verdict": "accepted",
-      "evidence": "app/safety/input_guard.py"
+      "evidence": "app/safety/input_guard.py",
+      "blast_radius": "localized to `app/safety/input_guard.py` (area: safety)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -586,7 +668,9 @@
       "note": "Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md",
       "guardrails": "SLO breach fails the gate",
       "verdict": "accepted",
-      "evidence": "docs/scale.md"
+      "evidence": "docs/scale.md",
+      "blast_radius": "localized to `docs/scale.md` (area: ops)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -600,7 +684,9 @@
       "note": "Reporting only; 9 intents and 9 tools segmented (see evals/report.md)",
       "guardrails": null,
       "verdict": "accepted",
-      "evidence": "app/evaluation/segments.py"
+      "evidence": "app/evaluation/segments.py",
+      "blast_radius": "localized to `app/evaluation/segments.py` (area: observability)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
     },
     {
       "date": "2026-09-13",
@@ -614,7 +700,25 @@
       "note": "Without the wrapper only 2/5 dependency failures degrade; now 5/5",
       "guardrails": "disabled fallback propagates; degradation recorded",
       "verdict": "accepted",
-      "evidence": "app/core/resilience.py"
+      "evidence": "app/core/resilience.py",
+      "blast_radius": "localized to `app/core/resilience.py` (area: resilience)",
+      "rollback": "git revert the squash-merge commit; no destructive migration"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#44 032-change-safety",
+      "area": "process",
+      "class": "no-behavior",
+      "what": "Require blast radius + rollback per change; gate them; seam map + PR template",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Process/docs + gate; every entry now states blast radius and rollback",
+      "guardrails": "gate fails an entry missing either field",
+      "blast_radius": "change-log schema, gate, report renderer, PR template, docs (no runtime)",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/change-safety.md"
     }
   ]
 }

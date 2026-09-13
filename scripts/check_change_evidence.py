@@ -88,6 +88,11 @@ def main() -> int:
         )
         return 1
 
+    for field in ("blast_radius", "rollback"):
+        if not entry.get(field):
+            print(f"FAIL: entry {entry.get('change')!r} must state {field!r} (SC-4).")
+            return 1
+
     if classification == "measurable":
         has_numbers = (
             entry.get("metric") is not None

@@ -306,8 +306,8 @@ def _agent_section(agent: dict) -> list[str]:
 def _change_log_table(entries: list[dict]) -> str:
     lines = [
         "| Date | Change | Area | Class | What changed | Metric | Before → After "
-        "| Guardrails | Verdict | Evidence |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Guardrails | Blast radius | Rollback | Verdict | Evidence |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for entry in entries:
         before, after = entry.get("before"), entry.get("after")
@@ -318,8 +318,9 @@ def _change_log_table(entries: list[dict]) -> str:
         lines.append(
             f"| {entry['date']} | {entry['change']} | {entry['area']} | "
             f"`{entry['class']}` | {entry['what']} | {entry.get('metric') or '—'} | "
-            f"{delta} | {entry.get('guardrails') or '—'} | {entry['verdict']} | "
-            f"`{entry['evidence']}` |"
+            f"{delta} | {entry.get('guardrails') or '—'} | "
+            f"{entry.get('blast_radius') or '—'} | {entry.get('rollback') or '—'} | "
+            f"{entry['verdict']} | `{entry['evidence']}` |"
         )
     return "\n".join(lines)
 
