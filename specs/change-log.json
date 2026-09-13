@@ -735,6 +735,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/regressions.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#46 034-audit-closeout",
+      "area": "docs",
+      "class": "docs",
+      "what": "Re-run the production audit: per-clause current status, evidence, and residual gaps",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Docs only; 9 of 14 clauses now Met, residual gaps named",
+      "guardrails": null,
+      "blast_radius": "docs/production-audit.md only",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/production-audit.md"
     }
   ]
 }

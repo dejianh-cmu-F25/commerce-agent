@@ -29,6 +29,28 @@ useful.
 | EV-4 Versioning | Met | Model + rendered-prompt hash recorded (`evals/report.md`) | — |
 | EV-5 Regression sets | Partial | Gold + parameterized cases | Production failures are not yet a pipeline into regressions |
 
+## Remediation status (2026-09-13)
+
+The roadmap below was executed as features 026–033. The original summary above is
+the **as-found** snapshot; this table is the current status.
+
+| Clause | As found | Now | Evidence | Residual gap |
+| --- | --- | --- | --- | --- |
+| RW-1 Input distribution | Partial | **Met** | `evals/adversarial.py` (17 cases, 1.000) | English-only; clarify-vs-refuse still unspecified |
+| RW-2 Data quality | Gap | **Met** | `app/data/quality.py`, `evals/data_quality.py` (0.100 → 1.000) | large-catalog scale untested |
+| RW-3 Edge & failure modes | Partial | Partial | `## Real-World Coverage` in every spec | enumeration still uneven |
+| RW-4 No patchwork | Partial | **Met** | `evals/regressions.json` + promotion script | promotion is manual |
+| RD-1 Fallback (was RW-5) | Partial | **Met** | `app/core/resilience.py`, `evals/fallbacks.py` (0.400 → 1.000) | no second LLM provider |
+| SC-1 Scale envelope | Gap | **Met** | `docs/scale.md`, `evals/scale.py` | no multi-tenant / long-session / large-corpus test |
+| SC-2 Diagnosability | Partial | **Met** | `app/evaluation/segments.py` (intent + tool) | model/tenant single-valued; not measured under load |
+| SC-3 SLOs | Gap | **Met** | `docs/scale.md` budgets, enforced by the gate | budgets are regression guards, not tight targets |
+| SC-4 Change safety | Partial | **Met** | `blast_radius`/`rollback` per change, gated; `docs/change-safety.md` | rollback is manual revert (no canary) |
+| EV-1 No unmeasured change | Met | Met | `scripts/check_change_evidence.py` | — |
+| EV-2 Paired & significant | Partial | **Met** | `app/evaluation/significance.py` (CI + McNemar) | wide CIs on 12 scenarios (small set) |
+| EV-3 Guardrails | Partial | Partial | judge veto, budget, input guard | guardrails not formally compared per change |
+| EV-4 Versioning | Met | Met | model + prompt hash in `evals/report.md` | — |
+| EV-5 Regression sets | Partial | **Met** | `evals/regressions.py` (5 named) | small set; manual promotion |
+
 ## Detail
 
 ### RW-1 Input distribution — Partial
@@ -91,17 +113,17 @@ failure-to-regression pipeline (EV-5). Model and rendered-prompt versioning
 
 ## Remediation roadmap
 
-| Priority | Item | Clause |
-| --- | --- | --- |
-| P0 | Data contracts + validation/normalization + repair path | RW-2 |
-| P0 | Adversarial / OOD input set; specify clarify/refuse | RW-1 |
-| P1 | Declare and measure a scale envelope | SC-1 |
-| P1 | Declare latency/cost/error budgets (SLOs) | SC-3 |
-| P1 | Paired significance (CI / McNemar) in the eval report | EV-2 |
-| P2 | Segment metrics by intent / tool / model / tenant | SC-2 |
-| P2 | Failure-to-regression pipeline; grow trajectory-prefix set | RW-4, EV-5 |
-| P2 | Declared fallback per dependency | RW-5 |
-| P2 | Blast radius / rollback in the PR | SC-4 |
+| Priority | Item | Clause | Status |
+| --- | --- | --- | --- |
+| P0 | Data contracts + validation/normalization + repair path | RW-2 | ✅ 027 |
+| P0 | Adversarial / OOD input set; specify clarify/refuse | RW-1 | ✅ 028 (clarify-vs-refuse open) |
+| P1 | Declare and measure a scale envelope | SC-1 | ✅ 029 |
+| P1 | Declare latency/cost/error budgets (SLOs) | SC-3 | ✅ 029 |
+| P1 | Paired significance (CI / McNemar) in the eval report | EV-2 | ✅ 026 |
+| P2 | Segment metrics by intent / tool / model / tenant | SC-2 | ✅ 030 (intent/tool; model/tenant open) |
+| P2 | Failure-to-regression pipeline; grow trajectory-prefix set | RW-4, EV-5 | ✅ 033 |
+| P2 | Declared fallback per dependency | RD-1 | ✅ 031 |
+| P2 | Blast radius / rollback in the PR | SC-4 | ✅ 032 |
 
 This audit is itself the demonstration that the project can name its own gaps —
 the first requirement of being trustworthy at scale.
