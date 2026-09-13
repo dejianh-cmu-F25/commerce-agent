@@ -79,7 +79,7 @@ fallback; the gate enforces it.
 
 - **Input distribution**: a failing vector store / embedding outage; a missing
   knowledge directory; an LLM provider failure.
-- **Data quality**: n/a.
+- **Data quality**: n/a (the fallback composes retrievers; see `docs/edge-cases.md`).
 - **Edge & failure modes**: the fallback triggers once and is not retried; a
   disabled fallback propagates the error.
 - **Scale envelope**: the wrapper is O(1) per call; see `docs/scale.md`.

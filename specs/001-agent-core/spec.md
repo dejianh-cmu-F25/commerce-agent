@@ -132,12 +132,13 @@ boundary it will attach to.
 
 ## Real-World Coverage
 
-- **Input distribution**: free-form chat; unseen phrasings go to the model. No
-  adversarial / prompt-injection suite yet (gap; see `docs/production-audit.md`).
+- **Input distribution**: free-form chat; unseen phrasings go to the model.
+  Adversarial and out-of-distribution input is guarded before the model and
+  measured (feature 028, `evals/adversarial.py`).
 - **Data quality**: the session log is append-only; tool JSON is parsed
   defensively. User text is not validated beyond length.
 - **Edge & failure modes**: unknown tool → error event, the turn continues; max
   turns is bounded; the budget stops the loop.
-- **Scale envelope**: single process, single session; not declared or measured (gap).
+- **Scale envelope**: single process, single session; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: an LLM failure surfaces as an error event; there is no model fallback.
 - **Change evidence**: model/prompt changes must update `specs/RESULTS.md` (EV-1).

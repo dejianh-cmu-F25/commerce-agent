@@ -110,6 +110,6 @@ The harness prints a per-scenario report; it can emit spans through the same
   real, so assertions cover deterministic outcomes.
 - **Edge & failure modes**: a failing scenario is reported and the gate exits
   non-zero.
-- **Scale envelope**: 12 scenarios; not a load test (gap).
+- **Scale envelope**: 12 scenarios; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: fully keyless; no provider needed.
 - **Change evidence**: gold scenarios 12/12 (`specs/RESULTS.md`).

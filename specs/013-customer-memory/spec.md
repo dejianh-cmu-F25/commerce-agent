@@ -243,6 +243,6 @@ answers, not the chat chrome.
   is idempotent per (customer, kind, text).
 - **Edge & failure modes**: no customer id → memory disabled; a store error
   degrades to no memory.
-- **Scale envelope**: per-customer fact sets; not measured (gap).
+- **Scale envelope**: per-customer fact sets; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: memory failures never fail the turn (RD-1).
 - **Change evidence**: the ablation measures the memory contribution (+0.167).

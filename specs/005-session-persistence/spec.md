@@ -143,6 +143,6 @@ No new events; structured traces arrive with feature 080 (SL-2).
   is idempotent.
 - **Edge & failure modes**: an unknown session id returns 404; a stale id is
   cleared client-side.
-- **Scale envelope**: a per-session log; not measured (gap).
+- **Scale envelope**: a per-session log; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: the `memory` store is the keyless fallback.
 - **Change evidence**: resume integration tests.

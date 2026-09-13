@@ -24,10 +24,10 @@ them. The audit says "Re-run: after remediation" — this closes that loop.
 ## Real-World Coverage
 
 - **Input distribution**: n/a (process/documentation).
-- **Data quality**: n/a.
+- **Data quality**: n/a (a document, no data path).
 - **Edge & failure modes**: residual gaps are named, not hidden.
-- **Scale envelope**: n/a.
-- **Degradation**: n/a.
+- **Scale envelope**: n/a (a document; the system envelope is in `docs/scale.md`).
+- **Degradation**: n/a (a document, no runtime path).
 - **Change evidence**: the clause statuses reference the measured evidence.
 
 ## Success Criteria

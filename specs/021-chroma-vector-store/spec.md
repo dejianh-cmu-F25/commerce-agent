@@ -138,6 +138,6 @@ default embedding (all-MiniLM) is never triggered and telemetry is off.
 - **Data quality**: upsert is keyed by chunk id and idempotent; data persists under `./data/chroma`.
 - **Edge & failure modes**: an empty collection returns nothing; a missing
   `chromadb` fails loud (PB-1).
-- **Scale envelope**: a tiny corpus; not measured (gap).
+- **Scale envelope**: a tiny corpus; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: the in-process `memory` store is the keyless fallback.
 - **Change evidence**: parity with the in-memory store and the benchmark row.

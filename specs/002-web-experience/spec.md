@@ -232,6 +232,6 @@ turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
 - **Data quality**: model/user markup is sanitized before the DOM (WV-9); tool
   JSON is parsed defensively.
 - **Edge & failure modes**: Stop, error + Retry, and the empty state are defined.
-- **Scale envelope**: single browser session; not measured (gap).
+- **Scale envelope**: single browser session; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: a failed turn surfaces inline with Retry.
 - **Change evidence**: UI-only; no quantitative delta (see `specs/change-log.json`).

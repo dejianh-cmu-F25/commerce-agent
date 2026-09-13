@@ -58,7 +58,7 @@ tables; a failing scenario is attributable to its intent and its tools.
 ## Real-World Coverage
 
 - **Input distribution**: the 12 gold scenarios across 9 intents and 12 tools.
-- **Data quality**: n/a.
+- **Data quality**: n/a (segmentation reads run results, not raw data).
 - **Edge & failure modes**: a by-design tool error is attributed to its tool.
 - **Scale envelope**: segments are O(scenarios + tool calls); see `docs/scale.md`.
 - **Degradation**: n/a (reporting only).

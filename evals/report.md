@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
 | `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -108,10 +108,10 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.7/8.9 | 15.3/34.6 | 47030 | 0 |
-| 4 | 6.7/8.6 | 14.5/15.8 | 54381 | 0 |
-| 16 | 6.4/8.0 | 14.3/15.2 | 56491 | 0 |
-| 64 | 6.8/8.6 | 14.4/16.0 | 56365 | 0 |
+| 1 | 6.7/11.3 | 15.0/23.6 | 48945 | 0 |
+| 4 | 6.5/8.1 | 15.0/17.1 | 53243 | 0 |
+| 16 | 6.7/8.7 | 15.1/46.9 | 39782 | 0 |
+| 64 | 6.4/8.0 | 15.0/15.7 | 53718 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -211,3 +211,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #44 032-change-safety | process | `no-behavior` | Require blast radius + rollback per change; gate them; seam map + PR template | — | Process/docs + gate; every entry now states blast radius and rollback | gate fails an entry missing either field | change-log schema, gate, report renderer, PR template, docs (no runtime) | git revert the squash-merge commit | accepted | `docs/change-safety.md` |
 | 2026-09-13 | #45 033-regression-pipeline | process | `measurable` | Failure-to-regression pipeline: registry, promotion, keyless runner in the gate | named root-caused regressions enforced (count) | 0 → 5 | unknown check or a failed regression fails the gate; promotion requires a root cause | evals/regressions.json, evals/regressions.py, gate, report (no runtime) | git revert the squash-merge commit | accepted | `docs/regressions.md` |
 | 2026-09-13 | #46 034-audit-closeout | docs | `docs` | Re-run the production audit: per-clause current status, evidence, and residual gaps | — | Docs only; 9 of 14 clauses now Met, residual gaps named | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
+| 2026-09-13 | #47 035-edge-cases | docs | `docs` | Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps | — | Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed | spec_review fails a missing/short coverage bullet; corpus test enforces all specs | docs/edge-cases.md, spec_review, specs' coverage notes | git revert the squash-merge commit | accepted | `docs/edge-cases.md` |

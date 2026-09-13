@@ -192,6 +192,6 @@ chat turn. No component, state, or style changes.
   excluded from the image.
 - **Edge & failure modes**: missing Docker fails loud; the smoke test cleans up on
   every exit path.
-- **Scale envelope**: a single image build + smoke; not measured (gap).
+- **Scale envelope**: a single image build + smoke; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: a keyless smoke with a mock model and memory providers.
 - **Change evidence**: container smoke PASS (`specs/015-deployment-hardening/checkpoint.md`).

@@ -130,6 +130,6 @@ Merchant turns emit the existing spans (007); tool spans show `list_inventory` /
 - **Input distribution**: operator instructions to change price/stock.
 - **Data quality**: changes are validated (price > 0, stock ≥ 0) and staged.
 - **Edge & failure modes**: unknown product → error; double-apply is a no-op (RD-2).
-- **Scale envelope**: single operator; not measured (gap).
+- **Scale envelope**: single operator; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: the merchant backend is SQLite-backed; a write failure surfaces as an error.
 - **Change evidence**: model/prompt changes update `specs/RESULTS.md` (EV-1).

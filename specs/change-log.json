@@ -751,6 +751,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/production-audit.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#47 035-edge-cases",
+      "area": "docs",
+      "class": "docs",
+      "what": "Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed",
+      "guardrails": "spec_review fails a missing/short coverage bullet; corpus test enforces all specs",
+      "blast_radius": "docs/edge-cases.md, spec_review, specs' coverage notes",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/edge-cases.md"
     }
   ]
 }
