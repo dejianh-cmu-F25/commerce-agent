@@ -194,14 +194,15 @@ def _guardrails_section(guardrails: dict) -> list[str]:
         "",
         "Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).",
         "",
-        "| Guardrail | Value | Floor | Direction | Source | Status |",
-        "| --- | ---: | ---: | --- | --- | --- |",
+        "| Guardrail | Value | Δ prev | Floor | Direction | Source | Status |",
+        "| --- | ---: | ---: | ---: | --- | --- | --- |",
     ]
     for metric in metrics:
         direction = "≥" if metric["direction"] == "at_least" else "≤"
+        delta = f"{metric['delta']:+.4f}" if metric.get("delta") is not None else "—"
         lines.append(
-            f"| `{metric['name']}` | {metric['value']} | {metric['floor']} | {direction} | "
-            f"`{metric['source']}` | {'OK' if metric['ok'] else 'FAIL'} |"
+            f"| `{metric['name']}` | {metric['value']} | {delta} | {metric['floor']} | "
+            f"{direction} | `{metric['source']}` | {'OK' if metric['ok'] else 'FAIL'} |"
         )
     lines.append("")
     return lines

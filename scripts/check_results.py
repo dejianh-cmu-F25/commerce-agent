@@ -175,11 +175,12 @@ def _check_report(artifacts: dict) -> list[str]:
                     if not row_ok:
                         failures.append(f"guardrails: row for {metric['name']!r} missing")
                     continue
-                expected = (
-                    f"| `{metric['name']}` | {metric['value']} | {metric['floor']} | {direction} |"
-                )
-                if expected not in section:
-                    failures.append(f"guardrails: expected row {expected!r} in the report")
+                expected_value = f"| `{metric['name']}` | {metric['value']} |"
+                expected_floor = f"| {metric['floor']} | {direction} |"
+                if expected_value not in section or expected_floor not in section:
+                    failures.append(
+                        f"guardrails: expected row for {metric['name']!r} in the report"
+                    )
 
     regressions = artifacts.get("regressions", {})
     if regressions:

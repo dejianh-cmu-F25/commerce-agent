@@ -33,8 +33,19 @@ Every `measurable` entry in `specs/change-log.json` MUST state its `guardrails`
 impact. The evidence gate (`scripts/check_change_evidence.py`) fails an entry that
 omits it. A change that does not touch a guardrail says so explicitly.
 
+## Trend history
+
+`evals/guardrails.py --record` appends the current values to
+`evals/guardrail-history.jsonl` (append-only, capped at 50 entries); the report
+shows each guardrail's delta vs the previous recorded run. The gate runs the check
+**without** `--record`, so a normal run never dirties the working tree.
+
+```bash
+uv run python evals/guardrails.py --record   # after a meaningful run
+```
+
 ## Gaps (honest)
 
 - Guardrails are keyless; the real (paid) eval's quality/safety numbers are a
   dated snapshot and are not floors.
-- There is no per-guardrail trend history (only the current value vs floor).
+- Recording is manual; there is no scheduler that records after every release.
