@@ -133,3 +133,13 @@ unchanged.
   gap: hit-rate@3 **0.800 (TF-IDF) → 1.000 (dense)** on the 27-query benchmark.
 - In-memory and Chroma stores agree on the top hit (parity).
 - Source: `evals/bench.py`; aggregate: [`specs/RESULTS.md`](../RESULTS.md).
+
+## Real-World Coverage
+
+- **Input distribution**: retrieval queries; hard/paraphrase cases are measured.
+- **Data quality**: chunk ids are stable; the vector store upsert is idempotent (RD-2).
+- **Edge & failure modes**: empty query → nothing; an unknown provider fails loud (PB-1).
+- **Scale envelope**: a tiny corpus; not measured (gap).
+- **Degradation**: the keyless `hash` embedding needs no network; an embedding
+  failure surfaces as a tool error.
+- **Change evidence**: the retrieval benchmark measures the dense path (022).

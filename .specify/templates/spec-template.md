@@ -103,6 +103,40 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## Real-World Coverage *(mandatory when the feature touches inputs, data, the model, or retrieval; RW-1..RW-5, SC-1..SC-4, EV-1..EV-5)*
+
+<!--
+  Fill this in when the feature interprets free-form input, handles data, or
+  changes the model/prompt/retrieval/modules. A happy-path-only spec is
+  incomplete (RW). Keep it concrete and testable. See docs/production-conventions.md.
+-->
+
+### Input distribution
+
+- The real inputs the feature must handle (phrasings, ambiguity, languages, adversarial).
+- Behavior for unseen / out-of-distribution input: clarify, refuse, or fall back.
+
+### Data quality
+
+- Validation and normalization at each boundary.
+- Defined behavior for missing, dirty, or conflicting data, and the repair path.
+
+### Edge & failure modes
+
+- Each edge and failure mode and the behavior defined for it.
+
+### Scale envelope
+
+- The scale dimensions the feature must survive (traffic, data volume, concurrency, tenancy, session length) and the measured boundary.
+
+### Degradation
+
+- The fallback per external dependency and how the degradation is surfaced.
+
+### Change evidence
+
+- For a model / prompt / retrieval / module change: the before/after evaluation (paired, seeds, guardrails) and where it is recorded (`specs/RESULTS.md`).
+
 ## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
 
 <!--

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 from datetime import UTC, datetime
@@ -60,7 +61,7 @@ def _load_dotenv() -> None:
         os.environ.setdefault(key.strip(), value.strip())
 
 
-def _build_agent(settings: Settings, llm: DeepSeekClient, tracer: JsonlTracer) -> Agent:
+def _build_agent(settings: Settings, llm: DeepSeekClient, tracer: JsonlTracer) -> tuple[Agent, str]:
     registry = ToolRegistry()
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
@@ -74,7 +75,7 @@ def _build_agent(settings: Settings, llm: DeepSeekClient, tracer: JsonlTracer) -
         register_skill_tools(registry, skills)
         system_prompt += "\n\n## Available skills\n" + skills.catalog()
 
-    return Agent(
+    agent = Agent(
         llm=llm,
         tools=registry,
         settings=settings.agent,
@@ -83,6 +84,7 @@ def _build_agent(settings: Settings, llm: DeepSeekClient, tracer: JsonlTracer) -
         tracer=tracer,
         memory=InMemoryMemoryStore(),
     )
+    return agent, system_prompt
 
 
 def _final_text(session: Session) -> str:
@@ -179,7 +181,8 @@ def _summarize_judge(results: list[JudgeResult]) -> dict:
 async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
     llm = DeepSeekClient(settings.llm)
     tracer = JsonlTracer(str(ROOT / "logs" / "eval-traces.jsonl"))
-    agent = _build_agent(settings, llm, tracer)
+    agent, system_prompt = _build_agent(settings, llm, tracer)
+    prompt_hash = hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()[:12]
     meter = UsageCostMeter(settings.budget)
     start_cost = meter.spent_cny()
     cap = settings.evaluation.max_cost_cny
@@ -231,6 +234,7 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
     reliability = aggregate([outcomes[name] for name in CASE_NAMES], settings.evaluation.pass_k)
     return {
         "model": settings.llm.model,
+        "prompt_hash": prompt_hash,
         "judge_model": settings.evaluation.judge_model if use_judge else "disabled",
         "seeds": seeds,
         "pass_k": settings.evaluation.pass_k,

@@ -58,6 +58,9 @@ uv run python evals/ablation.py
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
 
+step "Python: change evidence (EV-1)"
+uv run python scripts/check_change_evidence.py
+
 step "Python: self-review (spec compliance)"
 uv run python scripts/spec_review.py
 

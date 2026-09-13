@@ -28,6 +28,15 @@ This repository is developed **spec-first** with [GitHub Spec Kit](https://githu
 Each feature lives in `specs/<NNN>-<name>/` on its own branch and merges through a pull
 request that satisfies the review checklist.
 
+## Production constraints
+
+The constitution (v1.3.0) adds three clauses: **RW** (Real-World Fitness),
+**SC** (Scale & Operability), and **EV** (Evidence-Backed Change). A feature that
+touches inputs, data, the model, or retrieval must fill in `## Real-World
+Coverage`; a model / prompt / retrieval / module change must ship before/after
+evidence. Details: `docs/production-conventions.md`. The project's current
+standing against these clauses: `docs/production-audit.md`.
+
 ## Status
 
 Spec-driven demo with 25 features merged. The measured results — retrieval

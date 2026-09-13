@@ -14,7 +14,7 @@ from pathlib import Path
 
 NOTES_ROOT = Path("docs/notes")
 LIFECYCLES = {"proposed", "implemented", "rejected"}
-CLASSES = {"architecture", "process", "testing"}
+CLASSES = {"architecture", "process", "testing", "production"}
 FILENAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9-]+\.md$")
 IMPLEMENTED_REQUIRED = ("## Decision", "## Consequences")
 IMPLEMENTED_FORBIDDEN = ("## Proposal", "## Plan", "## Acceptance criteria")

@@ -160,7 +160,7 @@ core path.
 - **DR-2** Format: `## Problem` / `## Decision` / `## Alternatives considered` /
   `## Consequences`. `## Alternatives considered` is mandatory.
 - **DR-3** Lifecycle `proposed/`, `implemented/`, `rejected/`; classes `architecture`,
-  `process`, `testing`. (No bilingual files, no frozen archive.)
+  `process`, `testing`, `production`. (No bilingual files, no frozen archive.)
 - **DR-4** A `verify_notes` gate checks path, `Status`, and the presence of alternatives.
 - **DR-5** Boundary: feature-scoped decisions stay in the Spec Kit `plan`/`research`;
   Agent Notes record cross-cutting decisions.
@@ -178,6 +178,83 @@ core path.
   disabled by config (memory extraction, rerank, chunk refinement, metadata enrichment).
 - **RD-2** Idempotent data management: `DocumentManager` guarantees re-ingestion does not
   duplicate data; updates and deletions are traceable.
+
+## RW — Real-World Fitness
+
+This project must be genuinely useful, not a demo that looks good until real
+traffic arrives. Features that interpret free-form input or handle data MUST
+address the real world, not the happy path. Enforcement is the spec's
+`## Real-World Coverage` section plus the checklist in
+`docs/production-conventions.md`.
+
+- **RW-1 Input distribution.** A feature that interprets free-form input MUST
+  enumerate the real input space — phrasings, ambiguity, languages, and
+  adversarial inputs — and define behavior for **unseen / out-of-distribution**
+  input, including when to ask for clarification and when to refuse. A single
+  happy-path phrasing is not a specification.
+- **RW-2 Data quality.** Every data boundary MUST validate and normalize; missing,
+  dirty, or conflicting data MUST have **defined behavior and a repair path**.
+  No silent assumptions about upstream data.
+- **RW-3 Edge & failure modes.** A spec MUST enumerate its edge and failure modes
+  and define behavior for each. An undefined boundary is a defect, not a
+  production discovery.
+- **RW-4 No patchwork.** A fix MUST address the **root cause** and ship with a
+  **regression case** (end-to-end and, where useful, trajectory-prefix). A
+  one-off special case without a regression is incomplete.
+- **RW-5 Degradation.** Every external dependency MUST have a defined,
+  config-gated fallback; the system degrades observably rather than failing
+  silently (extends RD-1).
+
+**Rationale:** the failure mode this project must avoid is a narrow demo that
+collapses under real phrasing, dirty data, and unexpected boundaries, and that is
+"fixed" by patching.
+
+## SC — Scale & Operability
+
+A system that works small and falls apart at scale, that a team cannot diagnose,
+or that cannot be changed safely, is not done.
+
+- **SC-1 Scale envelope.** A spec MUST state the scale dimensions it must survive
+  — traffic, data volume, concurrency, tenancy, session length — and the
+  **measured** behavior at that boundary. "It works small" is not a claim.
+- **SC-2 Diagnosability.** Every failure MUST be attributable (trace + first
+  error), and metrics MUST be **segmentable** (by intent, tool, model, tenant) so
+  a team can localize a problem under load.
+- **SC-3 SLOs.** Latency, cost, and error budgets MUST be declared and tracked;
+  regressions MUST be visible.
+- **SC-4 Change safety.** Changes MUST be localized behind seams; the **blast
+  radius** and the migration / rollback path MUST be stated. No big-bang
+  rewrites.
+
+**Rationale:** scale exposes problems in clusters, and a team that cannot locate
+them or change the system safely will stall.
+
+## EV — Evidence-Backed Change
+
+No change to the model, a prompt, retrieval, or a module is accepted on
+reputation. It ships with proof. Enforcement is the PR checklist plus
+`scripts/check_change_evidence.py`.
+
+- **EV-1 No unmeasured change.** Any change to the model, a prompt, retrieval, or
+  a module MUST ship with a **before/after evaluation** on a fixed,
+  representative benchmark.
+- **EV-2 Paired and significant.** Comparisons MUST be **paired** on the same
+  tasks with multiple seeds; effect size, confidence, and sample size MUST be
+  reported. A single run selects direction, it does not prove improvement.
+- **EV-3 Guardrails.** Quality, safety (zero ungrounded writes), latency, and cost
+  are **guardrail** metrics. A change that improves the target but regresses a
+  guardrail MUST be rejected.
+- **EV-4 Versioning.** Model and prompt versions — including a hash of the
+  rendered system prompt — MUST be recorded with the results.
+- **EV-5 Regression sets.** Production failures MUST become end-to-end and
+  trajectory-prefix regression cases.
+
+**Definition of done (extends P7 / GH-2).** A model, prompt, retrieval, or module
+change is done only when `specs/RESULTS.md` / `evals/report.md` records its
+before/after evidence.
+
+**Rationale:** a team that cannot prove a change improved the project cannot
+justify the change, and will drift into unmeasured churn.
 
 ## GH — GitHub Workflow
 
@@ -203,4 +280,4 @@ core path.
 - All PRs and reviews verify compliance with these principles. Any complexity beyond the
   simplest workable design must be justified in an Agent Note.
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+**Version**: 1.3.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13

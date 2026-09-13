@@ -126,3 +126,12 @@ A new **Report** view (a tab beside Chat / Traces / Merchant / Memory / Scenario
   page-level horizontal scroll at 375px; 0 console errors.
 - Source: `specs/025-eval-report-view/checkpoint.md`; aggregate:
   [`specs/RESULTS.md`](../RESULTS.md).
+
+## Real-World Coverage
+
+- **Input distribution**: none — the view renders a committed artifact.
+- **Data quality**: it reads `evals/report.md`; a missing file is an empty state, not an error.
+- **Edge & failure modes**: a fetch failure shows an inline error with Retry.
+- **Scale envelope**: a static document; no scale concern.
+- **Degradation**: read-only; the report is the source of truth.
+- **Change evidence**: the report it renders is the evidence (EV).

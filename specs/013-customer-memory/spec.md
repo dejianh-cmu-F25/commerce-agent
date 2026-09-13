@@ -234,3 +234,15 @@ answers, not the chat chrome.
 - The Memory view is consumer-facing; the merchant face is unchanged.
 - A single keyless demo customer per browser is sufficient; multi-device identity
   is out of scope.
+
+## Real-World Coverage
+
+- **Input distribution**: durable statements; extraction is a bounded,
+  deterministic pattern set, so unknown phrasings are simply not stored.
+- **Data quality**: facts are grounded in the customer's own words (P4); storage
+  is idempotent per (customer, kind, text).
+- **Edge & failure modes**: no customer id → memory disabled; a store error
+  degrades to no memory.
+- **Scale envelope**: per-customer fact sets; not measured (gap).
+- **Degradation**: memory failures never fail the turn (RD-1).
+- **Change evidence**: the ablation measures the memory contribution (+0.167).
