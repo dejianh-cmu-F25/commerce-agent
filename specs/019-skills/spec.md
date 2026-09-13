@@ -128,6 +128,6 @@ skills.
   is skipped, not fatal.
 - **Edge & failure modes**: an unknown skill returns an error without ending the
   turn; a missing directory yields no skills.
-- **Scale envelope**: the catalog grows with the prompt; not measured (gap).
+- **Scale envelope**: the catalog grows with the prompt; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: skills disabled by config -> no catalog, no tool.
 - **Change evidence**: ablation +0.083 (`specs/change-log.json` #25).

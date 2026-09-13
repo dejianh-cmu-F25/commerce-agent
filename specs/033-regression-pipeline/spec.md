@@ -62,7 +62,7 @@ reader can connect the guard to the incident.
 - **Data quality**: the dirty-price regression guards normalization.
 - **Edge & failure modes**: an unknown check name fails the gate (fail loud).
 - **Scale envelope**: the set is O(cases); see `docs/scale.md`.
-- **Degradation**: n/a.
+- **Degradation**: n/a (reporting only; see `docs/edge-cases.md`).
 - **Change evidence**: the regression set and its coverage (change log).
 
 ## Observability

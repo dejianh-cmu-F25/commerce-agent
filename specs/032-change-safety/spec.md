@@ -60,7 +60,7 @@ fails.
 - **Input distribution**: n/a (process/documentation).
 - **Data quality**: rollback states migration reversibility.
 - **Edge & failure modes**: a missing field fails the gate.
-- **Scale envelope**: n/a.
+- **Scale envelope**: n/a (process/docs; the system envelope is in `docs/scale.md`).
 - **Degradation**: rollback is the degradation path for a bad change.
 - **Change evidence**: the blast radius/rollback fields (change log).
 

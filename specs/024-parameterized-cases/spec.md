@@ -124,6 +124,6 @@ discriminates (no longer saturated).
   policy, refusal, ungrounded); adversarial phrasing is out of scope (gap).
 - **Data quality**: construction is pure and reproducible; results are snapshots.
 - **Edge & failure modes**: outcome failures are attributed as `incomplete`.
-- **Scale envelope**: 6 templates × N seeds; not a load test (gap).
+- **Scale envelope**: 6 templates × N seeds; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: n/a (evaluation harness).
 - **Change evidence**: the per-template results are the change evidence.

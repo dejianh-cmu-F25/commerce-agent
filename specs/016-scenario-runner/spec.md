@@ -186,6 +186,6 @@ A new **Scenarios** view (a tab beside Chat / Traces / Merchant / Memory).
 - **Data quality**: runs the real loop with fresh in-memory/temp resources.
 - **Edge & failure modes**: a run error shows inline; the Run control is disabled
   while running.
-- **Scale envelope**: 12 scenarios in one request; not measured (gap).
+- **Scale envelope**: 12 scenarios in one request; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: keyless; no provider needed.
 - **Change evidence**: 12/12 (`specs/RESULTS.md`).

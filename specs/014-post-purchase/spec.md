@@ -210,6 +210,6 @@ the existing product, cart, and checkout cards. There is no new tab.
 - **Data quality**: orders come from the storefront; demo orders seed idempotently.
 - **Edge & failure modes**: unknown order id → error; out-of-window or
   undelivered returns are refused with a reason.
-- **Scale envelope**: a small per-customer order history; not measured (gap).
+- **Scale envelope**: a small per-customer order history; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: an order lookup failure is a tool error; the turn continues.
 - **Change evidence**: behavior changes update the gold scenarios and `specs/RESULTS.md`.

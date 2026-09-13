@@ -125,6 +125,6 @@ No new events; structured traces arrive with feature 080 (SL-2).
 - **Data quality**: history is text-only; a missing session is cleared.
 - **Edge & failure modes**: a stale id clears gracefully; a history-load failure
   keeps the empty state.
-- **Scale envelope**: a single browser; not measured (gap).
+- **Scale envelope**: a single browser; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: a load failure falls back to the empty state (RD-1).
 - **Change evidence**: browser checkpoint (006).

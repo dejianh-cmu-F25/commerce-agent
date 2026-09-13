@@ -74,7 +74,7 @@ the gate.
 
 - **Input distribution**: the keyless stack under 1–64 concurrent operations
   (retrieval and a full scripted agent turn).
-- **Data quality**: n/a.
+- **Data quality**: n/a (no external data; the measurement is synthetic).
 - **Edge & failure modes**: error rate is measured, not assumed; a breach fails
   the gate.
 - **Scale envelope**: this feature **is** the envelope — catalog size, knowledge

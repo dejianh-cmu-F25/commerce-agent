@@ -132,6 +132,6 @@ backend events.
 - **Input distribution**: recent traces from the tracer.
 - **Data quality**: renders the recorded spans; nothing is fabricated.
 - **Edge & failure modes**: no traces -> empty state; a fetch error -> inline error.
-- **Scale envelope**: a list limit; not measured (gap).
+- **Scale envelope**: a list limit; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: read-only; the chat is preserved when switching views.
 - **Change evidence**: browser checkpoint (008).

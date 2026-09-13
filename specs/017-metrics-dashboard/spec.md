@@ -147,6 +147,6 @@ Scenarios).
 - **Data quality**: aggregates redacted span attributes; a missing/corrupt file
   degrades to empty.
 - **Edge & failure modes**: no spans -> empty state; a fetch error -> inline error.
-- **Scale envelope**: a bounded window (default 2000 spans); not measured (gap).
+- **Scale envelope**: a bounded window (default 2000 spans); the system envelope is measured in `docs/scale.md`.
 - **Degradation**: read-only; no provider needed.
 - **Change evidence**: metrics exist (`specs/change-log.json` #22).

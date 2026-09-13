@@ -68,6 +68,34 @@ def _requires_coverage(spec_md: str) -> bool:
     return any(marker in lowered for marker in _RW_MARKERS)
 
 
+# The six bullets every `## Real-World Coverage` section must carry, with content
+# (RW-3: enumerate the boundaries, do not just name the section).
+_COVERAGE_BULLETS = (
+    "Input distribution",
+    "Data quality",
+    "Edge & failure modes",
+    "Scale envelope",
+    "Degradation",
+    "Change evidence",
+)
+
+
+def _coverage_gaps(spec_md: str) -> list[str]:
+    match = re.search(r"^## Real-World Coverage\s*$(.*?)(?=^## |\Z)", spec_md, re.S | re.M)
+    block = match.group(1) if match else ""
+    gaps: list[str] = []
+    for bullet in _COVERAGE_BULLETS:
+        found = re.search(rf"\*\*{re.escape(bullet)}\*\*:\s*(.+)", block)
+        if found is None:
+            gaps.append(bullet)
+            continue
+        content = found.group(1).strip()
+        # A short bullet is allowed only as an *explained* "n/a (reason)".
+        if len(content) < 10 and not re.match(r"n/?a\s*\(.+\)", content, re.I):
+            gaps.append(f"{bullet} (too short)")
+    return gaps
+
+
 def _latest_spec() -> Path | None:
     if not SPECS.exists():
         return None
@@ -201,6 +229,17 @@ def check(spec: Path) -> list[Result]:
             "inputs/data/model/retrieval)",
         )
     )
+    if has_coverage:
+        coverage_gaps = _coverage_gaps(spec_md)
+        results.append(
+            Result(
+                "RW-3 edge & failure enumeration",
+                PASS if not coverage_gaps else FAIL,
+                "all six coverage bullets present with content"
+                if not coverage_gaps
+                else f"missing/short: {', '.join(coverage_gaps)}",
+            )
+        )
     results.append(
         Result(
             "EV change evidence",

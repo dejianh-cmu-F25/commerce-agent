@@ -149,6 +149,6 @@ unchanged. Structured traces arrive with feature 080 (SL-2).
 - **Data quality**: the catalog is seeded idempotently; ids are server-issued.
 - **Edge & failure modes**: an unknown id returns `None`; switching provider is
   config-only; an unknown provider fails loud.
-- **Scale envelope**: a tiny seeded catalog; not measured (gap).
+- **Scale envelope**: a tiny seeded catalog; the system envelope is measured in `docs/scale.md`.
 - **Degradation**: the `memory` provider is the keyless fallback.
 - **Change evidence**: parity tests (`tests/integration/test_storefront_sqlite.py`).

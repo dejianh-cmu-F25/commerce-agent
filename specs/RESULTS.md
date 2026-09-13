@@ -56,8 +56,11 @@ auditable record is the **change log** below. Each feature spec carries a
   wrapper) — dense retrieval degrades to keyless lexical, LLM failure surfaces.
 - **Regressions**: **5** named, root-caused regressions enforced in the gate
   (ungrounded id, return window, injection, dirty price, dense outage).
+- **Boundaries**: 16 cross-cutting edge/failure boundaries enumerated with a
+  behavior + enforcement each (`docs/edge-cases.md`); every spec's coverage is
+  enforced by the review + a corpus test.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 168 tests, gold scenarios 12/12, 26 Agent Notes.
+- **Gate**: 169 tests, gold scenarios 12/12, 27 Agent Notes.
 
 ## Change log
 
@@ -114,4 +117,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #44 032-change-safety | process | `no-behavior` | Require blast radius + rollback per change; gate them; seam map + PR template | — | Process/docs + gate; every entry now states blast radius and rollback | gate fails an entry missing either field | change-log schema, gate, report renderer, PR template, docs (no runtime) | git revert the squash-merge commit | accepted | `docs/change-safety.md` |
 | 2026-09-13 | #45 033-regression-pipeline | process | `measurable` | Failure-to-regression pipeline: registry, promotion, keyless runner in the gate | named root-caused regressions enforced (count) | 0 → 5 | unknown check or a failed regression fails the gate; promotion requires a root cause | evals/regressions.json, evals/regressions.py, gate, report (no runtime) | git revert the squash-merge commit | accepted | `docs/regressions.md` |
 | 2026-09-13 | #46 034-audit-closeout | docs | `docs` | Re-run the production audit: per-clause current status, evidence, and residual gaps | — | Docs only; 9 of 14 clauses now Met, residual gaps named | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
+| 2026-09-13 | #47 035-edge-cases | docs | `docs` | Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps | — | Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed | spec_review fails a missing/short coverage bullet; corpus test enforces all specs | docs/edge-cases.md, spec_review, specs' coverage notes | git revert the squash-merge commit | accepted | `docs/edge-cases.md` |
 <!-- change-log:end -->
