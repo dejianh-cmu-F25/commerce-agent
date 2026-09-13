@@ -162,7 +162,7 @@ provider works keylessly and that an unknown provider is rejected.
 - **Customer**: the identity that owns facts and sessions. Identified by a
   client-supplied opaque id; it is not a login and holds no credentials.
 
-## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+## UI Requirements
 
 The browser gains a **Memory** view (a fourth tab beside Chat / Traces /
 Merchant) that shows the current customer's remembered facts and lets them be

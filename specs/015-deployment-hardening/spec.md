@@ -127,7 +127,7 @@ survives restarts.
 - **Smoke test**: a script that runs the built image keylessly and asserts the
   container's HTTP surface and process identity.
 
-## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+## UI Requirements
 
 This feature changes packaging, not the UI. The browser surface is the existing
 app, now served from the container; the smoke test asserts the served shell and a
@@ -184,3 +184,14 @@ chat turn. No component, state, or style changes.
 - `make ci-fast` is unaffected (Docker-free).
 - Source: `specs/015-deployment-hardening/checkpoint.md`; aggregate:
   [`specs/RESULTS.md`](../RESULTS.md).
+
+## Real-World Coverage
+
+- **Input distribution**: environment variables and the container runtime.
+- **Data quality**: the config contract is enforced by a parity test; `.env` is
+  excluded from the image.
+- **Edge & failure modes**: missing Docker fails loud; the smoke test cleans up on
+  every exit path.
+- **Scale envelope**: a single image build + smoke; not measured (gap).
+- **Degradation**: a keyless smoke with a mock model and memory providers.
+- **Change evidence**: container smoke PASS (`specs/015-deployment-hardening/checkpoint.md`).

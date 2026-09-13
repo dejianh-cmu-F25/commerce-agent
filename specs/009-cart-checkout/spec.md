@@ -95,7 +95,9 @@ charge/payment code path exists.
 - **Cart**: `items[]`, `total` (server-computed).
 - **Checkout**: `items[]`, `total` (a render, not a charge).
 
-## UI States *(convention, WV-6)*
+## UI Requirements
+
+### UI States
 
 | State | Trigger | What the user sees |
 | --- | --- | --- |
@@ -104,13 +106,13 @@ charge/payment code path exists.
 | Empty cart | `view_cart` / `render_checkout` with no lines | "Your cart is empty." |
 | Error | Unknown id | Inline tool error; cart unchanged |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Ask "add the tent to my cart": a cart card shows the tent and the total. Ask
 "checkout": a checkout card shows the summary; nothing is charged. Ask "what's in
 my cart": the cart card is shown again.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 Cart turns emit the existing spans (007); tool spans show `add_to_cart` /
 `render_checkout`. No new events.

@@ -110,7 +110,7 @@ and that the live session/storefront are unchanged.
 - **ScenarioResult**: the outcome of running one scenario (name, ok, failures,
   actual tools, actual components).
 
-## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+## UI Requirements
 
 A new **Scenarios** view (a tab beside Chat / Traces / Merchant / Memory).
 
@@ -179,3 +179,13 @@ A new **Scenarios** view (a tab beside Chat / Traces / Merchant / Memory).
 - The browser Scenario Runner reports **12/12** gold scenarios passing,
   keylessly, matching the gate CLI (one runner, no drift).
 - Source: `evals/runner.py`; aggregate: [`specs/RESULTS.md`](../RESULTS.md).
+
+## Real-World Coverage
+
+- **Input distribution**: the gold scenarios (the catalog).
+- **Data quality**: runs the real loop with fresh in-memory/temp resources.
+- **Edge & failure modes**: a run error shows inline; the Run control is disabled
+  while running.
+- **Scale envelope**: 12 scenarios in one request; not measured (gap).
+- **Degradation**: keyless; no provider needed.
+- **Change evidence**: 12/12 (`specs/RESULTS.md`).

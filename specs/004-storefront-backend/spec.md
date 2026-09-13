@@ -102,7 +102,7 @@ is unchanged.
 - **StorefrontBackend**: the capability (search, get).
 - **StorefrontSettings**: `provider` (`memory` | `sqlite`), `sqlite_path`.
 
-## UI States *(convention, WV-6)*
+## UI Requirements
 
 This feature does not change the browser surface; the states are unchanged from
 003.
@@ -114,13 +114,13 @@ This feature does not change the browser surface; the states are unchanged from
 | Success | Turn ends | Unchanged; sources show backend products |
 | Error | Failure | Unchanged |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, ask for a tent. The `search_products` step completes and the sources
 list the same product(s) as before — now served from the configured backend
 (SQLite by default). `/readyz` still reports ready.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 No new events; the existing `ToolCallStarted`/`ToolResult`/`UIComponent` stream is
 unchanged. Structured traces arrive with feature 080 (SL-2).
@@ -142,3 +142,13 @@ unchanged. Structured traces arrive with feature 080 (SL-2).
 - Retrieval/vector search is out of scope (features 008+); this is the storefront
   system of record, not the knowledge base.
 - `search` is a simple keyword match for now; ranking quality is not in scope.
+
+## Real-World Coverage
+
+- **Input distribution**: product search queries; an empty query returns nothing.
+- **Data quality**: the catalog is seeded idempotently; ids are server-issued.
+- **Edge & failure modes**: an unknown id returns `None`; switching provider is
+  config-only; an unknown provider fails loud.
+- **Scale envelope**: a tiny seeded catalog; not measured (gap).
+- **Degradation**: the `memory` provider is the keyless fallback.
+- **Change evidence**: parity tests (`tests/integration/test_storefront_sqlite.py`).

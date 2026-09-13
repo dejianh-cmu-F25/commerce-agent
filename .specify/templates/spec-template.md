@@ -178,6 +178,17 @@
 - [ ] Live window resize re-flows with no stuck widths or overlap
 - [ ] Theme follows `prefers-color-scheme`
 
+## Web Acceptance
+
+<!-- Required when the feature is browser-visible (WV-1). What a reviewer clicks
+     in the browser to see it work. Otherwise omit or record why there is no
+     browser surface (WV-5). -->
+
+## Observability
+
+<!-- Required (WV-1). The spans, metrics, and logs the feature emits or reads
+     (SL-2 / OB). -->
+
 ## Success Criteria *(mandatory)*
 
 <!--
@@ -191,6 +202,12 @@
 - **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+
+## Measured Results
+
+<!-- Required when the feature has measured data (EV). The slice of
+     specs/RESULTS.md for this feature: metric, before → after, and the change
+     log entry. Otherwise omit. -->
 
 ## Assumptions
 

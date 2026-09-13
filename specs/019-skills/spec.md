@@ -120,3 +120,14 @@ skills.
 - Selection is model-driven (the catalog guides the model to call `use_skill`);
   there is no separate intent classifier.
 - The example skills are demo procedures, not exhaustive.
+
+## Real-World Coverage
+
+- **Input distribution**: skill names from the model; a missing skill errors.
+- **Data quality**: `SKILL.md` files with optional frontmatter; a malformed file
+  is skipped, not fatal.
+- **Edge & failure modes**: an unknown skill returns an error without ending the
+  turn; a missing directory yields no skills.
+- **Scale envelope**: the catalog grows with the prompt; not measured (gap).
+- **Degradation**: skills disabled by config -> no catalog, no tool.
+- **Change evidence**: ablation +0.083 (`specs/change-log.json` #25).

@@ -176,8 +176,10 @@ def check(spec: Path) -> list[Result]:
     results.append(
         Result(
             "WV-6 UI states specified",
-            PASS if ("## Web Acceptance" not in spec_md or "## UI States" in spec_md) else FAIL,
-            "spec lists UI states (or has no web surface)",
+            PASS
+            if ("## Web Acceptance" not in spec_md or "## UI Requirements" in spec_md)
+            else FAIL,
+            "spec has ## UI Requirements (or has no web surface)",
         )
     )
     results.append(

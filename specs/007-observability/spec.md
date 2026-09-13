@@ -95,7 +95,7 @@ A trace can be listed and fetched over HTTP for review (WV-5).
 - **TraceSummary**: `trace_id`, `start_ms`, `duration_ms`, `span_count`, `status`.
 - **Tracer**: the capability (record, list, get).
 
-## UI States *(convention, WV-6)*
+## UI Requirements
 
 No browser change; the chat is unchanged. Traces are exposed via the API.
 
@@ -103,12 +103,12 @@ No browser change; the chat is unchanged. Traces are exposed via the API.
 | --- | --- | --- |
 | Empty / Streaming / Success / Error | As in 003 | Unchanged |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, send a message. Then `GET /traces` lists a trace and
 `GET /traces/{trace_id}` returns its `turn`/`llm`/`tool` spans.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 This feature **is** the observability layer: `logs/traces.jsonl`, `trace_id`
 across turn/llm/tool, metrics (latency, tokens, cost, tool status), and redacted
@@ -129,3 +129,14 @@ inputs/outputs (SL-2, OB-1/2/3/5). The web Trace Viewer (OB-4) is a follow-up.
 - The trace file is `logs/traces.jsonl` (already in `observability.trace_file`).
 - The loop is the instrumentation point; adapters stay dumb.
 - A rich Trace Viewer UI (OB-4) is a follow-up feature.
+
+## Real-World Coverage
+
+- **Input distribution**: spans emitted by the loop.
+- **Data quality**: one JSON span per line; attribute values are redacted to a max
+  length; a corrupt line is tolerated.
+- **Edge & failure modes**: a tracer failure never changes the turn; reads tolerate
+  a missing/empty file.
+- **Scale envelope**: a growing JSONL file; rotation is out of scope (gap).
+- **Degradation**: a no-op tracer is used when tracing is disabled.
+- **Change evidence**: traces recorded (`specs/RESULTS.md`).

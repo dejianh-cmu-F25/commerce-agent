@@ -83,7 +83,7 @@ and that no provider call occurs.
 - **MetricsSummary**: the span stats list plus token totals, cost, and tool
   success/failure counts.
 
-## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+## UI Requirements
 
 A new **Metrics** view (a tab beside Chat / Traces / Merchant / Memory /
 Scenarios).
@@ -140,3 +140,13 @@ Scenarios).
   retention is out of scope.
 - Cost comes from the LLM spans (per window); the budget meter remains the
   authoritative all-time spend (HR-12).
+
+## Real-World Coverage
+
+- **Input distribution**: trace spans from the trace file.
+- **Data quality**: aggregates redacted span attributes; a missing/corrupt file
+  degrades to empty.
+- **Edge & failure modes**: no spans -> empty state; a fetch error -> inline error.
+- **Scale envelope**: a bounded window (default 2000 spans); not measured (gap).
+- **Degradation**: read-only; no provider needed.
+- **Change evidence**: metrics exist (`specs/change-log.json` #22).

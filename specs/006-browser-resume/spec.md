@@ -85,7 +85,9 @@ usable (empty transcript) and the stale id is cleared.
 - **StoredSession**: the `session_id` kept in browser storage.
 - **Resume mapping**: server messages → AI SDK `UIMessage` parts.
 
-## UI States *(convention, WV-6)*
+## UI Requirements
+
+### UI States
 
 | State | Trigger | What the user sees |
 | --- | --- | --- |
@@ -93,13 +95,13 @@ usable (empty transcript) and the stale id is cleared.
 | Empty | No stored id, or cleared | Suggestion chips (as in 003) |
 | Streaming / Success / Error | As in 003 | Unchanged |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Send "I need a tent under $250", reload the page: the exchange reappears. Send
 another message: the agent answers with prior context (same `session_id`). Click
 New chat: the transcript clears and a new session starts.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 No new events; structured traces arrive with feature 080 (SL-2).
 
@@ -116,3 +118,13 @@ No new events; structured traces arrive with feature 080 (SL-2).
 - The AI SDK `useChat` exposes `setMessages` for rehydration.
 - Tool steps are not reconstructed on resume (text-only history) — a documented
   limitation.
+
+## Real-World Coverage
+
+- **Input distribution**: a stored session id in `localStorage`.
+- **Data quality**: history is text-only; a missing session is cleared.
+- **Edge & failure modes**: a stale id clears gracefully; a history-load failure
+  keeps the empty state.
+- **Scale envelope**: a single browser; not measured (gap).
+- **Degradation**: a load failure falls back to the empty state (RD-1).
+- **Change evidence**: browser checkpoint (006).

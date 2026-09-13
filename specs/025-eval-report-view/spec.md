@@ -69,7 +69,7 @@ The view is read-only and renders markdown through the sanitizing renderer.
 
 - **Report**: the committed markdown artifact rendered in the browser.
 
-## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+## UI Requirements
 
 A new **Report** view (a tab beside Chat / Traces / Merchant / Memory / Scenarios
 / Metrics).

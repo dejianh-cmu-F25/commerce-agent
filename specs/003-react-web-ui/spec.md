@@ -138,7 +138,7 @@ system theme.
 - **ChatTransport**: adapts `POST /chat` SSE → `UIMessageChunk`.
 - **Suggestion**, **Source**, **Budget**: as in 002.
 
-## UI Requirements *(WV-6..WV-8)*
+## UI Requirements
 
 ### UI States
 
@@ -168,14 +168,14 @@ system theme.
 - [ ] Live window resize re-flows with no stuck widths or overlap.
 - [ ] Follows `prefers-color-scheme` (light and dark).
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, send "I need a tent under $250 for a weekend trip". The reply streams
 with rendered markdown; a `search_products` tool step shows `ok`; a `Sources`
 area lists the tent; the budget meter updates. Stop a turn mid-stream; trigger an
 error and Retry.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 The UI consumes the existing 001/002 event stream; no new backend events. The
 turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
@@ -200,3 +200,13 @@ turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
 - Node 18+ is available in CI and Docker build stages.
 - Vendored registry components (AI Elements, shadcn/ui) are treated as generated
   code and excluded from strict typechecking.
+
+## Real-World Coverage
+
+- **Input distribution**: free-form chat; responses render through Streamdown.
+- **Data quality**: model/user markup is sanitized (WV-9).
+- **Edge & failure modes**: resume / empty / error states are defined; the custom
+  transport normalizes SSE line endings.
+- **Scale envelope**: bundle size is the relevant budget (see change #7, -44%).
+- **Degradation**: a stream error surfaces inline with Retry.
+- **Change evidence**: bundle size (`specs/change-log.json` #7).

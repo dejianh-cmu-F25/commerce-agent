@@ -91,3 +91,13 @@ The tools use the gates but produce exactly the same outputs as before.
 
 - This is a behavior-preserving refactor; no new guardrail is added.
 - Merchant approval stays a web-endpoint concern (the model has no apply tool).
+
+## Real-World Coverage
+
+- **Input distribution**: ids/orders presented by the model.
+- **Data quality**: gates are decision-only; they never mutate state.
+- **Edge & failure modes**: the pipeline returns the first block; an empty id list
+  is allowed.
+- **Scale envelope**: n/a (pure decisions).
+- **Degradation**: reasons are preserved by the tools.
+- **Change evidence**: behavior-preserving refactor (`specs/change-log.json` #26).
