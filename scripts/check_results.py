@@ -28,6 +28,7 @@ ADVERSARIAL_HEADING = "## Adversarial input"
 SCALE_HEADING = "## Scale & SLOs"
 FALLBACKS_HEADING = "## Dependency fallbacks"
 REGRESSIONS_HEADING = "## Regressions"
+GUARDRAILS_HEADING = "## Guardrails"
 REQUIRED_FIELDS = (
     "date",
     "change",
@@ -147,6 +148,30 @@ def _check_report(artifacts: dict) -> list[str]:
             )
             if expected not in section:
                 failures.append(f"adversarial: expected row {expected!r} in the report")
+
+    guardrails = artifacts.get("guardrails", {})
+    if guardrails.get("metrics"):
+        section = _section(text, GUARDRAILS_HEADING)
+        if not section:
+            failures.append("report.md has no guardrails section")
+        else:
+            for metric in guardrails["metrics"]:
+                direction = "≥" if metric["direction"] == "at_least" else "≤"
+                if metric["source"] == "scale":
+                    # The latency value is a wall-clock timing; check the row
+                    # exists (name + floor + direction), not its exact value.
+                    row_ok = (
+                        f"| `{metric['name']}` |" in section
+                        and f"| {metric['floor']} | {direction} |" in section
+                    )
+                    if not row_ok:
+                        failures.append(f"guardrails: row for {metric['name']!r} missing")
+                    continue
+                expected = (
+                    f"| `{metric['name']}` | {metric['value']} | {metric['floor']} | {direction} |"
+                )
+                if expected not in section:
+                    failures.append(f"guardrails: expected row {expected!r} in the report")
 
     regressions = artifacts.get("regressions", {})
     if regressions:

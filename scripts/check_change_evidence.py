@@ -105,6 +105,12 @@ def main() -> int:
                 "numeric before/after (EV-1)."
             )
             return 1
+        if not entry.get("guardrails"):
+            print(
+                f"FAIL: measurable entry {entry.get('change')!r} needs a guardrails "
+                "statement (EV-3; see docs/guardrails.md)."
+            )
+            return 1
     elif classification in {"no-behavior", "unmeasured"} and not entry.get("note"):
         print(f"FAIL: {classification} entry {entry.get('change')!r} needs a reason (note).")
         return 1

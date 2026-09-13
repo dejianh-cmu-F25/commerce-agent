@@ -174,6 +174,28 @@ def _adversarial_section(adversarial: dict) -> list[str]:
     ]
 
 
+def _guardrails_section(guardrails: dict) -> list[str]:
+    metrics = guardrails.get("metrics")
+    if not metrics:
+        return []
+    lines = [
+        "## Guardrails (keyless)",
+        "",
+        "Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).",
+        "",
+        "| Guardrail | Value | Floor | Direction | Source | Status |",
+        "| --- | ---: | ---: | --- | --- | --- |",
+    ]
+    for metric in metrics:
+        direction = "≥" if metric["direction"] == "at_least" else "≤"
+        lines.append(
+            f"| `{metric['name']}` | {metric['value']} | {metric['floor']} | {direction} | "
+            f"`{metric['source']}` | {'OK' if metric['ok'] else 'FAIL'} |"
+        )
+    lines.append("")
+    return lines
+
+
 def _regressions_section(regressions: dict) -> list[str]:
     if not regressions:
         return []
@@ -366,6 +388,7 @@ def render() -> str:
     lines += _segments_section(keyless.get("segments", {}))
     lines += _data_quality_section(keyless.get("data_quality", {}))
     lines += _adversarial_section(keyless.get("adversarial", {}))
+    lines += _guardrails_section(keyless.get("guardrails", {}))
     lines += _regressions_section(keyless.get("regressions", {}))
     lines += _fallbacks_section(keyless.get("fallbacks", {}))
     lines += _scale_section(keyless.get("scale", {}))
