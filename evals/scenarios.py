@@ -15,6 +15,7 @@ from app.adapters.mock_llm import MockTurn, text_turn, tool_turn
 @dataclass
 class Scenario:
     name: str
+    intent: str
     user_text: str
     turns: list[MockTurn]
     expect_tools: list[str]
@@ -35,6 +36,7 @@ _DONE = text_turn("Done.")
 SCENARIOS: list[Scenario] = [
     Scenario(
         name="search_only",
+        intent="search",
         user_text="I need a tent",
         turns=[_SEARCH, _DONE],
         expect_tools=["search_products"],
@@ -42,6 +44,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="add_to_cart",
+        intent="cart",
         user_text="add the tent to my cart",
         turns=[_SEARCH, _ADD, _DONE],
         expect_tools=["search_products", "add_to_cart"],
@@ -50,6 +53,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="ungrounded_add_rejected",
+        intent="cart",
         user_text="add product P-999",
         turns=[tool_turn("add_to_cart", '{"product_id": "P-999"}', call_id="c9"), _DONE],
         expect_tools=["add_to_cart"],
@@ -58,6 +62,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="checkout_render",
+        intent="checkout",
         user_text="add the tent and check out",
         turns=[_SEARCH, _ADD, _CHECKOUT, _DONE],
         expect_tools=["search_products", "add_to_cart", "render_checkout"],
@@ -66,6 +71,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="merchant_stage",
+        intent="merchant",
         user_text="set the tent price to 199",
         turns=[
             tool_turn(
@@ -81,6 +87,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="knowledge_answer",
+        intent="knowledge",
         user_text="what is your return policy?",
         turns=[tool_turn("search_knowledge", '{"query": "return policy"}', call_id="k1"), _DONE],
         expect_tools=["search_knowledge"],
@@ -89,6 +96,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="use_skill",
+        intent="skills",
         user_text="help me plan a 2-day trip",
         turns=[tool_turn("use_skill", '{"name": "trip-planning"}', call_id="s1"), _DONE],
         expect_tools=["use_skill"],
@@ -96,6 +104,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="memory_extract",
+        intent="memory",
         user_text="I usually wear size M",
         turns=[_DONE],
         expect_tools=[],
@@ -103,6 +112,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="memory_recall",
+        intent="memory",
         user_text="hello",
         turns=[_DONE],
         expect_tools=[],
@@ -111,6 +121,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="order_status",
+        intent="orders",
         user_text="where is my order?",
         turns=[
             tool_turn("list_orders", "{}", call_id="o1"),
@@ -122,6 +133,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="start_return",
+        intent="returns",
         user_text="I want to return the tent",
         turns=[
             tool_turn("list_orders", "{}", call_id="o1"),
@@ -135,6 +147,7 @@ SCENARIOS: list[Scenario] = [
     ),
     Scenario(
         name="return_out_of_window",
+        intent="returns",
         user_text="I want to return the backpack",
         turns=[
             tool_turn("list_orders", "{}", call_id="o1"),

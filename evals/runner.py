@@ -66,9 +66,11 @@ class RunConfig:
 class ScenarioResult:
     name: str
     ok: bool
+    intent: str = ""
     failures: list[str] = field(default_factory=list)
     tools: list[str] = field(default_factory=list)
     components: list[str] = field(default_factory=list)
+    tool_results: list[tuple[str, str]] = field(default_factory=list)
 
 
 def _build_retriever(knowledge: str, tmp_dir: str) -> Retriever:
@@ -178,9 +180,11 @@ async def _run_scenario(scenario: Scenario, config: RunConfig) -> ScenarioResult
         return ScenarioResult(
             name=scenario.name,
             ok=not failures,
+            intent=scenario.intent,
             failures=failures,
             tools=tools,
             components=components,
+            tool_results=[(event.name, event.status) for event in sink.of_type(ev.ToolResult)],
         )
 
 

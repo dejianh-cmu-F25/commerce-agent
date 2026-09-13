@@ -49,8 +49,10 @@ auditable record is the **change log** below. Each feature spec carries a
 - **Scale & SLOs** (keyless, `docs/scale.md`): at concurrency 16, retrieval p95
   **7.8 µs**, turn p95 **15.2 µs**, 0 errors — far inside the declared budgets
   (2000 / 10000 µs); error rate 0.
+- **Diagnosability**: metrics segment by **intent** (9) and by **tool** (9) — a
+  failure is attributable, not just an aggregate pass rate.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 156 tests, gold scenarios 12/12, 22 Agent Notes.
+- **Gate**: 159 tests, gold scenarios 12/12, 23 Agent Notes.
 
 ## Change log
 
@@ -102,4 +104,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |
 | 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
 | 2026-09-13 | #41 029-scale-slo | ops | `no-behavior` | Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach | — | Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md | SLO breach fails the gate | accepted | `docs/scale.md` |
+| 2026-09-13 | #42 030-segmented-metrics | observability | `no-behavior` | Segment the keyless gold metrics by intent and by tool; render + validate | — | Reporting only; 9 intents and 9 tools segmented (see evals/report.md) | — | accepted | `app/evaluation/segments.py` |
 <!-- change-log:end -->

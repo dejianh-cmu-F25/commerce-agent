@@ -587,6 +587,20 @@
       "guardrails": "SLO breach fails the gate",
       "verdict": "accepted",
       "evidence": "docs/scale.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#42 030-segmented-metrics",
+      "area": "observability",
+      "class": "no-behavior",
+      "what": "Segment the keyless gold metrics by intent and by tool; render + validate",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Reporting only; 9 intents and 9 tools segmented (see evals/report.md)",
+      "guardrails": null,
+      "verdict": "accepted",
+      "evidence": "app/evaluation/segments.py"
     }
   ]
 }

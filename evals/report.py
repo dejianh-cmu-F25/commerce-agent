@@ -100,6 +100,44 @@ def _ablation_section(ablation: dict) -> list[str]:
     return lines
 
 
+def _segments_section(segments: dict) -> list[str]:
+    by_intent = segments.get("by_intent")
+    if not by_intent:
+        return []
+    lines = [
+        "## Segmented metrics (keyless)",
+        "",
+        "Metrics by **intent** (which job) and by **tool** (which dependency), so a "
+        "failure can be localized (SC-2).",
+        "",
+        "By intent:",
+        "",
+        "| Intent | Passed | Pass rate |",
+        "| --- | ---: | ---: |",
+    ]
+    for intent, metrics in by_intent.items():
+        lines.append(
+            f"| `{intent}` | {metrics['passed']:.0f}/{metrics['total']:.0f} | "
+            f"{metrics['pass_rate']:.3f} |"
+        )
+    lines.append("")
+    by_tool = segments.get("by_tool", {})
+    if by_tool:
+        lines += [
+            "By tool:",
+            "",
+            "| Tool | Calls | Errors | Error rate |",
+            "| --- | ---: | ---: | ---: |",
+        ]
+        for tool, metrics in by_tool.items():
+            lines.append(
+                f"| `{tool}` | {metrics['calls']:.0f} | {metrics['errors']:.0f} | "
+                f"{metrics['error_rate']:.3f} |"
+            )
+        lines.append("")
+    return lines
+
+
 def _data_quality_section(data_quality: dict) -> list[str]:
     if not data_quality:
         return []
@@ -291,6 +329,7 @@ def render() -> str:
     ]
     lines += _retrieval_section(keyless.get("retrieval", {}))
     lines += _ablation_section(keyless.get("ablation", {}))
+    lines += _segments_section(keyless.get("segments", {}))
     lines += _data_quality_section(keyless.get("data_quality", {}))
     lines += _adversarial_section(keyless.get("adversarial", {}))
     lines += _scale_section(keyless.get("scale", {}))

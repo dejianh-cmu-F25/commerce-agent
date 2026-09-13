@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
 | `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
 
 hit-rate@3 by difficulty:
 
@@ -37,6 +37,38 @@ Each configuration runs the same gold scenarios (scripted model); the delta is v
 | `+skills` | 10/12 | 0.833 | +0.083 | [0.000, 0.250] | 1.000 |
 | `+dense-hash` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
 | `+dense-chroma` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
+
+## Segmented metrics (keyless)
+
+Metrics by **intent** (which job) and by **tool** (which dependency), so a failure can be localized (SC-2).
+
+By intent:
+
+| Intent | Passed | Pass rate |
+| --- | ---: | ---: |
+| `cart` | 2/2 | 1.000 |
+| `checkout` | 1/1 | 1.000 |
+| `knowledge` | 1/1 | 1.000 |
+| `memory` | 2/2 | 1.000 |
+| `merchant` | 1/1 | 1.000 |
+| `orders` | 1/1 | 1.000 |
+| `returns` | 2/2 | 1.000 |
+| `search` | 1/1 | 1.000 |
+| `skills` | 1/1 | 1.000 |
+
+By tool:
+
+| Tool | Calls | Errors | Error rate |
+| --- | ---: | ---: | ---: |
+| `add_to_cart` | 3 | 1 | 0.333 |
+| `get_order_status` | 1 | 0 | 0.000 |
+| `list_orders` | 3 | 0 | 0.000 |
+| `propose_price_change` | 1 | 0 | 0.000 |
+| `render_checkout` | 1 | 0 | 0.000 |
+| `search_knowledge` | 1 | 0 | 0.000 |
+| `search_products` | 3 | 0 | 0.000 |
+| `start_return` | 2 | 1 | 0.500 |
+| `use_skill` | 1 | 0 | 0.000 |
 
 ## Data quality (keyless)
 
@@ -60,10 +92,10 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.5/9.5 | 15.0/21.7 | 47312 | 0 |
-| 4 | 6.5/8.2 | 15.0/19.3 | 42860 | 0 |
-| 16 | 6.1/8.2 | 14.5/17.3 | 56361 | 0 |
-| 64 | 6.2/7.9 | 14.4/16.9 | 56581 | 0 |
+| 1 | 14.6/25.4 | 35.0/77.5 | 16326 | 0 |
+| 4 | 15.0/24.7 | 32.8/75.2 | 20486 | 0 |
+| 16 | 6.8/35.0 | 14.7/25.3 | 33828 | 0 |
+| 64 | 6.2/7.9 | 14.7/17.0 | 55798 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -158,3 +190,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |
 | 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
 | 2026-09-13 | #41 029-scale-slo | ops | `no-behavior` | Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach | — | Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md | SLO breach fails the gate | accepted | `docs/scale.md` |
+| 2026-09-13 | #42 030-segmented-metrics | observability | `no-behavior` | Segment the keyless gold metrics by intent and by tool; render + validate | — | Reporting only; 9 intents and 9 tools segmented (see evals/report.md) | — | accepted | `app/evaluation/segments.py` |
