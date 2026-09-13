@@ -22,9 +22,16 @@ and a broken reference fails the gate (loudly, not silently).
 
 1. **A failure is observed** — a red gold scenario, a real-eval failure
    (`evals/results-real.json`), or a production incident.
-2. **Root-cause it.** Write the cause, not the symptom. If you cannot state the
+2. **Export the candidates.** After a real run, the failures are exported
+   automatically into `evals/regression-candidates.jsonl`, deduped by
+   `(task, category)`:
+   ```bash
+   uv run python scripts/export_regression_candidates.py
+   ```
+   A candidate is **evidence, not a regression** — it is not run by the gate.
+3. **Root-cause it.** Write the cause, not the symptom. If you cannot state the
    cause, you do not yet have a fix.
-3. **Promote it:**
+4. **Promote it:**
    ```bash
    uv run python scripts/promote_regression.py \
      --id dense_outage_falls_back \
@@ -33,7 +40,7 @@ and a broken reference fails the gate (loudly, not silently).
      --check dense_failure_falls_back
    ```
    Promotion **refuses an empty root cause** and is idempotent by `id`.
-4. **Run the gate.** `evals/regressions.py` runs every registered check and fails
+5. **Run the gate.** `evals/regressions.py` runs every registered check and fails
    the gate on any failure; the coverage is rendered into `evals/report.md`.
 
 ## Adding a check
@@ -44,6 +51,6 @@ fails. To add a genuinely new guard, add a keyless async function to
 
 ## Gaps (honest)
 
-- Promotion is manual; there is no automatic export of real-eval failures into the
-  registry (the real eval prints failures, but a human promotes them).
-- The set is small (5); it grows as failures are root-caused, which is the point.
+- The **export is automatic** (`scripts/export_regression_candidates.py`); the
+  **root cause and promotion stay human** (a candidate is not a regression).
+- The registry is small (5); it grows as candidates are root-caused.
