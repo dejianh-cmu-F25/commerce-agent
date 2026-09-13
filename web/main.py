@@ -40,6 +40,7 @@ from app.core import events as ev
 from app.core.loop import Agent
 from app.core.metrics import summarize
 from app.core.prompts import load_prompt
+from app.core.resilience import FallbackRetriever
 from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
 from app.core.types import Message
@@ -166,7 +167,13 @@ def build_retriever(settings: Settings) -> Retriever:
     chunks = load_chunks(settings.knowledge.path, settings.knowledge.min_chars)
     retriever: Retriever
     if settings.knowledge.provider == "dense":
-        retriever = DenseRetriever(build_embedding(settings), build_vector_store(settings))
+        primary = DenseRetriever(build_embedding(settings), build_vector_store(settings))
+        # Dense retrieval degrades to the keyless lexical retriever on an
+        # embedding/vector-store outage (feature 031, RD-1).
+        if settings.resilience.fallback_enabled:
+            retriever = FallbackRetriever(primary, InMemoryRetriever())
+        else:
+            retriever = primary
     else:
         retriever = InMemoryRetriever()
     retriever.add(chunks)

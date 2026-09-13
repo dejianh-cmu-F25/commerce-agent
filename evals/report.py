@@ -174,6 +174,23 @@ def _adversarial_section(adversarial: dict) -> list[str]:
     ]
 
 
+def _fallbacks_section(fallbacks: dict) -> list[str]:
+    if not fallbacks:
+        return []
+    return [
+        "## Dependency fallbacks (keyless)",
+        "",
+        "Each external dependency has a declared fallback that degrades observably "
+        "rather than failing silently (`docs/degradation.md`).",
+        "",
+        "| Cases | Before (no fallback) | After (declared) |",
+        "| ---: | ---: | ---: |",
+        f"| {fallbacks['cases']} | {fallbacks.get('baseline_coverage', 0.0):.3f} | "
+        f"{fallbacks['coverage']:.3f} |",
+        "",
+    ]
+
+
 def _scale_section(scale: dict) -> list[str]:
     if not scale or not scale.get("levels"):
         return []
@@ -332,6 +349,7 @@ def render() -> str:
     lines += _segments_section(keyless.get("segments", {}))
     lines += _data_quality_section(keyless.get("data_quality", {}))
     lines += _adversarial_section(keyless.get("adversarial", {}))
+    lines += _fallbacks_section(keyless.get("fallbacks", {}))
     lines += _scale_section(keyless.get("scale", {}))
     lines += _agent_section(real.get("agent", {}))
     lines += _change_log_section(_load(CHANGE_LOG).get("entries", []))

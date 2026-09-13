@@ -129,6 +129,11 @@ class SafetySettings(BaseModel):
     max_input_chars: int = Field(default=4000, gt=0)
 
 
+class ResilienceSettings(BaseModel):
+    # Graceful fallback per external dependency (feature 031, RD-1).
+    fallback_enabled: bool = True
+
+
 class DataSettings(BaseModel):
     # Boundary data quality (feature 027, RW-2): `repair` normalizes fixable
     # values and skips unusable rows; `strict` fails loud on an invalid row.
@@ -180,6 +185,7 @@ class Settings(BaseModel):
     skills: SkillsSettings = Field(default_factory=SkillsSettings)
     data: DataSettings = Field(default_factory=DataSettings)
     safety: SafetySettings = Field(default_factory=SafetySettings)
+    resilience: ResilienceSettings = Field(default_factory=ResilienceSettings)
 
 
 def _to_bool(raw: str) -> bool:
@@ -212,6 +218,7 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "DATA_QUALITY": ("data", "quality", str),
     "SAFETY_INPUT_GUARD": ("safety", "input_guard", _to_bool),
     "SAFETY_MAX_INPUT_CHARS": ("safety", "max_input_chars", int),
+    "RESILIENCE_FALLBACK_ENABLED": ("resilience", "fallback_enabled", _to_bool),
     "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),

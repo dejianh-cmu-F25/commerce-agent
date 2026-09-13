@@ -601,6 +601,20 @@
       "guardrails": null,
       "verdict": "accepted",
       "evidence": "app/evaluation/segments.py"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#43 031-fallbacks",
+      "area": "resilience",
+      "class": "measurable",
+      "what": "Declared, config-gated fallback per dependency; dense retriever degrades to keyless lexical",
+      "metric": "dependency fallback coverage (labeled set)",
+      "before": 0.4,
+      "after": 1.0,
+      "note": "Without the wrapper only 2/5 dependency failures degrade; now 5/5",
+      "guardrails": "disabled fallback propagates; degradation recorded",
+      "verdict": "accepted",
+      "evidence": "app/core/resilience.py"
     }
   ]
 }

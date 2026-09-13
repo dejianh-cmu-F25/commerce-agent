@@ -125,3 +125,9 @@ data:
 safety:
   input_guard: true
   max_input_chars: 4000
+
+# Graceful fallback (feature 031, RD-1). Dense retrieval degrades to the keyless
+# lexical retriever when the embedding/vector store fails; set false to let the
+# failure propagate.
+resilience:
+  fallback_enabled: true

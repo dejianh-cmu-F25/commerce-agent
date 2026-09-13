@@ -86,16 +86,24 @@ The deterministic input guard, scored against a labeled set of hostile and benig
 | ---: | ---: | ---: |
 | 17 | 0.412 | 1.000 |
 
+## Dependency fallbacks (keyless)
+
+Each external dependency has a declared fallback that degrades observably rather than failing silently (`docs/degradation.md`).
+
+| Cases | Before (no fallback) | After (declared) |
+| ---: | ---: | ---: |
+| 5 | 0.400 | 1.000 |
+
 ## Scale & SLOs (keyless)
 
 Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declared budgets (`docs/scale.md`): retrieval p95 ≤ 2000 µs, turn p95 ≤ 10000 µs at concurrency 16, error rate 0.00.
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 14.6/25.4 | 35.0/77.5 | 16326 | 0 |
-| 4 | 15.0/24.7 | 32.8/75.2 | 20486 | 0 |
-| 16 | 6.8/35.0 | 14.7/25.3 | 33828 | 0 |
-| 64 | 6.2/7.9 | 14.7/17.0 | 55798 | 0 |
+| 1 | 6.6/8.8 | 14.9/24.3 | 49045 | 0 |
+| 4 | 6.3/7.8 | 14.6/17.0 | 55869 | 0 |
+| 16 | 6.1/7.7 | 14.6/16.0 | 55883 | 0 |
+| 64 | 6.0/7.4 | 14.5/15.1 | 56375 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -191,3 +199,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
 | 2026-09-13 | #41 029-scale-slo | ops | `no-behavior` | Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach | — | Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md | SLO breach fails the gate | accepted | `docs/scale.md` |
 | 2026-09-13 | #42 030-segmented-metrics | observability | `no-behavior` | Segment the keyless gold metrics by intent and by tool; render + validate | — | Reporting only; 9 intents and 9 tools segmented (see evals/report.md) | — | accepted | `app/evaluation/segments.py` |
+| 2026-09-13 | #43 031-fallbacks | resilience | `measurable` | Declared, config-gated fallback per dependency; dense retriever degrades to keyless lexical | dependency fallback coverage (labeled set) | 0.4 → 1.0 | disabled fallback propagates; degradation recorded | accepted | `app/core/resilience.py` |
