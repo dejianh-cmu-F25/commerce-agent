@@ -25,7 +25,7 @@ from app.core.session import (
     UserMessage,
     derive_messages,
 )
-from app.core.settings import AgentSettings
+from app.core.settings import AgentSettings, SafetySettings
 from app.core.tracing import SpanTimer
 from app.core.types import (
     Finish,
@@ -42,6 +42,7 @@ from app.ports.event_sink import EventSink
 from app.ports.llm import LLMClient
 from app.ports.memory import MemoryStore
 from app.ports.tracer import Tracer
+from app.safety.input_guard import GuardVerdict, check_input
 from app.tools.registry import ToolRegistry
 
 
@@ -74,6 +75,7 @@ class Agent:
         cost_meter: CostMeter | None = None,
         tracer: Tracer | None = None,
         memory: MemoryStore | None = None,
+        safety: SafetySettings | None = None,
     ) -> None:
         self._llm = llm
         self._tools = tools
@@ -82,6 +84,7 @@ class Agent:
         self._cost_meter = cost_meter
         self._tracer = tracer
         self._memory = memory
+        self._safety = safety
 
     def build_request(self, session: Session) -> list[Message]:
         """Build model messages from the session log (the only path, SL-1)."""
@@ -97,6 +100,10 @@ class Agent:
         turn_id = uuid4().hex[:8]
         trace_id = uuid4().hex
         await sink.emit(ev.TurnStart(turn_id=turn_id))
+        verdict = self._guard(user_text)
+        if not verdict.allowed:
+            await self._refuse(session, sink, verdict, turn_id, trace_id)
+            return
         reason = "stop"
         with SpanTimer(self._tracer, "turn", trace_id) as span:
             span.attributes["session_id"] = session.id
@@ -111,6 +118,24 @@ class Agent:
                 span.attributes["reason"] = reason
                 span.status = "ok" if reason == "stop" else reason
                 await sink.emit(ev.TurnEnd(turn_id=turn_id, reason=reason))
+
+    def _guard(self, user_text: str) -> GuardVerdict:
+        """Classify the input before the model (RW-1); off by config."""
+        if self._safety is None or not self._safety.input_guard:
+            return GuardVerdict.allow()
+        return check_input(user_text, max_chars=self._safety.max_input_chars)
+
+    async def _refuse(
+        self, session: Session, sink: EventSink, verdict: GuardVerdict, turn_id: str, trace_id: str
+    ) -> None:
+        """Record a refusal in the log and end the turn; no model/tool call (P3)."""
+        with SpanTimer(self._tracer, "turn", trace_id) as span:
+            span.attributes["session_id"] = session.id
+            span.attributes["reason"] = verdict.category
+            span.status = verdict.category
+            session.append(AssistantMessage(verdict.message))
+            await sink.emit(ev.TextDelta(text=verdict.message))
+        await sink.emit(ev.TurnEnd(turn_id=turn_id, reason=verdict.category))
 
     async def _recall_memory(self, session: Session, trace_id: str, parent_id: str) -> None:
         """Recall the customer's facts into the log, once per session (SL-1).

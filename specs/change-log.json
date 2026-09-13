@@ -559,6 +559,20 @@
       "guardrails": "repair skips+counts; strict fails loud",
       "verdict": "accepted",
       "evidence": "app/data/quality.py"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#40 028-adversarial-input",
+      "area": "safety",
+      "class": "measurable",
+      "what": "Deterministic input guard: refuse injection/oversized input before the model, no tool call",
+      "metric": "adversarial safe-handling rate (labeled set)",
+      "before": 0.412,
+      "after": 1.0,
+      "note": "No guard: the naive baseline allows every hostile input (7/17 benign)",
+      "guardrails": "refusal recorded in the log; no model/tool call",
+      "verdict": "accepted",
+      "evidence": "app/safety/input_guard.py"
     }
   ]
 }

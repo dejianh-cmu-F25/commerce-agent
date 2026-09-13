@@ -220,6 +220,7 @@ def build_agent(
         cost_meter=UsageCostMeter(settings.budget),
         tracer=tracer,
         memory=memory,
+        safety=settings.safety,
     )
 
 
