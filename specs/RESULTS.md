@@ -51,8 +51,10 @@ auditable record is the **change log** below. Each feature spec carries a
   (2000 / 10000 µs); error rate 0.
 - **Diagnosability**: metrics segment by **intent** (9) and by **tool** (9) — a
   failure is attributable, not just an aggregate pass rate.
+- **Fallbacks**: dependency fallback coverage **5/5** (from **0.400** without the
+  wrapper) — dense retrieval degrades to keyless lexical, LLM failure surfaces.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 159 tests, gold scenarios 12/12, 23 Agent Notes.
+- **Gate**: 163 tests, gold scenarios 12/12, 24 Agent Notes.
 
 ## Change log
 
@@ -105,4 +107,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
 | 2026-09-13 | #41 029-scale-slo | ops | `no-behavior` | Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach | — | Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md | SLO breach fails the gate | accepted | `docs/scale.md` |
 | 2026-09-13 | #42 030-segmented-metrics | observability | `no-behavior` | Segment the keyless gold metrics by intent and by tool; render + validate | — | Reporting only; 9 intents and 9 tools segmented (see evals/report.md) | — | accepted | `app/evaluation/segments.py` |
+| 2026-09-13 | #43 031-fallbacks | resilience | `measurable` | Declared, config-gated fallback per dependency; dense retriever degrades to keyless lexical | dependency fallback coverage (labeled set) | 0.4 → 1.0 | disabled fallback propagates; degradation recorded | accepted | `app/core/resilience.py` |
 <!-- change-log:end -->

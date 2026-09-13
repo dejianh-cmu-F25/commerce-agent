@@ -26,6 +26,7 @@ SEGMENTS_HEADING = "## Segmented metrics"
 DATA_QUALITY_HEADING = "## Data quality"
 ADVERSARIAL_HEADING = "## Adversarial input"
 SCALE_HEADING = "## Scale & SLOs"
+FALLBACKS_HEADING = "## Dependency fallbacks"
 REQUIRED_FIELDS = ("date", "change", "area", "class", "what", "verdict", "evidence")
 VALID_CLASSES = {"measurable", "unmeasured", "no-behavior", "docs"}
 
@@ -135,6 +136,19 @@ def _check_report(artifacts: dict) -> list[str]:
             )
             if expected not in section:
                 failures.append(f"adversarial: expected row {expected!r} in the report")
+
+    fallbacks = artifacts.get("fallbacks", {})
+    if fallbacks:
+        section = _section(text, FALLBACKS_HEADING)
+        if not section:
+            failures.append("report.md has no fallbacks section")
+        else:
+            expected = (
+                f"| {fallbacks['cases']} | {fallbacks.get('baseline_coverage', 0.0):.3f} | "
+                f"{fallbacks['coverage']:.3f} |"
+            )
+            if expected not in section:
+                failures.append(f"fallbacks: expected row {expected!r} in the report")
 
     # Scale numbers are wall-clock timings, not reproducible run to run; check
     # that the section and the target row exist, not their exact values. The SLO
