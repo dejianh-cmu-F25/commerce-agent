@@ -799,6 +799,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/scale.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#50 038-clarify-multilingual",
+      "area": "safety",
+      "class": "measurable",
+      "what": "Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns",
+      "metric": "non-English injection cases blocked (labeled)",
+      "before": 0,
+      "after": 4,
+      "note": "Adversarial set grew 17 -> 23 cases; safe-handling rate stays 1.000",
+      "guardrails": "gold 13/13; adversarial safe-rate 1.0; no guardrail regression",
+      "blast_radius": "config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/clarify-vs-refuse.md"
     }
   ]
 }
