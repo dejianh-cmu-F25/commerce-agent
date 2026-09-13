@@ -108,10 +108,10 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.7/8.7 | 15.1/19.8 | 49321 | 0 |
-| 4 | 6.5/8.0 | 14.9/16.4 | 54906 | 0 |
-| 16 | 6.4/7.9 | 14.9/15.4 | 55682 | 0 |
-| 64 | 6.2/7.7 | 14.9/16.2 | 48994 | 0 |
+| 1 | 6.7/8.9 | 15.3/34.6 | 47030 | 0 |
+| 4 | 6.7/8.6 | 14.5/15.8 | 54381 | 0 |
+| 16 | 6.4/8.0 | 14.3/15.2 | 56491 | 0 |
+| 64 | 6.8/8.6 | 14.4/16.0 | 56365 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -210,3 +210,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #43 031-fallbacks | resilience | `measurable` | Declared, config-gated fallback per dependency; dense retriever degrades to keyless lexical | dependency fallback coverage (labeled set) | 0.4 → 1.0 | disabled fallback propagates; degradation recorded | localized to `app/core/resilience.py` (area: resilience) | git revert the squash-merge commit; no destructive migration | accepted | `app/core/resilience.py` |
 | 2026-09-13 | #44 032-change-safety | process | `no-behavior` | Require blast radius + rollback per change; gate them; seam map + PR template | — | Process/docs + gate; every entry now states blast radius and rollback | gate fails an entry missing either field | change-log schema, gate, report renderer, PR template, docs (no runtime) | git revert the squash-merge commit | accepted | `docs/change-safety.md` |
 | 2026-09-13 | #45 033-regression-pipeline | process | `measurable` | Failure-to-regression pipeline: registry, promotion, keyless runner in the gate | named root-caused regressions enforced (count) | 0 → 5 | unknown check or a failed regression fails the gate; promotion requires a root cause | evals/regressions.json, evals/regressions.py, gate, report (no runtime) | git revert the squash-merge commit | accepted | `docs/regressions.md` |
+| 2026-09-13 | #46 034-audit-closeout | docs | `docs` | Re-run the production audit: per-clause current status, evidence, and residual gaps | — | Docs only; 9 of 14 clauses now Met, residual gaps named | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
