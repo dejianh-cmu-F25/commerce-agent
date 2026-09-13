@@ -98,7 +98,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 15.1 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 20.0 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 0.6562 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -115,7 +115,7 @@ Each external dependency has a declared fallback that degrades observably rather
 
 | Cases | Before (no fallback) | After (declared) |
 | ---: | ---: | ---: |
-| 5 | 0.400 | 1.000 |
+| 7 | 0.286 | 1.000 |
 
 ## Scale & SLOs (keyless)
 
@@ -123,14 +123,14 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.4/8.9 | 14.3/18.4 | 52436 | 0 |
-| 4 | 6.1/7.6 | 14.2/16.6 | 54783 | 0 |
-| 16 | 5.8/7.7 | 14.2/15.1 | 58403 | 0 |
-| 64 | 5.9/7.9 | 14.3/15.0 | 58175 | 0 |
+| 1 | 6.6/8.8 | 14.7/19.5 | 50521 | 0 |
+| 4 | 6.4/8.1 | 14.4/15.5 | 58803 | 0 |
+| 16 | 6.6/8.9 | 13.3/20.0 | 55979 | 0 |
+| 64 | 6.7/8.7 | 15.1/16.7 | 53037 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5239.9/7109.0 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5373.2/7210.5 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -234,3 +234,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #48 036-guardrails | process | `no-behavior` | Declare guardrail metrics with floors; aggregate them in the gate; require a guardrail statement per measurable change | — | Tooling/docs; 7 guardrails aggregated, 9 old measurable entries backfilled | the feature is the guardrail comparison (EV-3) | evals/guardrails.py, docs/guardrails.md, gate, change-log schema | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
 | 2026-09-13 | #49 037-scale-boundaries | ops | `no-behavior` | Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them | — | Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md) | breach of either budget fails the gate; SL-1 asserted | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 | 2026-09-13 | #50 038-clarify-multilingual | safety | `measurable` | Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns | non-English injection cases blocked (labeled) | 0 → 4 | gold 13/13; adversarial safe-rate 1.0; no guardrail regression | config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
+| 2026-09-13 | #51 039-llm-fallback | resilience | `measurable` | Config-gated LLM provider fallback (serves when the primary fails before emitting) | dependency fallback coverage (labeled set) | 0.286 → 1.0 | fallback coverage 1.0; no guardrail regression | app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval | git revert the squash-merge commit; or unset llm.fallback_provider | accepted | `docs/degradation.md` |

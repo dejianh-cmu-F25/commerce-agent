@@ -8,10 +8,12 @@ retry a failed primary (fast, deterministic). Stdlib only.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
-from app.core.types import Chunk
+from app.core.types import Chunk, LLMEvent, Message, ToolSpec
+from app.ports.llm import LLMClient
 
 
 @dataclass(frozen=True)
@@ -74,6 +76,70 @@ class FallbackRetriever:
                 )
             )
             return self._secondary.retrieve(query, k)
+
+    @property
+    def degraded(self) -> bool:
+        return self._degraded
+
+    @property
+    def degradations(self) -> list[Degradation]:
+        return list(self._degradations)
+
+
+class FallbackLLM:
+    """Fall back to a secondary LLM when the primary fails **before emitting**.
+
+    Once a delta is sent it cannot be un-sent, so a mid-stream failure propagates
+    rather than silently switching providers. A failed primary is not retried.
+    """
+
+    def __init__(
+        self,
+        primary: LLMClient,
+        secondary: LLMClient,
+        *,
+        component: str = "llm",
+        enabled: bool = True,
+    ) -> None:
+        self._primary = primary
+        self._secondary = secondary
+        self._component = component
+        self._enabled = enabled
+        self._degraded = False
+        self._degradations: list[Degradation] = []
+
+    async def stream(
+        self, messages: Sequence[Message], tools: Sequence[ToolSpec] = ()
+    ) -> AsyncIterator[LLMEvent]:
+        if self._degraded:
+            async for event in self._secondary.stream(messages, tools):
+                yield event
+            return
+        if not self._enabled:
+            async for event in self._primary.stream(messages, tools):
+                yield event
+            return
+
+        emitted = False
+        try:
+            async for event in self._primary.stream(messages, tools):
+                emitted = True
+                yield event
+            return
+        except Exception as exc:
+            if emitted:
+                raise  # a partial response cannot be retried
+            self._degraded = True
+            self._degradations.append(
+                Degradation(
+                    component=self._component,
+                    primary=type(self._primary).__name__,
+                    fallback=type(self._secondary).__name__,
+                    reason=str(exc),
+                )
+            )
+        async for event in self._secondary.stream(messages, tools):
+            yield event
 
     @property
     def degraded(self) -> bool:

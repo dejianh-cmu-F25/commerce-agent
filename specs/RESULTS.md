@@ -53,8 +53,9 @@ auditable record is the **change log** below. Each feature spec carries a
   session (100 turns) **~7 ms**, reconstructable (SL-1).
 - **Diagnosability**: metrics segment by **intent** (10) and by **tool** (9) — a
   failure is attributable, not just an aggregate pass rate.
-- **Fallbacks**: dependency fallback coverage **5/5** (from **0.400** without the
-  wrapper) — dense retrieval degrades to keyless lexical, LLM failure surfaces.
+- **Fallbacks**: dependency fallback coverage **7/7** (from **0.286** without the
+  wrapper) — dense retrieval degrades to keyless lexical, the LLM falls back to a
+  configured provider (a mid-stream failure surfaces).
 - **Regressions**: **5** named, root-caused regressions enforced in the gate
   (ungrounded id, return window, injection, dirty price, dense outage).
 - **Boundaries**: 16 cross-cutting edge/failure boundaries enumerated with a
@@ -63,7 +64,7 @@ auditable record is the **change log** below. Each feature spec carries a
 - **Guardrails**: 7 metrics (quality, safety, data, resilience, latency, cost)
   aggregated against declared floors and enforced in the gate (EV-3).
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 177 tests, gold scenarios 13/13, 30 Agent Notes.
+- **Gate**: 179 tests, gold scenarios 13/13, 31 Agent Notes.
 
 ## Change log
 
@@ -124,4 +125,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #48 036-guardrails | process | `no-behavior` | Declare guardrail metrics with floors; aggregate them in the gate; require a guardrail statement per measurable change | — | Tooling/docs; 7 guardrails aggregated, 9 old measurable entries backfilled | the feature is the guardrail comparison (EV-3) | evals/guardrails.py, docs/guardrails.md, gate, change-log schema | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
 | 2026-09-13 | #49 037-scale-boundaries | ops | `no-behavior` | Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them | — | Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md) | breach of either budget fails the gate; SL-1 asserted | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 | 2026-09-13 | #50 038-clarify-multilingual | safety | `measurable` | Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns | non-English injection cases blocked (labeled) | 0 → 4 | gold 13/13; adversarial safe-rate 1.0; no guardrail regression | config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
+| 2026-09-13 | #51 039-llm-fallback | resilience | `measurable` | Config-gated LLM provider fallback (serves when the primary fails before emitting) | dependency fallback coverage (labeled set) | 0.286 → 1.0 | fallback coverage 1.0; no guardrail regression | app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval | git revert the squash-merge commit; or unset llm.fallback_provider | accepted | `docs/degradation.md` |
 <!-- change-log:end -->

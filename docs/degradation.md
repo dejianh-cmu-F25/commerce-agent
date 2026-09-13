@@ -12,7 +12,7 @@ system **degrade observably rather than fail silently**.
 | Knowledge corpus | `config/knowledge/` | empty (no crash) | empty result | — |
 | Customer memory | SQLite store | no memory (turn proceeds) | traced span, error swallowed | — |
 | Merchant writes | SQLite | staged change only (never applied) | `P3` gate | — |
-| LLM provider | configured provider | surfaced error turn (`reason=error`) | `ErrorEvent` + `TurnEnd` | — |
+| LLM provider | configured provider | fallback provider (if configured), else a surfaced error turn | `FallbackLLM.degraded` + `ErrorEvent` | `llm.fallback_provider` |
 | Budget | — | turn stopped at the cap (HR-12) | `BudgetExceeded` event | `budget.enabled` |
 
 The **retriever** fallback is the one wrapped by code: `app/core/resilience.py`
@@ -34,8 +34,9 @@ uv run python evals/fallbacks.py
 
 ## Gaps (honest)
 
-- The LLM has **no provider fallback** (a second provider); its failure degrades
-  to a surfaced error, which RD-1 accepts as observable degradation.
+- The LLM fallback serves only when the primary fails **before the first token**;
+  a mid-stream failure surfaces (a partial answer cannot be un-sent). With no
+  `llm.fallback_provider` configured, the LLM failure degrades to a surfaced error.
 - The embedding provider has no separate fallback from the retriever: a dense
   failure is handled at the retriever level (embedding → lexical).
 - Degradations are recorded in-process, not yet exported as a metric/counter.

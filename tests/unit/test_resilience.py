@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Sequence
+
+from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.retriever_memory import InMemoryRetriever
-from app.core.resilience import FallbackRetriever
-from app.core.types import Chunk
+from app.core.resilience import FallbackLLM, FallbackRetriever
+from app.core.types import Chunk, LLMEvent, Message, TextDelta, ToolSpec
 from evals.fallbacks import run_fallbacks
 
 
@@ -57,6 +60,39 @@ def test_disabled_fallback_propagates() -> None:
     except RuntimeError:
         return
     raise AssertionError("a disabled fallback must let the primary failure propagate")
+
+
+class _FailingLLM:
+    async def stream(
+        self, messages: Sequence[Message], tools: Sequence[ToolSpec] = ()
+    ) -> AsyncIterator[LLMEvent]:
+        raise RuntimeError("provider down")
+        yield  # pragma: no cover
+
+
+class _MidstreamFailingLLM:
+    async def stream(
+        self, messages: Sequence[Message], tools: Sequence[ToolSpec] = ()
+    ) -> AsyncIterator[LLMEvent]:
+        yield TextDelta("partial")
+        raise RuntimeError("provider down")
+
+
+async def test_llm_falls_back_before_emitting() -> None:
+    wrapper = FallbackLLM(_FailingLLM(), MockLLMClient([text_turn("fallback")]))
+    events = [event async for event in wrapper.stream([])]
+    assert any(isinstance(e, TextDelta) and e.text == "fallback" for e in events)
+    assert wrapper.degraded and len(wrapper.degradations) == 1
+
+
+async def test_llm_midstream_failure_propagates() -> None:
+    wrapper = FallbackLLM(_MidstreamFailingLLM(), MockLLMClient([text_turn("nope")]))
+    try:
+        _ = [event async for event in wrapper.stream([])]
+    except RuntimeError:
+        assert not wrapper.degraded
+        return
+    raise AssertionError("a mid-stream failure must propagate")
 
 
 async def test_coverage_benchmark_passes() -> None:

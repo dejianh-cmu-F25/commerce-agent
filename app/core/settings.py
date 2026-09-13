@@ -24,6 +24,11 @@ class LLMSettings(BaseModel):
     api_key: str = ""
     temperature: float = 0.0
     max_tokens: int = 4096
+    # Fallback provider (feature 039, RD-1): empty disables the fallback.
+    fallback_provider: Literal["", "deepseek", "openai", "anthropic", "mock"] = ""
+    fallback_model: str = ""
+    fallback_base_url: str = ""
+    fallback_api_key: str = ""
 
 
 class AgentSettings(BaseModel):
@@ -203,6 +208,10 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "LLM_MODEL": ("llm", "model", str),
     "LLM_BASE_URL": ("llm", "base_url", str),
     "LLM_API_KEY": ("llm", "api_key", str),
+    "LLM_FALLBACK_PROVIDER": ("llm", "fallback_provider", str),
+    "LLM_FALLBACK_MODEL": ("llm", "fallback_model", str),
+    "LLM_FALLBACK_BASE_URL": ("llm", "fallback_base_url", str),
+    "LLM_FALLBACK_API_KEY": ("llm", "fallback_api_key", str),
     "EMBEDDING_PROVIDER": ("embedding", "provider", str),
     "EMBEDDING_MODEL": ("embedding", "model", str),
     "EMBEDDING_BASE_URL": ("embedding", "base_url", str),
