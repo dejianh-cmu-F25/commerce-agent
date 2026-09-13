@@ -160,7 +160,7 @@ and that streamed text is announced; resize to 375px; toggle the system theme.
 - **Source**: `title`, `price`, `in_stock` (provenance-backed).
 - **BudgetMeter**: `spent`, `limit`, `last_turn_cost`.
 
-## UI Requirements *(WV-6..WV-8)*
+## UI Requirements
 
 ### UI States
 
@@ -186,7 +186,7 @@ and that streamed text is announced; resize to 375px; toggle the system theme.
 - [ ] Usable at 375px and on desktop; no horizontal scroll.
 - [ ] Theme follows `prefers-color-scheme` (light and dark).
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, click a suggestion chip (or type "I need a tent under $250"), and press
 Send. The reply streams with formatted text; a `search_products` step with an
@@ -194,7 +194,7 @@ Send. The reply streams with formatted text; a `search_products` step with an
 updates. Press Stop during a turn to confirm cancellation, and trigger an error
 to confirm Retry.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 The UI renders the existing `TurnStart`/`TurnEnd`/`UsageReported`/`ErrorEvent`
 stream. No new backend events are required beyond what feature 001 emits; the
@@ -224,3 +224,14 @@ turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
   and no build step.
 - A headless browser checkpoint uses the Playwright tooling already available to
   the agent; it is not wired into CI in this feature.
+
+## Real-World Coverage
+
+- **Input distribution**: free-form chat; markdown and tool steps render from
+  model/tool output. No adversarial-rendering suite (gap).
+- **Data quality**: model/user markup is sanitized before the DOM (WV-9); tool
+  JSON is parsed defensively.
+- **Edge & failure modes**: Stop, error + Retry, and the empty state are defined.
+- **Scale envelope**: single browser session; not measured (gap).
+- **Degradation**: a failed turn surfaces inline with Retry.
+- **Change evidence**: UI-only; no quantitative delta (see `specs/change-log.json`).

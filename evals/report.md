@@ -122,3 +122,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #32 results-in-specs | process | `docs` | Record all key metrics in the specs, gate-checked | — | — | — | accepted | `specs/RESULTS.md` |
 | 2026-09-13 | #33 production-constraints | process | `docs` | Constitution RW/SC/EV clauses + production audit | — | — | — | accepted | `docs/production-audit.md` |
 | 2026-09-13 | #34 027-change-audit | process | `no-behavior` | Auditable change log + evidence gate + constitution consolidation | — | Tooling/process; no app behavior change | — | accepted | `specs/change-log.json` |
+| 2026-09-13 | #35 028-spec-structure | process | `docs` | Normalize the spec structure across all 25 features; complete the spec template | — | — | — | accepted | `.specify/templates/spec-template.md` |

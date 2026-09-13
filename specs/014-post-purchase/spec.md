@@ -135,7 +135,7 @@ parity; assert an invalid return window fails at load.
   order id, the item, the status (`requested`), and when it was requested. It is
   a proposal; no refund is implied.
 
-## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
+## UI Requirements
 
 Order and return outcomes render as cards inside the chat transcript, alongside
 the existing product, cart, and checkout cards. There is no new tab.

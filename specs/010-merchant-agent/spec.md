@@ -88,7 +88,9 @@ is updated and the change is marked applied.
   `new_value`, `status` (`pending` | `applied`), `created_at`.
 - **MerchantBackend**: the capability (list, stage, pending, apply).
 
-## UI States *(convention, WV-6)*
+## UI Requirements
+
+### UI States
 
 | State | Trigger | What the user sees |
 | --- | --- | --- |
@@ -97,13 +99,13 @@ is updated and the change is marked applied.
 | Empty | No pending changes | "No pending changes." |
 | Applied | Approve clicked | The change moves out of pending; the product updates |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open **Merchant**: the inventory is listed and (after asking the agent to change a
 price) the pending change appears with an Approve button. Approve it: the price
 updates in the inventory and the change leaves the pending list.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 Merchant turns emit the existing spans (007); tool spans show `list_inventory` /
 `propose_*`. Approval is an HTTP call, not a model action.

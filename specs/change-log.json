@@ -489,6 +489,20 @@
       "guardrails": null,
       "verdict": "accepted",
       "evidence": "specs/change-log.json"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#35 028-spec-structure",
+      "area": "process",
+      "class": "docs",
+      "what": "Normalize the spec structure across all 25 features; complete the spec template",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": null,
+      "guardrails": null,
+      "verdict": "accepted",
+      "evidence": ".specify/templates/spec-template.md"
     }
   ]
 }

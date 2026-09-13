@@ -98,7 +98,7 @@ match the session.
 - **SessionRecord**: the persisted form of `Session` (events, provenance, cart).
 - **SessionSettings**: `store` (`memory` | `sqlite`), `sqlite_path`.
 
-## UI States *(convention, WV-6)*
+## UI Requirements
 
 The browser surface is unchanged; the chat states are as in 003. Persistence is
 observable through `GET /sessions/{id}`.
@@ -110,12 +110,12 @@ observable through `GET /sessions/{id}`.
 | Success | Turn ends | Unchanged |
 | Error | Failure | Unchanged |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, send a message. After the turn, `GET /sessions/{id}` returns the
 messages. Restart the app and request the same id: the messages are still there.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 No new events; structured traces arrive with feature 080 (SL-2).
 
@@ -135,3 +135,14 @@ No new events; structured traces arrive with feature 080 (SL-2).
 - The event types are those of 001 (`UserMessage`, `AssistantMessage`,
   `ToolResultEvent`); new event types must extend the serialization.
 - Cart is persisted but empty until the cart feature lands.
+
+## Real-World Coverage
+
+- **Input distribution**: session ids from the client.
+- **Data quality**: the log is append-only, keyed by `(session_id, seq)`; re-saving
+  is idempotent.
+- **Edge & failure modes**: an unknown session id returns 404; a stale id is
+  cleared client-side.
+- **Scale envelope**: a per-session log; not measured (gap).
+- **Degradation**: the `memory` store is the keyless fallback.
+- **Change evidence**: resume integration tests.

@@ -88,7 +88,9 @@ reloads the list.
 - **Span**: `trace_id`, `span_id`, `parent_id`, `name`, `start_ms`, `end_ms`,
   `status`, `attributes`.
 
-## UI States *(convention, WV-6)*
+## UI Requirements
+
+### UI States
 
 | State | Trigger | What the user sees |
 | --- | --- | --- |
@@ -99,13 +101,13 @@ reloads the list.
 | Traces: error | Fetch fails | Inline message; Refresh available |
 | Chat | Toggle to Chat | Unchanged transcript + composer |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Send a message, switch to **Traces**: the turn's trace is listed; selecting it
 shows the `turn` span with `llm`/`tool` children and their durations/attributes.
 Switch back to **Chat**: the transcript is intact.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 This feature renders the observability data produced by 007 (OB-4). No new
 backend events.
@@ -124,3 +126,12 @@ backend events.
 - 007 provides `GET /traces` and `GET /traces/{trace_id}`.
 - No router is added; the view is a client-side toggle (a single page).
 - The viewer is read-only.
+
+## Real-World Coverage
+
+- **Input distribution**: recent traces from the tracer.
+- **Data quality**: renders the recorded spans; nothing is fabricated.
+- **Edge & failure modes**: no traces -> empty state; a fetch error -> inline error.
+- **Scale envelope**: a list limit; not measured (gap).
+- **Degradation**: read-only; the chat is preserved when switching views.
+- **Change evidence**: browser checkpoint (008).

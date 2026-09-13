@@ -93,13 +93,15 @@ Events reach the surface as they happen.
 - **AgentEvent**: `TurnStart | TextDelta | ToolCallStarted | ToolResult |
   UIComponent | CartUpdate | TurnEnd | ErrorEvent`.
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, type "I need a tent under $250", and press Send. The page shows the
 assistant reply streaming in; with a real provider it also shows the
 `search_products` tool call. `/healthz` returns `{"status":"ok"}`.
 
-## UI States *(convention, WV-6)*
+## UI Requirements
+
+### UI States
 
 | State | Trigger | What the user sees |
 | --- | --- | --- |
@@ -109,7 +111,7 @@ assistant reply streaming in; with a real provider it also shows the
 | Error | LLM or tool failure | `ErrorEvent` shown inline; Send re-enabled |
 | Disabled | Request in flight | Send button disabled until the turn ends |
 
-## Observability *(convention, WV-1)*
+## Observability
 
 Each turn emits `TurnStart`/`TurnEnd` with a `turn_id`. Structured tracing to
 `logs/traces.jsonl` arrives with feature 080; this feature defines the event

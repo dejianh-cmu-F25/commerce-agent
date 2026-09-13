@@ -88,7 +88,7 @@ Docs are chunked by paragraph; re-ingesting does not duplicate chunks.
 - **Retriever**: the capability (retrieve).
 - **KnowledgeSettings**: `provider` (`memory`), `path`, `top_k`, `min_chars`.
 
-## UI States *(convention, WV-6)*
+## UI Requirements
 
 The browser surface is unchanged (the tool result renders as a tool step).
 
@@ -96,12 +96,12 @@ The browser surface is unchanged (the tool result renders as a tool step).
 | --- | --- | --- |
 | Empty / Streaming / Success / Error | As in 003 | Unchanged; a `search_knowledge` step appears |
 
-## Web Acceptance *(convention, WV-1)*
+## Web Acceptance
 
 Open `/`, ask "what is your return policy?". The `search_knowledge` step runs and
 the answer cites the returns document.
 
-## Observability *(convention, WV-1)*
+## Observability
 
 Knowledge turns emit the existing spans (007); the `search_knowledge` tool span
 records the query and the number of hits. No new events.
