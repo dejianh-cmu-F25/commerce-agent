@@ -118,6 +118,24 @@ def _data_quality_section(data_quality: dict) -> list[str]:
     ]
 
 
+def _adversarial_section(adversarial: dict) -> list[str]:
+    if not adversarial:
+        return []
+    return [
+        "## Adversarial input (keyless)",
+        "",
+        "The deterministic input guard, scored against a labeled set of hostile and "
+        "benign messages (`evals/adversarial_set.py`): injection, prompt extraction, "
+        "unicode obfuscation, oversized input, and benign controls.",
+        "",
+        "| Cases | Before (no guard) | After (guarded) |",
+        "| ---: | ---: | ---: |",
+        f"| {adversarial['cases']} | "
+        f"{adversarial.get('baseline_safe_rate', 0.0):.3f} | {adversarial['safe_rate']:.3f} |",
+        "",
+    ]
+
+
 def _agent_section(agent: dict) -> list[str]:
     if not agent:
         return []
@@ -243,6 +261,7 @@ def render() -> str:
     lines += _retrieval_section(keyless.get("retrieval", {}))
     lines += _ablation_section(keyless.get("ablation", {}))
     lines += _data_quality_section(keyless.get("data_quality", {}))
+    lines += _adversarial_section(keyless.get("adversarial", {}))
     lines += _agent_section(real.get("agent", {}))
     lines += _change_log_section(_load(CHANGE_LOG).get("entries", []))
     return "\n".join(lines).rstrip() + "\n"

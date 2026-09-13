@@ -23,6 +23,7 @@ CHANGE_LOG = ROOT / "specs" / "change-log.json"
 RETRIEVAL_HEADING = "## Retrieval benchmark"
 ABLATION_HEADING = "## Feature ablation"
 DATA_QUALITY_HEADING = "## Data quality"
+ADVERSARIAL_HEADING = "## Adversarial input"
 REQUIRED_FIELDS = ("date", "change", "area", "class", "what", "verdict", "evidence")
 VALID_CLASSES = {"measurable", "unmeasured", "no-behavior", "docs"}
 
@@ -104,6 +105,20 @@ def _check_report(artifacts: dict) -> list[str]:
             )
             if expected not in section:
                 failures.append(f"data quality: expected row {expected!r} in the report")
+
+    adversarial = artifacts.get("adversarial", {})
+    if adversarial:
+        section = _section(text, ADVERSARIAL_HEADING)
+        if not section:
+            failures.append("report.md has no adversarial section")
+        else:
+            expected = (
+                f"| {adversarial['cases']} | "
+                f"{adversarial.get('baseline_safe_rate', 0.0):.3f} | "
+                f"{adversarial['safe_rate']:.3f} |"
+            )
+            if expected not in section:
+                failures.append(f"adversarial: expected row {expected!r} in the report")
     return failures
 
 

@@ -118,3 +118,10 @@ skills:
 # (e.g. "$1,299.00" -> 1299.00) and skips unusable rows; `strict` fails loud.
 data:
   quality: repair           # repair | strict
+
+# Input guard (feature 028, RW-1). A deterministic guard classifies the message
+# before the model: injection attempts and oversized input are refused with a
+# safe message, calling no tool. On by default.
+safety:
+  input_guard: true
+  max_input_chars: 4000

@@ -22,8 +22,8 @@ auditable record is the **change log** below. Each feature spec carries a
 **Reproduce**
 
 - Keyless (in the gate): `make ci-fast` runs `evals/bench.py`,
-  `evals/ablation.py`, and `evals/data_quality.py`, then renders `evals/report.md`
-  via
+  `evals/ablation.py`, `evals/data_quality.py`, and `evals/adversarial.py`, then
+  renders `evals/report.md` via
   `uv run python evals/report.py --write` (which also refreshes the change log
   below).
 - Real model (opt-in, snapshot): `uv run python evals/agent_eval.py --real
@@ -43,8 +43,11 @@ auditable record is the **change log** below. Each feature spec carries a
   0 judge vetoes; **¥0.0797**.
 - **Data quality**: labeled dirty-input set **20/20** (accuracy **1.000**) —
   currency symbols, "out of stock", padding, control chars, negatives, missing.
+- **Adversarial input**: labeled hostile/benign set **17/17** (safe-handling
+  **1.000**, from **0.412** without the guard) — injection, prompt extraction,
+  unicode obfuscation, oversize.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 144 tests, gold scenarios 12/12, 20 Agent Notes.
+- **Gate**: 152 tests, gold scenarios 12/12, 21 Agent Notes.
 
 ## Change log
 
@@ -94,4 +97,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #37 030-evidence-main-skip | process | `no-behavior` | Skip the change-evidence gate on the base branch | — | Gate-only fix; running the gate on main has no change to audit | — | accepted | `scripts/check_change_evidence.py` |
 | 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |
 | 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |
+| 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
 <!-- change-log:end -->
