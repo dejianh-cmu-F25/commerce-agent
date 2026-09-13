@@ -64,6 +64,9 @@ def main() -> int:
     entries = json.loads(CHANGE_LOG.read_text()).get("entries", [])
 
     branch = _current_change()
+    if branch in {"", "main", "master", "HEAD"}:
+        print("SKIP: on the base branch; no change to audit.")
+        return 0
     entry = _find_entry(entries, branch)
     if entry is None:
         print(f"FAIL: no change-log entry for the current change ({branch!r}).")
