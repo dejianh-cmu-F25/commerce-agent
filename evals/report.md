@@ -15,7 +15,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
 | `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
@@ -25,6 +25,8 @@ hit-rate@3 by difficulty:
 | `tfidf` | 1.000 | 0.800 | 1.000 |
 | `dense-hash` | 1.000 | 1.000 | 1.000 |
 | `dense-chroma` | 1.000 | 1.000 | 1.000 |
+
+Multilingual (not gated — a measured gap; the corpus is English): hit-rate@3 de 0.000 / es 0.000 / fr 0.500 / zh 0.000 over 8 queries.
 
 ## Feature ablation (keyless)
 
@@ -98,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 20.0 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 18.5 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 0.6562 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -123,12 +125,12 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.6/8.8 | 14.7/19.5 | 50521 | 0 |
-| 4 | 6.4/8.1 | 14.4/15.5 | 58803 | 0 |
-| 16 | 6.6/8.9 | 13.3/20.0 | 55979 | 0 |
-| 64 | 6.7/8.7 | 15.1/16.7 | 53037 | 0 |
+| 1 | 6.5/8.9 | 14.8/19.1 | 50792 | 0 |
+| 4 | 6.3/7.8 | 14.8/16.4 | 55652 | 0 |
+| 16 | 6.3/7.9 | 15.2/18.5 | 47994 | 0 |
+| 64 | 6.2/7.8 | 15.0/17.8 | 53798 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5373.2/7210.5 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5201.3/7108.3 µs** (budget 50000 µs).
 
 Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
@@ -235,3 +237,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #49 037-scale-boundaries | ops | `no-behavior` | Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them | — | Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md) | breach of either budget fails the gate; SL-1 asserted | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 | 2026-09-13 | #50 038-clarify-multilingual | safety | `measurable` | Specify clarify-vs-refuse (prompt + gold scenario); add es/fr/de/zh injection patterns | non-English injection cases blocked (labeled) | 0 → 4 | gold 13/13; adversarial safe-rate 1.0; no guardrail regression | config/prompts/system.md, app/safety/input_guard.py, gold + adversarial sets | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
 | 2026-09-13 | #51 039-llm-fallback | resilience | `measurable` | Config-gated LLM provider fallback (serves when the primary fails before emitting) | dependency fallback coverage (labeled set) | 0.286 → 1.0 | fallback coverage 1.0; no guardrail regression | app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval | git revert the squash-merge commit; or unset llm.fallback_provider | accepted | `docs/degradation.md` |
+| 2026-09-13 | #52 040-multilingual-retrieval | evaluation | `no-behavior` | Measure non-English retrieval over the English corpus; report the gap (not gated) | — | Measurement/reporting; es/fr/de/zh hit-rate@3 0.000-0.500 (a documented gap) | the English hit-rate gate is unchanged; no guardrail regression | evals/retrieval_set.py, evals/bench.py, report (no runtime) | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |

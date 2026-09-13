@@ -18,8 +18,10 @@ asserts an empty tool list, so a regression that guesses fails the gate.
 
 The guard matches instruction-override phrasing in English, Spanish, French,
 German, and Chinese (`app/safety/input_guard.py`); benign requests in those
-languages are allowed. The retrieval corpus and the gold scenarios are English —
-**non-English retrieval quality is not measured** (a residual gap).
+languages are allowed. The retrieval corpus and the gold scenarios are English:
+**non-English retrieval is measured and weak** — the keyless lexical retriever
+scores 0.000 hit-rate@3 on the multilingual set (`evals/bench.py`, reported as a
+gap, not gated). Closing it needs a multilingual embedding model.
 
 ## Gaps (honest)
 

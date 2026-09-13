@@ -39,3 +39,6 @@ empty.
   untested.
 - **Long session** is measured at 100 turns (`docs/scale.md`); longer is untested.
 - **Adversarial retrieval queries** (poisoned corpus) are not covered.
+- **Non-English retrieval** is measured at 0.000 hit-rate@3 over the English
+  corpus (`evals/bench.py`, reported as a gap); closing it needs multilingual
+  embeddings.
