@@ -35,6 +35,7 @@ from app.evaluation.agent_metrics import RunMetrics, summarize
 from app.evaluation.failure import attribute
 from app.evaluation.reliability import aggregate
 from app.evaluation.rubric import JudgeResult, judge_answer
+from app.evaluation.significance import bootstrap_ci
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.knowledge import register_knowledge_tools
@@ -232,6 +233,8 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
             break
 
     reliability = aggregate([outcomes[name] for name in CASE_NAMES], settings.evaluation.pass_k)
+    all_runs = [float(ok) for name in CASE_NAMES for ok in outcomes[name]]
+    ci_low, ci_high = bootstrap_ci(all_runs)
     return {
         "model": settings.llm.model,
         "prompt_hash": prompt_hash,
@@ -249,6 +252,7 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
             "successes": reliability.successes,
             "tasks": reliability.tasks,
             "pass_at_1": reliability.pass_at_1,
+            "pass_at_1_ci": [ci_low, ci_high],
             "pass_at_k": reliability.pass_at_k,
             "best_at_k": reliability.best_at_k,
             "pass_pow_k": reliability.pass_pow_k,

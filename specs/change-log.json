@@ -531,6 +531,20 @@
       "guardrails": null,
       "verdict": "accepted",
       "evidence": "scripts/check_change_evidence.py"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#38 026-paired-significance",
+      "area": "evaluation",
+      "class": "no-behavior",
+      "what": "Paired 95% CI + McNemar p-value in the ablation and real reliability",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Evaluation tooling; states existing deltas with significance, no app behavior change",
+      "guardrails": null,
+      "verdict": "accepted",
+      "evidence": "app/evaluation/significance.py"
     }
   ]
 }
