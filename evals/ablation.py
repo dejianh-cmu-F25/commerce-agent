@@ -12,6 +12,7 @@ import asyncio
 import json
 from pathlib import Path
 
+from app.evaluation.significance import paired_delta
 from evals.runner import RunConfig, run_scenarios
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,8 +29,10 @@ CONFIGS: dict[str, RunConfig] = {
 
 async def run_ablation() -> dict:
     result: dict = {"configs": {}}
+    outcomes: dict[str, list[bool]] = {}
     for name, config in CONFIGS.items():
         results = await run_scenarios(config)
+        outcomes[name] = [item.ok for item in results]
         passed = sum(1 for item in results if item.ok)
         result["configs"][name] = {
             "passed": passed,
@@ -37,6 +40,17 @@ async def run_ablation() -> dict:
             "pass_rate": round(passed / len(results), 4) if results else 0.0,
             "failed": [item.name for item in results if not item.ok],
         }
+    baseline = outcomes.get("naked", [])
+    for name, metrics in result["configs"].items():
+        stats = paired_delta(baseline, outcomes[name])
+        metrics.update(
+            {
+                "delta": stats.delta,
+                "ci_low": stats.ci_low,
+                "ci_high": stats.ci_high,
+                "p_value": stats.p_value,
+            }
+        )
     return result
 
 

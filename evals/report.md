@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
 | `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.5 |
 
 hit-rate@3 by difficulty:
 
@@ -28,15 +28,15 @@ hit-rate@3 by difficulty:
 
 ## Feature ablation (keyless)
 
-Each configuration runs the same gold scenarios (scripted model); the delta is vs the naked baseline. This isolates each feature's contribution.
+Each configuration runs the same gold scenarios (scripted model); the delta is vs the naked baseline, with a 95% bootstrap CI and an exact McNemar p-value.
 
-| Config | Passed | Pass rate | Delta vs naked |
-| --- | ---: | ---: | ---: |
-| `naked` | 9/12 | 0.750 | +0.000 |
-| `+memory` | 11/12 | 0.917 | +0.167 |
-| `+skills` | 10/12 | 0.833 | +0.083 |
-| `+dense-hash` | 9/12 | 0.750 | +0.000 |
-| `+dense-chroma` | 9/12 | 0.750 | +0.000 |
+| Config | Passed | Pass rate | Delta vs naked | 95% CI | p (McNemar) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `naked` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
+| `+memory` | 11/12 | 0.917 | +0.167 | [0.000, 0.417] | 0.500 |
+| `+skills` | 10/12 | 0.833 | +0.083 | [0.000, 0.250] | 1.000 |
+| `+dense-hash` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
+| `+dense-chroma` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -44,18 +44,20 @@ Each configuration runs the same gold scenarios (scripted model); the delta is v
 - Generated: 2026-09-13
 - Command: `uv run python evals/agent_eval.py --real --seeds 3`
 
-Reliability over 6 tasks × 3 runs (18 runs, 14 successes):
+Reliability over 6 tasks × 3 runs (18 runs, 15 successes):
 
 | Pass@1 | Pass@k | Best@k | Pass^k |
 | ---: | ---: | ---: | ---: |
-| 0.778 | 1.000 | 1.000 | 0.667 |
+| 0.833 | 0.833 | 0.833 | 0.833 |
+
+Pass@1 95% CI: [0.611, 1.000] (bootstrap).
 
 Per-template reliability:
 
 | Template | Pass@1 | Pass@k | Pass^k |
 | --- | ---: | ---: | ---: |
-| `budget_search` | 0.333 | 1.000 | 0.000 |
-| `multi_item_cart` | 0.333 | 1.000 | 0.000 |
+| `budget_search` | 1.000 | 1.000 | 1.000 |
+| `multi_item_cart` | 0.000 | 0.000 | 0.000 |
 | `add_named_item` | 1.000 | 1.000 | 1.000 |
 | `policy_question` | 1.000 | 1.000 | 1.000 |
 | `refuse_out_of_window` | 1.000 | 1.000 | 1.000 |
@@ -65,23 +67,23 @@ Process metrics (per run):
 
 | steps | tool ok/err | ungrounded | avg ms | p95 ms | prompt tok | completion tok | cache hit | cost CNY |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2.06 | 37/0 | 0 | 3550 | 5485 | 73491 | 8218 | 64000 | 0.0949 |
+| 1.67 | 30/0 | 0 | 3036 | 4597 | 63454 | 6631 | 54400 | 0.0797 |
 
 Failure attribution (first error):
 
 | Category | Count |
 | --- | ---: |
-| `incomplete` | 4 |
+| `incomplete` | 3 |
 
 Rubric judge: graded 18 answers, 0 vetoes.
 
 | Dimension | Avg (1-4) |
 | --- | ---: |
-| grounding | 3.89 |
-| correctness | 3.89 |
-| policy_compliance | 4.00 |
+| grounding | 3.78 |
+| correctness | 3.72 |
+| policy_compliance | 3.83 |
 | completeness | 3.39 |
-| tone | 4.00 |
+| tone | 3.94 |
 
 ## Change log
 
@@ -125,3 +127,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #35 028-spec-structure | process | `docs` | Normalize the spec structure across all 25 features; complete the spec template | — | — | — | accepted | `.specify/templates/spec-template.md` |
 | 2026-09-13 | #36 029-docs-dedup | process | `docs` | Deduplicate the spec corpus: README, conventions, templates, notes | — | — | — | accepted | `docs/architecture.md` |
 | 2026-09-13 | #37 030-evidence-main-skip | process | `no-behavior` | Skip the change-evidence gate on the base branch | — | Gate-only fix; running the gate on main has no change to audit | — | accepted | `scripts/check_change_evidence.py` |
+| 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |

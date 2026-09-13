@@ -79,21 +79,22 @@ def _ablation_section(ablation: dict) -> list[str]:
     configs = ablation.get("configs")
     if not configs:
         return []
-    baseline = configs.get("naked", {}).get("pass_rate", 0.0)
     lines = [
         "## Feature ablation (keyless)",
         "",
         "Each configuration runs the same gold scenarios (scripted model); the delta is "
-        "vs the naked baseline. This isolates each feature's contribution.",
+        "vs the naked baseline, with a 95% bootstrap CI and an exact McNemar p-value.",
         "",
-        "| Config | Passed | Pass rate | Delta vs naked |",
-        "| --- | ---: | ---: | ---: |",
+        "| Config | Passed | Pass rate | Delta vs naked | 95% CI | p (McNemar) |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for name, metrics in configs.items():
-        delta = metrics["pass_rate"] - baseline
+        ci = f"[{metrics['ci_low']:.3f}, {metrics['ci_high']:.3f}]" if "ci_low" in metrics else "—"
+        p_value = f"{metrics.get('p_value', 1.0):.3f}" if "p_value" in metrics else "—"
         lines.append(
             f"| `{name}` | {metrics['passed']}/{metrics['total']} | "
-            f"{metrics['pass_rate']:.3f} | {delta:+.3f} |"
+            f"{metrics['pass_rate']:.3f} | {metrics.get('delta', 0.0):+.3f} | "
+            f"{ci} | {p_value} |"
         )
     lines.append("")
     return lines
@@ -123,6 +124,9 @@ def _agent_section(agent: dict) -> list[str]:
             f"{reliability['best_at_k']:.3f} | {reliability['pass_pow_k']:.3f} |",
             "",
         ]
+        ci = reliability.get("pass_at_1_ci")
+        if ci:
+            lines += [f"Pass@1 95% CI: [{ci[0]:.3f}, {ci[1]:.3f}] (bootstrap).", ""]
     per_task = agent.get("per_task", {})
     if per_task:
         lines += [

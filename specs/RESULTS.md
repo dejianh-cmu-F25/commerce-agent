@@ -28,15 +28,18 @@ auditable record is the **change log** below. Each feature spec carries a
 - Real model (opt-in, snapshot): `uv run python evals/agent_eval.py --real
   --seeds 3`. These numbers are a **dated snapshot** and are **not** regenerated
   by the gate.
-- Budget: **¥0.5764 / ¥10.00** spent across all runs (harness-enforced, HR-12).
+- Budget: **¥0.6562 / ¥10.00** spent across all runs (harness-enforced, HR-12).
 
 ## Headline (2026-09-13 snapshot)
 
 - **Retrieval**: dense retrieval closes the hard-query gap (hit-rate@3
   0.800 → 1.000); TF-IDF overall 0.963.
-- **Ablation** (keyless gold set): memory **+0.167**, skills **+0.083**.
-- **Real** (DeepSeek, 6 templates × 3 seeds): Pass@1 **0.778** · Pass@k 1.000 ·
-  Pass^k **0.667**; 0 ungrounded attempts; 0 judge vetoes; **¥0.0949**.
+- **Ablation** (keyless gold set, paired vs naked): memory **+0.167** (95% CI
+  [0.000, 0.417], McNemar p = 0.500), skills **+0.083** (95% CI [0.000, 0.250],
+  p = 1.000) — the CIs are wide on 12 scenarios, as expected.
+- **Real** (DeepSeek, 6 templates × 3 seeds): Pass@1 **0.833** (95% CI
+  [0.611, 1.000]) · Pass@k 0.833 · Pass^k **0.833**; 0 ungrounded attempts;
+  0 judge vetoes; **¥0.0797**.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
 - **Gate**: 131 tests, gold scenarios 12/12, 18 Agent Notes.
 
@@ -86,4 +89,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #35 028-spec-structure | process | `docs` | Normalize the spec structure across all 25 features; complete the spec template | — | — | — | accepted | `.specify/templates/spec-template.md` |
 | 2026-09-13 | #36 029-docs-dedup | process | `docs` | Deduplicate the spec corpus: README, conventions, templates, notes | — | — | — | accepted | `docs/architecture.md` |
 | 2026-09-13 | #37 030-evidence-main-skip | process | `no-behavior` | Skip the change-evidence gate on the base branch | — | Gate-only fix; running the gate on main has no change to audit | — | accepted | `scripts/check_change_evidence.py` |
+| 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |
 <!-- change-log:end -->
