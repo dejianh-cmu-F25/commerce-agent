@@ -38,8 +38,8 @@ Prefer the simplest design that works. Add complexity only when it demonstrably 
 **Rationale:** readability and maintainability outrank cleverness.
 
 ### P7. Evals Are First-Class
-Every feature ships with positive and negative acceptance cases. Passing evals is part
-of the definition of done.
+Every feature ships with positive and negative acceptance cases. Change evidence and the
+definition of done for a change are governed by EV.
 **Rationale:** quality of a non-deterministic system can only be guaranteed by evaluation.
 
 ### P8. Reproducible by Default
@@ -110,7 +110,7 @@ core path.
 - **DP-2** All configuration comes from environment variables; no secrets in the image;
   ship `.env.example`.
 - **DP-3** `/healthz` (liveness) and `/readyz` (readiness).
-- **DP-4** Multi-stage build, non-root user, reproducible.
+- **DP-4** Multi-stage build, non-root user, reproducible (see P8).
 - **DP-5** The local gate builds the image (`scripts/ci.sh --with-image`) and runs a
   container smoke test.
 - **DP-6** Persistent volumes for SQLite, Chroma, and traces.
@@ -174,8 +174,10 @@ core path.
 
 ## RD — Resilience & Data
 
-- **RD-1** Graceful fallback: every LLM-enhanced step has a deterministic fallback and can be
-  disabled by config (memory extraction, rerank, chunk refinement, metadata enrichment).
+- **RD-1** Graceful fallback: every external dependency and LLM-enhanced step has a
+  deterministic fallback and can be disabled by config (memory extraction, rerank, chunk
+  refinement, metadata enrichment); the system degrades observably rather than failing
+  silently. This is the single owner of the fallback rule (see RW).
 - **RD-2** Idempotent data management: `DocumentManager` guarantees re-ingestion does not
   duplicate data; updates and deletions are traceable.
 
@@ -185,7 +187,7 @@ This project must be genuinely useful, not a demo that looks good until real
 traffic arrives. Features that interpret free-form input or handle data MUST
 address the real world, not the happy path. Enforcement is the spec's
 `## Real-World Coverage` section plus the checklist in
-`docs/production-conventions.md`.
+`docs/production-conventions.md`. Fallback is owned by RD-1.
 
 - **RW-1 Input distribution.** A feature that interprets free-form input MUST
   enumerate the real input space — phrasings, ambiguity, languages, and
@@ -201,9 +203,6 @@ address the real world, not the happy path. Enforcement is the spec's
 - **RW-4 No patchwork.** A fix MUST address the **root cause** and ship with a
   **regression case** (end-to-end and, where useful, trajectory-prefix). A
   one-off special case without a regression is incomplete.
-- **RW-5 Degradation.** Every external dependency MUST have a defined,
-  config-gated fallback; the system degrades observably rather than failing
-  silently (extends RD-1).
 
 **Rationale:** the failure mode this project must avoid is a narrow demo that
 collapses under real phrasing, dirty data, and unexpected boundaries, and that is
@@ -218,8 +217,9 @@ or that cannot be changed safely, is not done.
   — traffic, data volume, concurrency, tenancy, session length — and the
   **measured** behavior at that boundary. "It works small" is not a claim.
 - **SC-2 Diagnosability.** Every failure MUST be attributable (trace + first
-  error), and metrics MUST be **segmentable** (by intent, tool, model, tenant) so
-  a team can localize a problem under load.
+  error; the span/trace rules are owned by OB), and metrics MUST be
+  **segmentable** (by intent, tool, model, tenant) so a team can localize a
+  problem under load.
 - **SC-3 SLOs.** Latency, cost, and error budgets MUST be declared and tracked;
   regressions MUST be visible.
 - **SC-4 Change safety.** Changes MUST be localized behind seams; the **blast
@@ -235,9 +235,12 @@ No change to the model, a prompt, retrieval, or a module is accepted on
 reputation. It ships with proof. Enforcement is the PR checklist plus
 `scripts/check_change_evidence.py`.
 
-- **EV-1 No unmeasured change.** Any change to the model, a prompt, retrieval, or
-  a module MUST ship with a **before/after evaluation** on a fixed,
-  representative benchmark.
+- **EV-1 No unmeasured change.** Every change MUST have a dated, auditable entry in
+  the change log (`specs/change-log.json`, rendered into the `## Change log` of
+  `specs/RESULTS.md` and `evals/report.md`) recording **what changed**. A change to
+  the model, a prompt, retrieval, a tool, the agent logic, or data MUST also record
+  a **quantified `before → after`** on a fixed, representative benchmark, with
+  guardrails. A change with no measurable behavior MUST declare that and why.
 - **EV-2 Paired and significant.** Comparisons MUST be **paired** on the same
   tasks with multiple seeds; effect size, confidence, and sample size MUST be
   reported. A single run selects direction, it does not prove improvement.
@@ -248,10 +251,15 @@ reputation. It ships with proof. Enforcement is the PR checklist plus
   rendered system prompt — MUST be recorded with the results.
 - **EV-5 Regression sets.** Production failures MUST become end-to-end and
   trajectory-prefix regression cases.
+- **EV-6 Auditability.** Every merged change MUST be reconstructable from the change
+  log alone: the change id, date, what changed, the metric, the before/after, the
+  guardrails, the verdict, and a link to the evidence. A change that cannot be
+  audited this way is not done.
 
-**Definition of done (extends P7 / GH-2).** A model, prompt, retrieval, or module
-change is done only when `specs/RESULTS.md` / `evals/report.md` records its
-before/after evidence.
+**Definition of done (evidence).** A model, prompt, retrieval, or module change is
+done only when `specs/change-log.json` holds a dated entry with a metric and a
+quantified `before → after`; a change with no measurable behavior is done when its
+entry declares that and why.
 
 **Rationale:** a team that cannot prove a change improved the project cannot
 justify the change, and will drift into unmeasured churn.
@@ -279,5 +287,9 @@ justify the change, and will drift into unmeasured churn.
 - Changes to this constitution go through a pull request like any feature.
 - All PRs and reviews verify compliance with these principles. Any complexity beyond the
   simplest workable design must be justified in an Agent Note.
+- The production clauses (RW / SC / EV) are applied **proportionally** (P6): the hard gate
+  checks are narrow (a spec section exists, a change-log entry exists, a measurable entry
+  carries numbers); semantic judgments — root cause, blast radius, data contracts — are
+  reviewer-owned and recorded, not automated.
 
-**Version**: 1.3.0 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
+**Version**: 1.3.1 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13
