@@ -173,3 +173,9 @@ A new **Scenarios** view (a tab beside Chat / Traces / Merchant / Memory).
   single request is acceptable; no streaming is needed.
 - The Scenario Runner is a reviewer/dev surface, not a customer feature; it is
   reachable from the same app and needs no auth (consistent with Traces/Merchant).
+
+## Measured Results
+
+- The browser Scenario Runner reports **12/12** gold scenarios passing,
+  keylessly, matching the gate CLI (one runner, no drift).
+- Source: `evals/runner.py`; aggregate: [`specs/RESULTS.md`](../RESULTS.md).

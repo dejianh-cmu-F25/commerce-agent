@@ -126,3 +126,10 @@ unchanged.
 - Chroma is deferred: its dependency tree (onnxruntime, grpcio, kubernetes, …) is
   too heavy for a keyless project; the `VectorStore` port leaves room for it.
 - The corpus is tiny, so an in-process cosine store is sufficient.
+
+## Measured Results
+
+- Dense retrieval (keyless `hash` + in-memory vectors) closes the hard-query
+  gap: hit-rate@3 **0.800 (TF-IDF) → 1.000 (dense)** on the 27-query benchmark.
+- In-memory and Chroma stores agree on the top hit (parity).
+- Source: `evals/bench.py`; aggregate: [`specs/RESULTS.md`](../RESULTS.md).

@@ -119,6 +119,20 @@ def _agent_section(agent: dict) -> list[str]:
             f"{reliability['best_at_k']:.3f} | {reliability['pass_pow_k']:.3f} |",
             "",
         ]
+    per_task = agent.get("per_task", {})
+    if per_task:
+        lines += [
+            "Per-template reliability:",
+            "",
+            "| Template | Pass@1 | Pass@k | Pass^k |",
+            "| --- | ---: | ---: | ---: |",
+        ]
+        for name, metrics in per_task.items():
+            lines.append(
+                f"| `{name}` | {metrics['pass_at_1']:.3f} | {metrics['pass_at_k']:.3f} | "
+                f"{metrics['pass_pow_k']:.3f} |"
+            )
+        lines.append("")
     process = agent.get("process", {})
     if process:
         lines += [
