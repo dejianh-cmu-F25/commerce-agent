@@ -123,6 +123,12 @@ class StorefrontSettings(BaseModel):
     seed_orders: bool = True
 
 
+class DataSettings(BaseModel):
+    # Boundary data quality (feature 027, RW-2): `repair` normalizes fixable
+    # values and skips unusable rows; `strict` fails loud on an invalid row.
+    quality: Literal["repair", "strict"] = "repair"
+
+
 class ReturnsSettings(BaseModel):
     # The machine-readable return window; keep in sync with
     # config/knowledge/returns.md (feature 014).
@@ -166,6 +172,7 @@ class Settings(BaseModel):
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
     returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
     skills: SkillsSettings = Field(default_factory=SkillsSettings)
+    data: DataSettings = Field(default_factory=DataSettings)
 
 
 def _to_bool(raw: str) -> bool:
@@ -195,6 +202,7 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "STOREFRONT_PROVIDER": ("storefront", "provider", str),
     "STOREFRONT_SQLITE_PATH": ("storefront", "sqlite_path", str),
     "STOREFRONT_SEED_ORDERS": ("storefront", "seed_orders", _to_bool),
+    "DATA_QUALITY": ("data", "quality", str),
     "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),

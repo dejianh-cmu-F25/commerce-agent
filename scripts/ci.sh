@@ -55,6 +55,9 @@ uv run python evals/bench.py
 step "Python: feature ablation (keyless)"
 uv run python evals/ablation.py
 
+step "Python: data quality (keyless)"
+uv run python evals/data_quality.py
+
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
 

@@ -100,6 +100,24 @@ def _ablation_section(ablation: dict) -> list[str]:
     return lines
 
 
+def _data_quality_section(data_quality: dict) -> list[str]:
+    if not data_quality:
+        return []
+    return [
+        "## Data quality (keyless)",
+        "",
+        "Boundary normalizers scored against a labeled dirty-input set "
+        "(`evals/data_quality_set.py`): currency symbols, thousands separators, "
+        '"out of stock", padding, control characters, negatives, missing fields.',
+        "",
+        "| Cases | Before (naive) | After (normalized) |",
+        "| ---: | ---: | ---: |",
+        f"| {data_quality['cases']} | {data_quality.get('baseline_accuracy', 0.0):.3f} | "
+        f"{data_quality['accuracy']:.3f} |",
+        "",
+    ]
+
+
 def _agent_section(agent: dict) -> list[str]:
     if not agent:
         return []
@@ -224,6 +242,7 @@ def render() -> str:
     ]
     lines += _retrieval_section(keyless.get("retrieval", {}))
     lines += _ablation_section(keyless.get("ablation", {}))
+    lines += _data_quality_section(keyless.get("data_quality", {}))
     lines += _agent_section(real.get("agent", {}))
     lines += _change_log_section(_load(CHANGE_LOG).get("entries", []))
     return "\n".join(lines).rstrip() + "\n"

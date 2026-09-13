@@ -113,3 +113,8 @@ returns:
 skills:
   enabled: true
   path: ./skills
+
+# Boundary data quality (feature 027, RW-2). `repair` normalizes fixable values
+# (e.g. "$1,299.00" -> 1299.00) and skips unusable rows; `strict` fails loud.
+data:
+  quality: repair           # repair | strict

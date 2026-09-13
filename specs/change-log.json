@@ -545,6 +545,20 @@
       "guardrails": null,
       "verdict": "accepted",
       "evidence": "app/evaluation/significance.py"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#39 027-data-quality",
+      "area": "data",
+      "class": "measurable",
+      "what": "Validate/normalize storefront rows at the boundary; repair path + labeled benchmark",
+      "metric": "data-quality accuracy (labeled dirty-input set)",
+      "before": 0.1,
+      "after": 1.0,
+      "note": "Naive pre-change boundary vs the same labeled set: 2/20 -> 20/20",
+      "guardrails": "repair skips+counts; strict fails loud",
+      "verdict": "accepted",
+      "evidence": "app/data/quality.py"
     }
   ]
 }

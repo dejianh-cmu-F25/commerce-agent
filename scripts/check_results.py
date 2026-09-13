@@ -22,6 +22,7 @@ CHANGE_LOG = ROOT / "specs" / "change-log.json"
 
 RETRIEVAL_HEADING = "## Retrieval benchmark"
 ABLATION_HEADING = "## Feature ablation"
+DATA_QUALITY_HEADING = "## Data quality"
 REQUIRED_FIELDS = ("date", "change", "area", "class", "what", "verdict", "evidence")
 VALID_CLASSES = {"measurable", "unmeasured", "no-behavior", "docs"}
 
@@ -89,6 +90,20 @@ def _check_report(artifacts: dict) -> list[str]:
             expected = f"{metrics['pass_rate']:.3f}"
             if row[2] != expected:
                 failures.append(f"ablation {config}: pass rate {row[2]} != {expected}")
+
+    data_quality = artifacts.get("data_quality", {})
+    if data_quality:
+        section = _section(text, DATA_QUALITY_HEADING)
+        if not section:
+            failures.append("report.md has no data-quality section")
+        else:
+            expected = (
+                f"| {data_quality['cases']} | "
+                f"{data_quality.get('baseline_accuracy', 0.0):.3f} | "
+                f"{data_quality['accuracy']:.3f} |"
+            )
+            if expected not in section:
+                failures.append(f"data quality: expected row {expected!r} in the report")
     return failures
 
 
