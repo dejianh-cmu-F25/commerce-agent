@@ -22,8 +22,9 @@ auditable record is the **change log** below. Each feature spec carries a
 **Reproduce**
 
 - Keyless (in the gate): `make ci-fast` runs `evals/bench.py`,
-  `evals/ablation.py`, `evals/data_quality.py`, `evals/adversarial.py`, and
-  `evals/scale.py`, then renders `evals/report.md` via
+  `evals/ablation.py`, `evals/data_quality.py`, `evals/adversarial.py`,
+  `evals/regressions.py`, `evals/fallbacks.py`, and `evals/scale.py`, then renders
+  `evals/report.md` via
   `uv run python evals/report.py --write` (which also refreshes the change log
   below).
 - Real model (opt-in, snapshot): `uv run python evals/agent_eval.py --real
@@ -53,8 +54,10 @@ auditable record is the **change log** below. Each feature spec carries a
   failure is attributable, not just an aggregate pass rate.
 - **Fallbacks**: dependency fallback coverage **5/5** (from **0.400** without the
   wrapper) — dense retrieval degrades to keyless lexical, LLM failure surfaces.
+- **Regressions**: **5** named, root-caused regressions enforced in the gate
+  (ungrounded id, return window, injection, dirty price, dense outage).
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 164 tests, gold scenarios 12/12, 25 Agent Notes.
+- **Gate**: 168 tests, gold scenarios 12/12, 26 Agent Notes.
 
 ## Change log
 
@@ -109,4 +112,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #42 030-segmented-metrics | observability | `no-behavior` | Segment the keyless gold metrics by intent and by tool; render + validate | — | Reporting only; 9 intents and 9 tools segmented (see evals/report.md) | — | localized to `app/evaluation/segments.py` (area: observability) | git revert the squash-merge commit; no destructive migration | accepted | `app/evaluation/segments.py` |
 | 2026-09-13 | #43 031-fallbacks | resilience | `measurable` | Declared, config-gated fallback per dependency; dense retriever degrades to keyless lexical | dependency fallback coverage (labeled set) | 0.4 → 1.0 | disabled fallback propagates; degradation recorded | localized to `app/core/resilience.py` (area: resilience) | git revert the squash-merge commit; no destructive migration | accepted | `app/core/resilience.py` |
 | 2026-09-13 | #44 032-change-safety | process | `no-behavior` | Require blast radius + rollback per change; gate them; seam map + PR template | — | Process/docs + gate; every entry now states blast radius and rollback | gate fails an entry missing either field | change-log schema, gate, report renderer, PR template, docs (no runtime) | git revert the squash-merge commit | accepted | `docs/change-safety.md` |
+| 2026-09-13 | #45 033-regression-pipeline | process | `measurable` | Failure-to-regression pipeline: registry, promotion, keyless runner in the gate | named root-caused regressions enforced (count) | 0 → 5 | unknown check or a failed regression fails the gate; promotion requires a root cause | evals/regressions.json, evals/regressions.py, gate, report (no runtime) | git revert the squash-merge commit | accepted | `docs/regressions.md` |
 <!-- change-log:end -->

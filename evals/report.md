@@ -15,8 +15,8 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
 
 hit-rate@3 by difficulty:
 
@@ -86,6 +86,14 @@ The deterministic input guard, scored against a labeled set of hostile and benig
 | ---: | ---: | ---: |
 | 17 | 0.412 | 1.000 |
 
+## Regressions (keyless)
+
+Named, root-caused regressions for past failures (`docs/regressions.md`); the gate runs each so a fixed failure cannot silently return.
+
+| Regressions | Passed | Coverage |
+| ---: | ---: | ---: |
+| 5 | 5 | 1.000 |
+
 ## Dependency fallbacks (keyless)
 
 Each external dependency has a declared fallback that degrades observably rather than failing silently (`docs/degradation.md`).
@@ -100,10 +108,10 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.5/8.8 | 14.6/18.6 | 51750 | 0 |
-| 4 | 6.1/7.9 | 14.7/16.5 | 54979 | 0 |
-| 16 | 6.6/8.6 | 14.5/19.3 | 53265 | 0 |
-| 64 | 6.5/8.3 | 14.5/15.5 | 56462 | 0 |
+| 1 | 6.7/8.7 | 15.1/19.8 | 49321 | 0 |
+| 4 | 6.5/8.0 | 14.9/16.4 | 54906 | 0 |
+| 16 | 6.4/7.9 | 14.9/15.4 | 55682 | 0 |
+| 64 | 6.2/7.7 | 14.9/16.2 | 48994 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -201,3 +209,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #42 030-segmented-metrics | observability | `no-behavior` | Segment the keyless gold metrics by intent and by tool; render + validate | — | Reporting only; 9 intents and 9 tools segmented (see evals/report.md) | — | localized to `app/evaluation/segments.py` (area: observability) | git revert the squash-merge commit; no destructive migration | accepted | `app/evaluation/segments.py` |
 | 2026-09-13 | #43 031-fallbacks | resilience | `measurable` | Declared, config-gated fallback per dependency; dense retriever degrades to keyless lexical | dependency fallback coverage (labeled set) | 0.4 → 1.0 | disabled fallback propagates; degradation recorded | localized to `app/core/resilience.py` (area: resilience) | git revert the squash-merge commit; no destructive migration | accepted | `app/core/resilience.py` |
 | 2026-09-13 | #44 032-change-safety | process | `no-behavior` | Require blast radius + rollback per change; gate them; seam map + PR template | — | Process/docs + gate; every entry now states blast radius and rollback | gate fails an entry missing either field | change-log schema, gate, report renderer, PR template, docs (no runtime) | git revert the squash-merge commit | accepted | `docs/change-safety.md` |
+| 2026-09-13 | #45 033-regression-pipeline | process | `measurable` | Failure-to-regression pipeline: registry, promotion, keyless runner in the gate | named root-caused regressions enforced (count) | 0 → 5 | unknown check or a failed regression fails the gate; promotion requires a root cause | evals/regressions.json, evals/regressions.py, gate, report (no runtime) | git revert the squash-merge commit | accepted | `docs/regressions.md` |

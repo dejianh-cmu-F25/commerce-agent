@@ -719,6 +719,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/change-safety.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#45 033-regression-pipeline",
+      "area": "process",
+      "class": "measurable",
+      "what": "Failure-to-regression pipeline: registry, promotion, keyless runner in the gate",
+      "metric": "named root-caused regressions enforced (count)",
+      "before": 0,
+      "after": 5,
+      "note": "No named regression registry existed; 5 cross-feature regressions now gate",
+      "guardrails": "unknown check or a failed regression fails the gate; promotion requires a root cause",
+      "blast_radius": "evals/regressions.json, evals/regressions.py, gate, report (no runtime)",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/regressions.md"
     }
   ]
 }

@@ -61,6 +61,9 @@ uv run python evals/data_quality.py
 step "Python: adversarial input (keyless)"
 uv run python evals/adversarial.py
 
+step "Python: regressions (keyless)"
+uv run python evals/regressions.py
+
 step "Python: dependency fallbacks (keyless)"
 uv run python evals/fallbacks.py
 
