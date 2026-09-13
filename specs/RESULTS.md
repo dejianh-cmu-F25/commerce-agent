@@ -21,8 +21,9 @@ auditable record is the **change log** below. Each feature spec carries a
 
 **Reproduce**
 
-- Keyless (in the gate): `make ci-fast` runs `evals/bench.py` and
-  `evals/ablation.py`, then renders `evals/report.md` via
+- Keyless (in the gate): `make ci-fast` runs `evals/bench.py`,
+  `evals/ablation.py`, and `evals/data_quality.py`, then renders `evals/report.md`
+  via
   `uv run python evals/report.py --write` (which also refreshes the change log
   below).
 - Real model (opt-in, snapshot): `uv run python evals/agent_eval.py --real
@@ -40,8 +41,10 @@ auditable record is the **change log** below. Each feature spec carries a
 - **Real** (DeepSeek, 6 templates × 3 seeds): Pass@1 **0.833** (95% CI
   [0.611, 1.000]) · Pass@k 0.833 · Pass^k **0.833**; 0 ungrounded attempts;
   0 judge vetoes; **¥0.0797**.
+- **Data quality**: labeled dirty-input set **20/20** (accuracy **1.000**) —
+  currency symbols, "out of stock", padding, control chars, negatives, missing.
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 131 tests, gold scenarios 12/12, 18 Agent Notes.
+- **Gate**: 144 tests, gold scenarios 12/12, 20 Agent Notes.
 
 ## Change log
 
@@ -90,4 +93,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #36 029-docs-dedup | process | `docs` | Deduplicate the spec corpus: README, conventions, templates, notes | — | — | — | accepted | `docs/architecture.md` |
 | 2026-09-13 | #37 030-evidence-main-skip | process | `no-behavior` | Skip the change-evidence gate on the base branch | — | Gate-only fix; running the gate on main has no change to audit | — | accepted | `scripts/check_change_evidence.py` |
 | 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |
+| 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |
 <!-- change-log:end -->

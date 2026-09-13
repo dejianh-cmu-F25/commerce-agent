@@ -15,8 +15,8 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.5 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -37,6 +37,14 @@ Each configuration runs the same gold scenarios (scripted model); the delta is v
 | `+skills` | 10/12 | 0.833 | +0.083 | [0.000, 0.250] | 1.000 |
 | `+dense-hash` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
 | `+dense-chroma` | 9/12 | 0.750 | +0.000 | [0.000, 0.000] | 1.000 |
+
+## Data quality (keyless)
+
+Boundary normalizers scored against a labeled dirty-input set (`evals/data_quality_set.py`): currency symbols, thousands separators, "out of stock", padding, control characters, negatives, missing fields.
+
+| Cases | Before (naive) | After (normalized) |
+| ---: | ---: | ---: |
+| 20 | 0.100 | 1.000 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -128,3 +136,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #36 029-docs-dedup | process | `docs` | Deduplicate the spec corpus: README, conventions, templates, notes | — | — | — | accepted | `docs/architecture.md` |
 | 2026-09-13 | #37 030-evidence-main-skip | process | `no-behavior` | Skip the change-evidence gate on the base branch | — | Gate-only fix; running the gate on main has no change to audit | — | accepted | `scripts/check_change_evidence.py` |
 | 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |
+| 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |

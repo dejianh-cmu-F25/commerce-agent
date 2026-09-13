@@ -85,7 +85,9 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
     if settings.storefront.provider == "memory":
         return InMemoryStorefront(SEED_PRODUCTS, seed_orders=settings.storefront.seed_orders)
     return SqliteStorefront(
-        settings.storefront.sqlite_path, seed_orders=settings.storefront.seed_orders
+        settings.storefront.sqlite_path,
+        seed_orders=settings.storefront.seed_orders,
+        quality=settings.data.quality,
     )
 
 
