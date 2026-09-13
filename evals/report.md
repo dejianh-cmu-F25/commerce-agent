@@ -15,8 +15,8 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
 
 hit-rate@3 by difficulty:
 
@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.9 | +2.4000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 19.8 | +4.3000 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 0.6562 | +0.0000 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.5/9.0 | 14.6/20.4 | 50974 | 0 |
-| 4 | 6.2/7.8 | 14.4/16.3 | 57009 | 0 |
-| 16 | 6.1/7.6 | 14.3/17.9 | 55981 | 0 |
-| 64 | 6.1/7.6 | 14.2/16.0 | 57638 | 0 |
+| 1 | 6.7/8.8 | 14.8/20.9 | 49370 | 0 |
+| 4 | 6.6/8.6 | 14.6/17.0 | 55131 | 0 |
+| 16 | 6.3/7.9 | 14.7/19.8 | 52677 | 0 |
+| 64 | 6.5/8.1 | 15.1/17.6 | 54048 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5240.5/7145.4 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5523.2/7465.3 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12116.8/14923.0 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12952.8/15829.0 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **7.1 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -243,3 +243,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #53 041-large-catalog | ops | `no-behavior` | Measure storefront search over a 5k-product catalog; gate the budget | — | Measurement; search p95 ~15ms over 5k products (see evals/report.md) | a breach of the budget fails the gate; no guardrail regression | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 | 2026-09-13 | #54 042-guardrail-history | process | `no-behavior` | Record guardrail values over time (append-only, capped) and render the delta | — | Tooling; the report now shows each guardrail's delta vs the previous recorded run | the gate does not record; recording is explicit (--record) | evals/guardrails.py, evals/guardrail-history.jsonl, report | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
 | 2026-09-13 | #55 043-regression-candidates | process | `no-behavior` | Export real-eval failures to a deduped, committed candidate file; root-cause + promotion stay human | — | Tooling; candidates are evidence, not gated regressions | a missing results file is a no-op; the export is idempotent | evals/agent_eval.py, scripts/export_regression_candidates.py, docs/regressions.md | git revert the squash-merge commit | accepted | `docs/regressions.md` |
+| 2026-09-13 | #56 044-audit-update | docs | `docs` | Refresh the production audit: all 14 clauses Met; residual gaps as one honest boundary; follow-up features | — | Docs only; RW-3 and EV-3 now Met after features 035/036/042 | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
