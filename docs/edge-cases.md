@@ -35,5 +35,7 @@ empty.
 
 - **Multi-tenant isolation** is untested (single tenant).
 - **Long-session memory** (100+ turns) is untested.
-- **Large corpus** (> 10⁴ chunks) retrieval is untested (see feature 036).
+- **Large corpus** is measured at 10,000 chunks (`docs/scale.md`); beyond that is
+  untested.
+- **Long session** is measured at 100 turns (`docs/scale.md`); longer is untested.
 - **Adversarial retrieval queries** (poisoned corpus) are not covered.

@@ -32,3 +32,28 @@ def test_slo_fails_on_error_rate() -> None:
 
 def test_slo_fails_without_a_target_measurement() -> None:
     assert evaluate_slo({"envelope": {"target_concurrency": 16}, "levels": []})
+
+
+def _base() -> dict:
+    return _result(_level(5.0, 10.0))
+
+
+def test_large_corpus_and_long_session_within_budget() -> None:
+    result = _base()
+    result["large_corpus"] = {"p95_us": 7000.0}
+    result["long_session"] = {"elapsed_ms": 10.0, "reconstructable": True}
+    assert evaluate_slo(result) == []
+
+
+def test_large_corpus_breach_fails() -> None:
+    result = _base()
+    result["large_corpus"] = {"p95_us": SLO["large_corpus_p95_us"] + 1}
+    assert evaluate_slo(result)
+
+
+def test_long_session_breach_and_unreconstructable_fail() -> None:
+    result = _base()
+    result["long_session"] = {"elapsed_ms": SLO["long_session_ms"] + 1, "reconstructable": False}
+    failures = evaluate_slo(result)
+    assert any("long-session" in f for f in failures)
+    assert any("reconstructable" in f for f in failures)

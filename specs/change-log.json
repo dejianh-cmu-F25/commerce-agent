@@ -783,6 +783,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/guardrails.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#49 037-scale-boundaries",
+      "area": "ops",
+      "class": "no-behavior",
+      "what": "Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md)",
+      "guardrails": "breach of either budget fails the gate; SL-1 asserted",
+      "blast_radius": "evals/scale.py, docs/scale.md, report (no runtime)",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/scale.md"
     }
   ]
 }

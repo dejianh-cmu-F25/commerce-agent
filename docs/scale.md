@@ -11,14 +11,14 @@ and the gate enforces it.
 | Dimension | Tested value | Source |
 | --- | ---: | --- |
 | Catalog products | 5 | `app/adapters/catalog_seed.py` |
-| Knowledge chunks | 9 | `config/knowledge/` |
+| Knowledge chunks | 9 (and a synthetic **10,000**) | `config/knowledge/`, `evals/scale.py` |
 | Concurrent operations | 1 / 4 / 16 / 64 | `evals/scale.py` |
 | Ops per level | 64 | `evals/scale.py` |
-| Session length | 24 turns | `agent.max_turns` |
+| Session length | 24 turns cap; **100 turns** measured | `agent.max_turns`, `evals/scale.py` |
 | Cost | ¥10 total cap | `data/budget.json` (HR-12) |
 
-These are the **tested** dimensions. Larger catalogs, corpora, and concurrency are
-an explicit, documented gap (see "Boundary" below).
+These are the **tested** dimensions. Larger catalogs and higher concurrency are an
+explicit, documented gap (see "Boundary" below).
 
 ## SLOs (declared budgets)
 
@@ -26,6 +26,8 @@ an explicit, documented gap (see "Boundary" below).
 | --- | ---: | --- |
 | Retrieval latency | p95 ≤ **2000 µs** | TF-IDF, in-process |
 | Turn latency | p95 ≤ **10000 µs** | full scripted agent turn |
+| Large-corpus retrieval | p95 ≤ **50000 µs** | TF-IDF over 10,000 chunks |
+| Long-session | ≤ **5000 ms** | 100 turns, reconstructable log (SL-1) |
 | Error rate | **0.00** | failed ops / total |
 | Cost | **¥10.00** | harness-enforced (HR-12) |
 
@@ -50,9 +52,13 @@ uv run python evals/scale.py
 
 - **Within the envelope** (≤ 64 concurrent keyless ops): error rate 0, latency
   flat — the stack is CPU-bound and GIL-bound, not I/O-bound.
+- **Data volume**: retrieval over 10,000 chunks is ~7 ms p95 vs ~8 µs over 9 —
+  the cost is in the in-process scan, so a large corpus is the first thing to feel
+  the boundary. A vector store (dense retrieval) is the intended answer at volume.
+- **Session length**: 100 turns complete in ~7 ms with a reconstructable log; the
+  log grows linearly (2 events/turn) and there is no O(n²) re-derivation.
 - **Beyond it**: throughput is capped by a single process/GIL; the web server
   scales by running multiple workers/processes, each with its own storefront
   connection. SQLite is embedded (DP-6); concurrent writers are serialized.
-- **Known gaps**: no multi-tenant isolation test, no long-session (100+ turn)
-  memory test, no large-corpus (>10⁴ chunks) retrieval test. These are the next
-  scale work; they are not claimed here.
+- **Known gaps**: no multi-tenant isolation test; catalogs >10k and concurrency
+  >64 are not measured. These are the next scale work; they are not claimed here.

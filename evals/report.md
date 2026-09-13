@@ -15,8 +15,8 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
-| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.2 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
+| `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -97,7 +97,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 20.5 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 17.0 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 0.6562 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -122,10 +122,14 @@ Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declar
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 6.5/10.2 | 14.3/22.4 | 50467 | 0 |
-| 4 | 6.0/11.5 | 14.3/18.8 | 56200 | 0 |
-| 16 | 6.1/8.0 | 14.3/20.5 | 55505 | 0 |
-| 64 | 6.1/10.6 | 14.3/17.7 | 56635 | 0 |
+| 1 | 6.1/9.0 | 13.2/21.2 | 31930 | 0 |
+| 4 | 5.9/7.9 | 14.0/14.4 | 60200 | 0 |
+| 16 | 6.6/9.3 | 14.5/17.0 | 53765 | 0 |
+| 64 | 6.0/7.9 | 14.3/15.7 | 57343 | 0 |
+
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5324.5/7120.5 µs** (budget 50000 µs).
+
+Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -227,3 +231,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #46 034-audit-closeout | docs | `docs` | Re-run the production audit: per-clause current status, evidence, and residual gaps | — | Docs only; 9 of 14 clauses now Met, residual gaps named | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
 | 2026-09-13 | #47 035-edge-cases | docs | `docs` | Canonical edge/failure boundary matrix; enforce six coverage bullets; refresh stale scale gaps | — | Docs + review check; 16 boundaries enumerated, 20 stale scale notes refreshed | spec_review fails a missing/short coverage bullet; corpus test enforces all specs | docs/edge-cases.md, spec_review, specs' coverage notes | git revert the squash-merge commit | accepted | `docs/edge-cases.md` |
 | 2026-09-13 | #48 036-guardrails | process | `no-behavior` | Declare guardrail metrics with floors; aggregate them in the gate; require a guardrail statement per measurable change | — | Tooling/docs; 7 guardrails aggregated, 9 old measurable entries backfilled | the feature is the guardrail comparison (EV-3) | evals/guardrails.py, docs/guardrails.md, gate, change-log schema | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
+| 2026-09-13 | #49 037-scale-boundaries | ops | `no-behavior` | Measure the large-corpus (10k chunks) and long-session (100 turns) boundaries; gate them | — | Tooling; measured large-corpus p95 ~7ms, long session ~7ms (see evals/report.md) | breach of either budget fails the gate; SL-1 asserted | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
