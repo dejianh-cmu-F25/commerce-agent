@@ -191,6 +191,7 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
     outcomes: dict[str, list[bool]] = {name: [] for name in CASE_NAMES}
     run_metrics: list[RunMetrics] = []
     failure_counts: dict[str, int] = {}
+    failure_records: list[dict] = []
     judge_results: list[JudgeResult] = []
     stopped = False
 
@@ -213,6 +214,7 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
                 # No tool error means the outcome predicate failed: incomplete.
                 category = attribution.category if attribution else "incomplete"
                 failure_counts[category] = failure_counts.get(category, 0) + 1
+                failure_records.append({"task": case.name, "seed": seed, "category": category})
 
             if use_judge:
                 judge_results.append(
@@ -259,6 +261,7 @@ async def run_real(settings: Settings, seeds: int, use_judge: bool) -> dict:
         },
         "process": _summarize_runs(run_metrics),
         "failures": failure_counts,
+        "failure_records": failure_records,
         "judge": _summarize_judge(judge_results),
         "per_task": {
             name: {

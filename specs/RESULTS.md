@@ -59,7 +59,8 @@ auditable record is the **change log** below. Each feature spec carries a
   wrapper) — dense retrieval degrades to keyless lexical, the LLM falls back to a
   configured provider (a mid-stream failure surfaces).
 - **Regressions**: **5** named, root-caused regressions enforced in the gate
-  (ungrounded id, return window, injection, dirty price, dense outage).
+  (ungrounded id, return window, injection, dirty price, dense outage); real-eval
+  failures export automatically to deduped candidates for promotion.
 - **Boundaries**: 16 cross-cutting edge/failure boundaries enumerated with a
   behavior + enforcement each (`docs/edge-cases.md`); every spec's coverage is
   enforced by the review + a corpus test.
@@ -67,7 +68,7 @@ auditable record is the **change log** below. Each feature spec carries a
   aggregated against declared floors, enforced in the gate, and trended over
   recorded runs (`evals/guardrail-history.jsonl`) (EV-3).
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 183 tests, gold scenarios 13/13, 34 Agent Notes.
+- **Gate**: 185 tests, gold scenarios 13/13, 35 Agent Notes.
 
 ## Change log
 
@@ -132,4 +133,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #52 040-multilingual-retrieval | evaluation | `no-behavior` | Measure non-English retrieval over the English corpus; report the gap (not gated) | — | Measurement/reporting; es/fr/de/zh hit-rate@3 0.000-0.500 (a documented gap) | the English hit-rate gate is unchanged; no guardrail regression | evals/retrieval_set.py, evals/bench.py, report (no runtime) | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
 | 2026-09-13 | #53 041-large-catalog | ops | `no-behavior` | Measure storefront search over a 5k-product catalog; gate the budget | — | Measurement; search p95 ~15ms over 5k products (see evals/report.md) | a breach of the budget fails the gate; no guardrail regression | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
 | 2026-09-13 | #54 042-guardrail-history | process | `no-behavior` | Record guardrail values over time (append-only, capped) and render the delta | — | Tooling; the report now shows each guardrail's delta vs the previous recorded run | the gate does not record; recording is explicit (--record) | evals/guardrails.py, evals/guardrail-history.jsonl, report | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
+| 2026-09-13 | #55 043-regression-candidates | process | `no-behavior` | Export real-eval failures to a deduped, committed candidate file; root-cause + promotion stay human | — | Tooling; candidates are evidence, not gated regressions | a missing results file is a no-op; the export is idempotent | evals/agent_eval.py, scripts/export_regression_candidates.py, docs/regressions.md | git revert the squash-merge commit | accepted | `docs/regressions.md` |
 <!-- change-log:end -->

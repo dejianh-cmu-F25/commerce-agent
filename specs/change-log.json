@@ -879,6 +879,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/guardrails.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#55 043-regression-candidates",
+      "area": "process",
+      "class": "no-behavior",
+      "what": "Export real-eval failures to a deduped, committed candidate file; root-cause + promotion stay human",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Tooling; candidates are evidence, not gated regressions",
+      "guardrails": "a missing results file is a no-op; the export is idempotent",
+      "blast_radius": "evals/agent_eval.py, scripts/export_regression_candidates.py, docs/regressions.md",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/regressions.md"
     }
   ]
 }
