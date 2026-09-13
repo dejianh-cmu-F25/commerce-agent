@@ -129,3 +129,12 @@ Cart turns emit the existing spans (007); tool spans show `add_to_cart` /
 - Prices are read from the storefront at add time; later price changes are not
   reconciled in this feature.
 - The `cart` UI component reuses the 004 `UIComponent` seam.
+
+## Real-World Coverage
+
+- **Input distribution**: free-form add/checkout requests; ids must come from a search.
+- **Data quality**: prices and titles come from the storefront, never the model (P4).
+- **Edge & failure modes**: unknown product id → error; quantity clamped to ≥ 1; empty cart renders empty.
+- **Scale envelope**: in-session cart; not measured (gap).
+- **Degradation**: a storefront lookup failure is a tool error; the turn continues.
+- **Change evidence**: checkout remains render-only (P3); behavior changes update the evals.

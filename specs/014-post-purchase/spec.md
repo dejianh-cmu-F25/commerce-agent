@@ -202,3 +202,14 @@ the existing product, cart, and checkout cards. There is no new tab.
 - Returns are requests, not refunds; fulfillment is out of scope.
 - A customer id (feature 013) identifies the order owner; without one, orders
   are unavailable.
+
+## Real-World Coverage
+
+- **Input distribution**: order-status and return requests; ids must be
+  server-issued (P4).
+- **Data quality**: orders come from the storefront; demo orders seed idempotently.
+- **Edge & failure modes**: unknown order id → error; out-of-window or
+  undelivered returns are refused with a reason.
+- **Scale envelope**: a small per-customer order history; not measured (gap).
+- **Degradation**: an order lookup failure is a tool error; the turn continues.
+- **Change evidence**: behavior changes update the gold scenarios and `specs/RESULTS.md`.

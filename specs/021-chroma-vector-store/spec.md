@@ -131,3 +131,13 @@ default embedding (all-MiniLM) is never triggered and telemetry is off.
 - Dense + Chroma retrieval: hit-rate@3 **1.000**, hard hit@3 **1.000**.
 - Source: `tests/integration/test_chroma_store.py`, `evals/bench.py`; aggregate:
   [`specs/RESULTS.md`](../RESULTS.md).
+
+## Real-World Coverage
+
+- **Input distribution**: retrieval queries over the policy corpus.
+- **Data quality**: upsert is keyed by chunk id and idempotent; data persists under `./data/chroma`.
+- **Edge & failure modes**: an empty collection returns nothing; a missing
+  `chromadb` fails loud (PB-1).
+- **Scale envelope**: a tiny corpus; not measured (gap).
+- **Degradation**: the in-process `memory` store is the keyless fallback.
+- **Change evidence**: parity with the in-memory store and the benchmark row.

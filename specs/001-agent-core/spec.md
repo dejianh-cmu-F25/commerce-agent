@@ -127,3 +127,15 @@ boundary it will attach to.
 - The catalog is a small in-memory stand-in; feature 002 replaces it.
 - Sessions are in-memory for now; persistence and resume arrive with feature 009.
 - Checkout and payment are out of scope here (feature 021).
+
+## Real-World Coverage
+
+- **Input distribution**: free-form chat; unseen phrasings go to the model. No
+  adversarial / prompt-injection suite yet (gap; see `docs/production-audit.md`).
+- **Data quality**: the session log is append-only; tool JSON is parsed
+  defensively. User text is not validated beyond length.
+- **Edge & failure modes**: unknown tool → error event, the turn continues; max
+  turns is bounded; the budget stops the loop.
+- **Scale envelope**: single process, single session; not declared or measured (gap).
+- **Degradation**: an LLM failure surfaces as an error event; there is no model fallback.
+- **Change evidence**: model/prompt changes must update `specs/RESULTS.md` (EV-1).

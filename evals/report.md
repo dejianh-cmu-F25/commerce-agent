@@ -40,22 +40,22 @@ Each configuration runs the same gold scenarios (scripted model); the delta is v
 
 ## Agent evaluation (real model, opt-in)
 
-- Model: `deepseek-flash` · seeds: 3 · judge: `deepseek-chat`
-- Generated: 2026-09-12
+- Model: `deepseek-flash` · prompt: `8578920a4f16` · seeds: 3 · judge: `deepseek-chat`
+- Generated: 2026-09-13
 - Command: `uv run python evals/agent_eval.py --real --seeds 3`
 
 Reliability over 6 tasks × 3 runs (18 runs, 14 successes):
 
 | Pass@1 | Pass@k | Best@k | Pass^k |
 | ---: | ---: | ---: | ---: |
-| 0.778 | 0.833 | 0.833 | 0.667 |
+| 0.778 | 1.000 | 1.000 | 0.667 |
 
 Per-template reliability:
 
 | Template | Pass@1 | Pass@k | Pass^k |
 | --- | ---: | ---: | ---: |
-| `budget_search` | 0.667 | 1.000 | 0.000 |
-| `multi_item_cart` | 0.000 | 0.000 | 0.000 |
+| `budget_search` | 0.333 | 1.000 | 0.000 |
+| `multi_item_cart` | 0.333 | 1.000 | 0.000 |
 | `add_named_item` | 1.000 | 1.000 | 1.000 |
 | `policy_question` | 1.000 | 1.000 | 1.000 |
 | `refuse_out_of_window` | 1.000 | 1.000 | 1.000 |
@@ -65,7 +65,7 @@ Process metrics (per run):
 
 | steps | tool ok/err | ungrounded | avg ms | p95 ms | prompt tok | completion tok | cache hit | cost CNY |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1.61 | 29/0 | 0 | 2836 | 3955 | 63083 | 6333 | 54272 | 0.0766 |
+| 2.06 | 37/0 | 0 | 3550 | 5485 | 73491 | 8218 | 64000 | 0.0949 |
 
 Failure attribution (first error):
 
@@ -78,7 +78,7 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | Dimension | Avg (1-4) |
 | --- | ---: |
 | grounding | 3.89 |
-| correctness | 3.67 |
-| policy_compliance | 3.89 |
-| completeness | 3.56 |
-| tone | 3.89 |
+| correctness | 3.89 |
+| policy_compliance | 4.00 |
+| completeness | 3.39 |
+| tone | 4.00 |

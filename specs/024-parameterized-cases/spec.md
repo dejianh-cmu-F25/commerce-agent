@@ -106,8 +106,8 @@ Per template (DeepSeek, 3 seeds; dated snapshot):
 
 | Template | Pass@1 | Pass@k | Pass^k |
 | --- | ---: | ---: | ---: |
-| `budget_search` | 0.667 | 1.000 | 0.000 |
-| `multi_item_cart` | 0.000 | 0.000 | 0.000 |
+| `budget_search` | 0.333 | 1.000 | 0.000 |
+| `multi_item_cart` | 0.333 | 1.000 | 0.000 |
 | `add_named_item` | 1.000 | 1.000 | 1.000 |
 | `policy_question` | 1.000 | 1.000 | 1.000 |
 | `refuse_out_of_window` | 1.000 | 1.000 | 1.000 |
@@ -117,3 +117,13 @@ Overall Pass@1 **0.778** / Pass^k **0.667** — the metric discriminates (no lon
 saturated).
 
 - Source: `evals/report.md`; aggregate: [`specs/RESULTS.md`](../RESULTS.md).
+
+## Real-World Coverage
+
+- **Input distribution**: seeded templates (budget, multi-item, named item,
+  policy, refusal, ungrounded); adversarial phrasing is out of scope (gap).
+- **Data quality**: construction is pure and reproducible; results are snapshots.
+- **Edge & failure modes**: outcome failures are attributed as `incomplete`.
+- **Scale envelope**: 6 templates × N seeds; not a load test (gap).
+- **Degradation**: n/a (evaluation harness).
+- **Change evidence**: the per-template results are the change evidence.

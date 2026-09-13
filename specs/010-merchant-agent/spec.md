@@ -122,3 +122,12 @@ Merchant turns emit the existing spans (007); tool spans show `list_inventory` /
 - One merchant identity (no auth) for the demo.
 - The merchant backend shares the storefront's SQLite file.
 - Approval is a human web action; the agent may only propose.
+
+## Real-World Coverage
+
+- **Input distribution**: operator instructions to change price/stock.
+- **Data quality**: changes are validated (price > 0, stock ≥ 0) and staged.
+- **Edge & failure modes**: unknown product → error; double-apply is a no-op (RD-2).
+- **Scale envelope**: single operator; not measured (gap).
+- **Degradation**: the merchant backend is SQLite-backed; a write failure surfaces as an error.
+- **Change evidence**: model/prompt changes update `specs/RESULTS.md` (EV-1).

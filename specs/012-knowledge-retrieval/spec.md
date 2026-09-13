@@ -119,3 +119,14 @@ records the query and the number of hits. No new events.
 - Dense embeddings + a vector store (Chroma) are a later feature; this is a
   keyless lexical retriever behind the same `Retriever` port.
 - Chunks are paragraphs; no overlap.
+
+## Real-World Coverage
+
+- **Input distribution**: policy questions; the 27-query benchmark includes hard
+  and paraphrase cases. Adversarial queries are not covered (gap).
+- **Data quality**: markdown docs chunked by paragraph; chunk ids are stable and
+  re-ingestion is idempotent (RD-2).
+- **Edge & failure modes**: empty query → no hits; no match → the agent says it does not know.
+- **Scale envelope**: a tiny policy corpus; not measured (gap).
+- **Degradation**: a missing knowledge directory yields an empty retriever.
+- **Change evidence**: retrieval changes are measured by `evals/bench.py` (022).

@@ -8,8 +8,9 @@ with its slice; this file aggregates them.
 
 | Field | Value |
 | --- | --- |
-| Date | 2026-09-12 (UTC) |
+| Date | 2026-09-13 |
 | Agent model | `deepseek-flash` |
+| Rendered prompt hash | `8578920a4f16` |
 | Judge model | `deepseek-chat` |
 | Seeds | 3 |
 | Embedding | keyless `hash` (256 dims) |
@@ -24,7 +25,7 @@ with its slice; this file aggregates them.
 - Real model (opt-in, snapshot): `uv run python evals/agent_eval.py --real
   --seeds 3`. These numbers are a **dated snapshot** and are **not** regenerated
   by the gate.
-- Budget: **¥0.4815 / ¥10.00** spent across all runs (harness-enforced, HR-12).
+- Budget: **¥0.5764 / ¥10.00** spent across all runs (harness-enforced, HR-12).
 
 ## Retrieval benchmark (keyless)
 
@@ -55,14 +56,14 @@ baseline.
 
 | Pass@1 | Pass@k | Best@k | Pass^k |
 | ---: | ---: | ---: | ---: |
-| 0.778 | 0.833 | 0.833 | 0.667 |
+| 0.778 | 1.000 | 1.000 | 0.667 |
 
 Per template:
 
 | Template | Pass@1 | Pass@k | Pass^k |
 | --- | ---: | ---: | ---: |
-| `budget_search` | 0.667 | 1.000 | 0.000 |
-| `multi_item_cart` | 0.000 | 0.000 | 0.000 |
+| `budget_search` | 0.333 | 1.000 | 0.000 |
+| `multi_item_cart` | 0.333 | 1.000 | 0.000 |
 | `add_named_item` | 1.000 | 1.000 | 1.000 |
 | `policy_question` | 1.000 | 1.000 | 1.000 |
 | `refuse_out_of_window` | 1.000 | 1.000 | 1.000 |
@@ -72,7 +73,7 @@ Per template:
 
 | steps | tool ok/err | ungrounded | avg ms | p95 ms | prompt tok | completion tok | cache hit | cost CNY |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1.61 | 29/0 | 0 | 2836 | 3955 | 63083 | 6333 | 54272 | 0.0766 |
+| 2.06 | 37/0 | 0 | 3550 | 5485 | 73491 | 8218 | 64000 | 0.0949 |
 
 ## Failure attribution (real)
 
@@ -85,10 +86,10 @@ Per template:
 | Dimension | Avg (1-4) |
 | --- | ---: |
 | grounding | 3.89 |
-| correctness | 3.67 |
-| policy_compliance | 3.89 |
-| completeness | 3.56 |
-| tone | 3.89 |
+| correctness | 3.89 |
+| policy_compliance | 4.00 |
+| completeness | 3.39 |
+| tone | 4.00 |
 
 ## Deployment smoke (feature 015)
 
@@ -120,4 +121,4 @@ user:    uid 10001 (non-root)
 | Dense retrieval (018) | Hard-query hit-rate@3 0.800 → 1.000 (TF-IDF → dense) |
 | Chroma vector store (021) | Parity with the in-memory store; hard hit@3 1.000 |
 | Guardrails (020) | 0 ungrounded-id attempts in the real run |
-| Evaluation upgrade (023–024) | Real Pass@1 0.778 / Pass^k 0.667; 0 judge vetoes; ¥0.0766 per 18 runs |
+| Evaluation upgrade (023–024) | Real Pass@1 0.778 / Pass^k 0.667; 0 judge vetoes; ¥0.0949 per 18 runs |

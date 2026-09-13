@@ -45,6 +45,29 @@ def _absent(pattern: str) -> bool:
     return not _has(pattern)
 
 
+# Terms that indicate a feature touches free-form input, data, the model, or
+# retrieval — the trigger for the Real-World Coverage requirement (RW).
+_RW_MARKERS = (
+    "tool",
+    "retriev",
+    "model",
+    "prompt",
+    "knowledge",
+    "memory",
+    "llm",
+    "order",
+    "cart",
+    "policy",
+    "input",
+    "data",
+)
+
+
+def _requires_coverage(spec_md: str) -> bool:
+    lowered = spec_md.lower()
+    return any(marker in lowered for marker in _RW_MARKERS)
+
+
 def _latest_spec() -> Path | None:
     if not SPECS.exists():
         return None
@@ -162,6 +185,27 @@ def check(spec: Path) -> list[Result]:
             "OB observability",
             PASS if _has(r"SpanTimer") and _has(r"JsonlTracer") else MANUAL,
             "spans + metrics emitted and readable via /traces (viewer in the web app)",
+        )
+    )
+
+    # --- Real-world fitness & evidence (RW / SC / EV, v1.3.0) ---
+    requires_coverage = _requires_coverage(spec_md)
+    has_coverage = "## Real-World Coverage" in spec_md
+    results.append(
+        Result(
+            "RW real-world coverage",
+            PASS if has_coverage or not requires_coverage else FAIL,
+            "spec has ## Real-World Coverage (or the feature does not touch "
+            "inputs/data/model/retrieval)",
+        )
+    )
+    results.append(
+        Result(
+            "EV change evidence",
+            PASS
+            if "## Measured Results" in spec_md or (ROOT / "specs" / "RESULTS.md").exists()
+            else MANUAL,
+            "specs/RESULTS.md records measured before/after evidence",
         )
     )
 

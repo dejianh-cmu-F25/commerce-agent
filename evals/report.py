@@ -101,8 +101,8 @@ def _agent_section(agent: dict) -> list[str]:
     lines = [
         "## Agent evaluation (real model, opt-in)",
         "",
-        f"- Model: `{agent.get('model', '?')}` · seeds: {agent.get('seeds', '?')} · "
-        f"judge: `{agent.get('judge_model', '?')}`",
+        f"- Model: `{agent.get('model', '?')}` · prompt: `{agent.get('prompt_hash', '?')}` · "
+        f"seeds: {agent.get('seeds', '?')} · judge: `{agent.get('judge_model', '?')}`",
         f"- Generated: {agent.get('generated', '?')}",
         f"- Command: `{agent.get('command', '')}`",
         "",
