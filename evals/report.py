@@ -136,6 +136,37 @@ def _adversarial_section(adversarial: dict) -> list[str]:
     ]
 
 
+def _scale_section(scale: dict) -> list[str]:
+    if not scale or not scale.get("levels"):
+        return []
+    envelope = scale.get("envelope", {})
+    slo = scale.get("slo", {})
+    lines = [
+        "## Scale & SLOs (keyless)",
+        "",
+        f"Keyless stack (catalog {envelope.get('catalog_products', '?')} products, "
+        f"{envelope.get('knowledge_chunks', '?')} knowledge chunks); "
+        f"{envelope.get('ops_per_level', '?')} ops per level. Declared budgets "
+        f"(`docs/scale.md`): retrieval p95 ≤ {slo.get('retrieval_p95_us', 0):.0f} µs, "
+        f"turn p95 ≤ {slo.get('turn_p95_us', 0):.0f} µs at concurrency "
+        f"{envelope.get('target_concurrency', '?')}, error rate "
+        f"{slo.get('error_rate', 0):.2f}.",
+        "",
+        "| Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | "
+        "Turn throughput (ops/s) | Errors |",
+        "| ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for level in scale["levels"]:
+        retrieval, turn = level["retrieval"], level["turn"]
+        lines.append(
+            f"| {level['concurrency']} | {retrieval['p50_us']:.1f}/{retrieval['p95_us']:.1f} | "
+            f"{turn['p50_us']:.1f}/{turn['p95_us']:.1f} | "
+            f"{turn['throughput_ops_s']:.0f} | {turn['errors']} |"
+        )
+    lines.append("")
+    return lines
+
+
 def _agent_section(agent: dict) -> list[str]:
     if not agent:
         return []
@@ -262,6 +293,7 @@ def render() -> str:
     lines += _ablation_section(keyless.get("ablation", {}))
     lines += _data_quality_section(keyless.get("data_quality", {}))
     lines += _adversarial_section(keyless.get("adversarial", {}))
+    lines += _scale_section(keyless.get("scale", {}))
     lines += _agent_section(real.get("agent", {}))
     lines += _change_log_section(_load(CHANGE_LOG).get("entries", []))
     return "\n".join(lines).rstrip() + "\n"

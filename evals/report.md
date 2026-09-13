@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.926 | 0.0 |
 | `dense-hash` | 1.000 | 1.000 | 0.907 | 0.1 |
-| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.4 |
+| `dense-chroma` | 1.000 | 1.000 | 0.907 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -53,6 +53,17 @@ The deterministic input guard, scored against a labeled set of hostile and benig
 | Cases | Before (no guard) | After (guarded) |
 | ---: | ---: | ---: |
 | 17 | 0.412 | 1.000 |
+
+## Scale & SLOs (keyless)
+
+Keyless stack (catalog 5 products, 9 knowledge chunks); 64 ops per level. Declared budgets (`docs/scale.md`): retrieval p95 ≤ 2000 µs, turn p95 ≤ 10000 µs at concurrency 16, error rate 0.00.
+
+| Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 6.5/9.5 | 15.0/21.7 | 47312 | 0 |
+| 4 | 6.5/8.2 | 15.0/19.3 | 42860 | 0 |
+| 16 | 6.1/8.2 | 14.5/17.3 | 56361 | 0 |
+| 64 | 6.2/7.9 | 14.4/16.9 | 56581 | 0 |
 
 ## Agent evaluation (real model, opt-in)
 
@@ -146,3 +157,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #38 026-paired-significance | evaluation | `no-behavior` | Paired 95% CI + McNemar p-value in the ablation and real reliability | — | Evaluation tooling; states existing deltas with significance, no app behavior change | — | accepted | `app/evaluation/significance.py` |
 | 2026-09-13 | #39 027-data-quality | data | `measurable` | Validate/normalize storefront rows at the boundary; repair path + labeled benchmark | data-quality accuracy (labeled dirty-input set) | 0.1 → 1.0 | repair skips+counts; strict fails loud | accepted | `app/data/quality.py` |
 | 2026-09-13 | #40 028-adversarial-input | safety | `measurable` | Deterministic input guard: refuse injection/oversized input before the model, no tool call | adversarial safe-handling rate (labeled set) | 0.412 → 1.0 | refusal recorded in the log; no model/tool call | accepted | `app/safety/input_guard.py` |
+| 2026-09-13 | #41 029-scale-slo | ops | `no-behavior` | Declare the scale envelope + SLO budgets; keyless concurrency benchmark; gate on breach | — | Tooling/docs only; measured SLOs (retrieval p95 7.8us, turn p95 15.2us at c=16) live in evals/report.md | SLO breach fails the gate | accepted | `docs/scale.md` |
