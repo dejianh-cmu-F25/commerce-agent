@@ -503,6 +503,20 @@
       "guardrails": null,
       "verdict": "accepted",
       "evidence": ".specify/templates/spec-template.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#36 029-docs-dedup",
+      "area": "process",
+      "class": "docs",
+      "what": "Deduplicate the spec corpus: README, conventions, templates, notes",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": null,
+      "guardrails": null,
+      "verdict": "accepted",
+      "evidence": "docs/architecture.md"
     }
   ]
 }

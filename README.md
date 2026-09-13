@@ -30,7 +30,7 @@ request that satisfies the review checklist.
 
 ## Production constraints
 
-The constitution (v1.3.0) adds three clauses: **RW** (Real-World Fitness),
+The constitution (v1.3.1) adds three clauses: **RW** (Real-World Fitness),
 **SC** (Scale & Operability), and **EV** (Evidence-Backed Change). A feature that
 touches inputs, data, the model, or retrieval must fill in `## Real-World
 Coverage`; a model / prompt / retrieval / module change must ship before/after
@@ -76,17 +76,9 @@ Then open the web UI and try the Scenario Runner.
 
 ## Layout
 
-```
-.specify/        Spec Kit config, templates, and the constitution
-specs/           One directory per feature (spec, plan, tasks, contracts)
-app/             core (loop, session), ports, adapters, tools, skills, memory, gates, trace
-config/          settings.yaml and prompts
-web/             FastAPI + SSE chat, scenario runner, observability, admin
-evals/           Evaluation cases, fixtures, and the replay runner
-tests/           unit / integration / e2e
-docs/            architecture, decisions (Agent Notes), demo
-scripts/         sync_spec, verify_notes
-```
+The repository layout, layers, and data flow live in
+[`docs/architecture.md`](docs/architecture.md) (single source of truth). The
+feature specs are in `specs/<NNN>-<name>/`; decisions are in `docs/notes/`.
 
 ## License
 
