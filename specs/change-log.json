@@ -863,6 +863,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/scale.md"
+    },
+    {
+      "date": "2026-09-13",
+      "change": "#54 042-guardrail-history",
+      "area": "process",
+      "class": "no-behavior",
+      "what": "Record guardrail values over time (append-only, capped) and render the delta",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Tooling; the report now shows each guardrail's delta vs the previous recorded run",
+      "guardrails": "the gate does not record; recording is explicit (--record)",
+      "blast_radius": "evals/guardrails.py, evals/guardrail-history.jsonl, report",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/guardrails.md"
     }
   ]
 }

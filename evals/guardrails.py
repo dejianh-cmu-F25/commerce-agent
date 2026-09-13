@@ -7,13 +7,17 @@ than recomputes, so it cannot disagree with the report and costs nothing (P8).
 
 from __future__ import annotations
 
+import argparse
 import json
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 KEYLESS = ROOT / "evals" / "results-keyless.json"
 BUDGET = ROOT / "data" / "budget.json"
+HISTORY = ROOT / "evals" / "guardrail-history.jsonl"
+HISTORY_LIMIT = 50
 
 
 @dataclass(frozen=True)
@@ -103,15 +107,49 @@ def evaluate(keyless: dict, budget: dict) -> list[Guardrail]:
     return guardrails
 
 
+def load_history(path: Path = HISTORY) -> list[dict]:
+    """Read the committed guardrail history (one JSON object per line)."""
+    if not path.exists():
+        return []
+    entries: list[dict] = []
+    for line in path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            entries.append(json.loads(stripped))
+        except json.JSONDecodeError:
+            continue
+    return entries
+
+
+def record(result: dict, path: Path = HISTORY, limit: int = HISTORY_LIMIT) -> None:
+    """Append the current guardrail values to the committed history (EV-3)."""
+    history = load_history(path)
+    history.append(
+        {
+            "date": datetime.now(UTC).date().isoformat(),
+            "metrics": {metric["name"]: metric["value"] for metric in result["metrics"]},
+        }
+    )
+    history = history[-limit:]
+    path.write_text("\n".join(json.dumps(entry) for entry in history) + "\n")
+
+
 def run_guardrails() -> dict:
     keyless = _load(KEYLESS)
     guardrails = evaluate(keyless, _load(BUDGET))
+    history = load_history()
+    previous = history[-1]["metrics"] if history else {}
+    metrics: list[dict] = []
+    for guardrail in guardrails:
+        row = asdict(guardrail) | {"ok": guardrail.ok}
+        prior = previous.get(guardrail.name)
+        row["previous"] = prior
+        row["delta"] = round(guardrail.value - prior, 4) if prior is not None else None
+        metrics.append(row)
     failures = [g.name for g in guardrails if not g.ok]
-    return {
-        "metrics": [asdict(g) | {"ok": g.ok} for g in guardrails],
-        "ok": not failures,
-        "failures": failures,
-    }
+    return {"metrics": metrics, "ok": not failures, "failures": failures}
 
 
 def write_keyless(result: dict) -> None:
@@ -121,16 +159,26 @@ def write_keyless(result: dict) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Aggregate and check guardrails.")
+    parser.add_argument(
+        "--record", action="store_true", help="append the current values to the history"
+    )
+    args = parser.parse_args()
+
     result = run_guardrails()
     print(f"guardrails ({len(result['metrics'])} metrics)")
     for metric in result["metrics"]:
         symbol = ">=" if metric["direction"] == "at_least" else "<="
         status = "OK" if metric["ok"] else "FAIL"
+        delta = f"Δ{metric['delta']:+.4f}" if metric["delta"] is not None else "Δ—"
         print(
             f"  {status:<4} {metric['name']:<32} {metric['value']} {symbol} {metric['floor']}"
-            f"  ({metric['source']})"
+            f"  {delta}  ({metric['source']})"
         )
     write_keyless(result)
+    if args.record:
+        record(result)
+        print(f"recorded to {HISTORY.relative_to(ROOT)}")
     if not result["ok"]:
         print(f"FAIL: guardrail regression: {result['failures']}")
         return 1

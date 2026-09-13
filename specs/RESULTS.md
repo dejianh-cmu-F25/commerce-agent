@@ -64,9 +64,10 @@ auditable record is the **change log** below. Each feature spec carries a
   behavior + enforcement each (`docs/edge-cases.md`); every spec's coverage is
   enforced by the review + a corpus test.
 - **Guardrails**: 7 metrics (quality, safety, data, resilience, latency, cost)
-  aggregated against declared floors and enforced in the gate (EV-3).
+  aggregated against declared floors, enforced in the gate, and trended over
+  recorded runs (`evals/guardrail-history.jsonl`) (EV-3).
 - **Deployment**: keyless container smoke PASS (non-root, health, SPA, chat).
-- **Gate**: 181 tests, gold scenarios 13/13, 33 Agent Notes.
+- **Gate**: 183 tests, gold scenarios 13/13, 34 Agent Notes.
 
 ## Change log
 
@@ -130,4 +131,5 @@ Every merged change, auditable: date, what changed, and the quantified
 | 2026-09-13 | #51 039-llm-fallback | resilience | `measurable` | Config-gated LLM provider fallback (serves when the primary fails before emitting) | dependency fallback coverage (labeled set) | 0.286 → 1.0 | fallback coverage 1.0; no guardrail regression | app/core/resilience.py, llm.fallback_* config, web build_llm, fallbacks eval | git revert the squash-merge commit; or unset llm.fallback_provider | accepted | `docs/degradation.md` |
 | 2026-09-13 | #52 040-multilingual-retrieval | evaluation | `no-behavior` | Measure non-English retrieval over the English corpus; report the gap (not gated) | — | Measurement/reporting; es/fr/de/zh hit-rate@3 0.000-0.500 (a documented gap) | the English hit-rate gate is unchanged; no guardrail regression | evals/retrieval_set.py, evals/bench.py, report (no runtime) | git revert the squash-merge commit | accepted | `docs/clarify-vs-refuse.md` |
 | 2026-09-13 | #53 041-large-catalog | ops | `no-behavior` | Measure storefront search over a 5k-product catalog; gate the budget | — | Measurement; search p95 ~15ms over 5k products (see evals/report.md) | a breach of the budget fails the gate; no guardrail regression | evals/scale.py, docs/scale.md, report (no runtime) | git revert the squash-merge commit | accepted | `docs/scale.md` |
+| 2026-09-13 | #54 042-guardrail-history | process | `no-behavior` | Record guardrail values over time (append-only, capped) and render the delta | — | Tooling; the report now shows each guardrail's delta vs the previous recorded run | the gate does not record; recording is explicit (--record) | evals/guardrails.py, evals/guardrail-history.jsonl, report | git revert the squash-merge commit | accepted | `docs/guardrails.md` |
 <!-- change-log:end -->
