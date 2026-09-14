@@ -14,7 +14,15 @@ _PAYLOAD = {
                     "id": "gid://shopify/Product/1",
                     "title": "Trail Tent",
                     "tags": ["camping", "imported:reviews23"],
-                    "variants": {"nodes": [{"price": "189.00", "inventoryQuantity": 12}]},
+                    "variants": {
+                        "nodes": [
+                            {
+                                "price": "189.00",
+                                "inventoryQuantity": 12,
+                                "inventoryItem": {"tracked": True},
+                            }
+                        ]
+                    },
                 }
             ]
         }
@@ -38,6 +46,38 @@ def test_search_maps_products() -> None:
     assert products[0].price == 189.0
     assert products[0].stock == 12
     assert "camping" in products[0].tags
+
+
+def test_untracked_inventory_is_available() -> None:
+    payload = {
+        "data": {
+            "products": {
+                "nodes": [
+                    {
+                        "id": "gid://shopify/Product/2",
+                        "title": "Untracked",
+                        "tags": [],
+                        "variants": {
+                            "nodes": [
+                                {
+                                    "price": "9.99",
+                                    "inventoryQuantity": 0,
+                                    "inventoryItem": {"tracked": False},
+                                }
+                            ]
+                        },
+                    }
+                ]
+            }
+        }
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=payload)
+
+    products = _catalog(handler).search("x", 5)
+    assert products[0].stock == 1
+    assert products[0].in_stock
 
 
 def test_empty_query_returns_nothing() -> None:

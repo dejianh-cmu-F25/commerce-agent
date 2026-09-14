@@ -34,6 +34,30 @@ query GetOrder($id: ID!) {
 }
 """
 
+_ORDER_BY_NAME_QUERY = """
+query GetOrderByName($q: String!) {
+  orders(first: 1, query: $q) {
+    nodes {
+      id
+      name
+      createdAt
+      displayFinancialStatus
+      displayFulfillmentStatus
+      totalPriceSet { shopMoney { amount currencyCode } }
+      lineItems(first: 50) {
+        nodes {
+          id
+          name
+          quantity
+          sku
+          originalUnitPriceSet { shopMoney { amount currencyCode } }
+        }
+      }
+    }
+  }
+}
+"""
+
 _RETURNABLE_QUERY = """
 query Returnable($id: ID!, $first: Int!) {
   returnableFulfillments(orderId: $id, first: $first) {
@@ -101,6 +125,12 @@ class ShopifyPostPurchase:
         self._client = client
 
     async def get_order(self, order_id: str) -> OrderView | None:
+        # Accept a global id, or a human order number like "#1001" / "1001".
+        if order_id and not order_id.startswith("gid://"):
+            name = order_id.lstrip("#").strip()
+            data = await self._client.query(_ORDER_BY_NAME_QUERY, {"q": f"name:#{name}"})
+            nodes = (data.get("orders") or {}).get("nodes") or []
+            return _to_order(nodes[0]) if nodes else None
         data = await self._client.query(_ORDER_QUERY, {"id": order_id})
         node = data.get("order")
         return _to_order(node) if node else None

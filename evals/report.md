@@ -100,8 +100,8 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 18.6 | +3.1000 | 10000.0 | ≤ | `scale` | OK |
-| `cost:spent_cny` | 1.027 | +0.3708 | 10.0 | ≤ | `budget` | OK |
+| `latency:turn_p95_us` | 15.2 | -0.3000 | 10000.0 | ≤ | `scale` | OK |
+| `cost:spent_cny` | 1.1811 | +0.5249 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
 
@@ -125,14 +125,14 @@ Keyless stack (catalog 5 products, 32 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 15.1/21.1 | 14.8/19.2 | 50242 | 0 |
-| 4 | 14.4/19.1 | 14.6/17.7 | 55668 | 0 |
-| 16 | 14.0/19.5 | 14.7/18.6 | 54522 | 0 |
-| 64 | 14.5/19.6 | 14.8/17.2 | 55678 | 0 |
+| 1 | 15.2/20.8 | 14.6/20.3 | 50127 | 0 |
+| 4 | 14.5/19.5 | 14.5/16.0 | 56122 | 0 |
+| 16 | 14.2/19.3 | 14.4/15.2 | 57071 | 0 |
+| 64 | 14.3/19.0 | 14.5/16.8 | 56556 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4183.6/6017.1 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4245.4/6350.6 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12232.8/14777.5 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12380.6/14599.1 µs** (budget 50000 µs).
 
 Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
@@ -264,3 +264,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-15 | #74 046-closed-loop P3 (ACP-sim checkout) | checkout | `no-behavior` | Added the checkout capability: port (app/ports/checkout.py, create/update/complete), an ACP-shaped simulated adapter (app/adapters/acp_checkout.py, placeholder payment token, charge_issued always False), and tools (app/tools/checkout.py) where complete_checkout is HITL-gated (pending_approval without approved=true). Added a keyless ACP conformance eval wired into the gate. | — | No runtime behavior change: the checkout tools are not yet in the agent's tool set. No real payment is taken. | — | app/ports/checkout.py, app/adapters/acp_checkout.py, app/tools/checkout.py, evals/acp_conformance.py, scripts/ci.sh, tests/unit/test_checkout.py | git revert the commit | accepted | `evals/acp_conformance.py, tests/unit/test_checkout.py` |
 | 2026-09-15 | #75 046-closed-loop P4/P5 (tenancy + pass^k) | evaluation | `no-behavior` | P4: simulated auth port (app/ports/auth.py, app/adapters/auth_memory.py) and a TenancyGate enforcing INV-7 (app/gates/tenancy.py). P5: Pass^k + tau-bench fault attribution (app/evaluation/passk.py) and a keyless self-test harness (evals/passk.py) wired into the gate. | — | No runtime behavior change: the tenancy gate and the pass^k harness are not yet wired into the agent's turn path. tau-bench and AgentDojo external runs are opt-in follow-ups (they require dataset downloads). | — | app/ports/auth.py, app/adapters/auth_memory.py, app/gates/tenancy.py, app/evaluation/passk.py, evals/passk.py, scripts/ci.sh, tests/unit/{test_tenancy,test_passk}.py | git revert the commit | accepted | `evals/passk.py, tests/unit/test_tenancy.py, tests/unit/test_passk.py` |
 | 2026-09-15 | #76 046-closed-loop P6/P7 (runtime rewire + runtime policy gate) | agent | `measurable` | Rewired web/main.py:build_agent to the closed-loop tool set (catalog + cart + checkout(ACP-sim) + knowledge + Shopify/fixture post-purchase tools) with the journey prompt (config/prompts/journey.md, procedure only). propose_return_decision now validates every proposal against the policy SoT at runtime via PolicyGate (comparing the proposed decision to the engine). Deprecated the legacy path (app/tools/orders.py, app/returns/policy.py) and documented the wiring in docs/architecture.md. | runtime policy validation active on the agent path (0=off, 1=on) | 0 → 1 | all keyless evals pass; 253 tests pass; no write/charge tool added; the gate is fail-closed (a contradicting proposal is rejected) | web/main.py, config/prompts/journey.md, app/tools/post_purchase.py, app/gates/{base,policy}.py, docs/architecture.md | git revert the commit; build_agent returns to the legacy wiring | accepted | `tests/integration/test_journey_agent.py` |
+| 2026-09-15 | #77 046-closed-loop (wire the real Shopify catalog into discovery) | catalog | `measurable` | build_agent now resolves the product catalog via build_catalog: the Shopify Admin API (ShopifyCatalog) when configured, else the local storefront. Discovery and the cart share that catalog, so a product added to the cart resolves to the same id search returned. Untracked inventory is treated as available (Reviews'23 has no stock). Added scripts/demo.py (journey walkthrough). | products available to discovery (catalog size) | 5 → 317 | keyless integration + unit tests pass; the cart resolves the same ids; no write/charge tool added | web/main.py, app/adapters/shopify_catalog.py, tests/unit/test_shopify_catalog.py, scripts/demo.py | git revert the commit; discovery returns to the local storefront | accepted | `scripts/demo.py, tests/unit/test_shopify_catalog.py` |

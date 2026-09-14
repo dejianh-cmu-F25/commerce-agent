@@ -33,6 +33,7 @@ from app.adapters.retriever_dense import DenseRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
+from app.adapters.shopify_catalog import ShopifyCatalog
 from app.adapters.shopify_client import ShopifyAdminClient
 from app.adapters.shopify_post_purchase import ShopifyPostPurchase
 from app.adapters.storefront_memory import InMemoryStorefront
@@ -128,6 +129,19 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
         seed_orders=settings.storefront.seed_orders,
         quality=settings.data.quality,
     )
+
+
+def build_catalog(settings: Settings):
+    """Resolve the product catalog (PB-1). Shopify when configured, else the storefront.
+
+    The catalog is the source of truth for prices; discovery and the cart share it
+    so a product added to the cart resolves to the same id that search returned.
+    """
+    if settings.shopify.shop and settings.shopify.access_token:
+        return ShopifyCatalog(
+            settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
+        )
+    return build_storefront(settings)
 
 
 def build_session_store(settings: Settings) -> SessionRepository:
@@ -287,9 +301,9 @@ def build_agent(
     memory: MemoryStore | None = None,
 ) -> Agent:
     registry = ToolRegistry()
-    storefront = build_storefront(settings)
-    register_catalog_tools(registry, storefront)
-    register_cart_tools(registry, storefront)
+    catalog = build_catalog(settings)
+    register_catalog_tools(registry, catalog)
+    register_cart_tools(registry, catalog)
     register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
     register_post_purchase_tools(

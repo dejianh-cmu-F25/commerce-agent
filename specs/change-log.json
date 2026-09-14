@@ -1199,6 +1199,22 @@
       "rollback": "git revert the commit; build_agent returns to the legacy wiring",
       "verdict": "accepted",
       "evidence": "tests/integration/test_journey_agent.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#77 046-closed-loop (wire the real Shopify catalog into discovery)",
+      "area": "catalog",
+      "class": "measurable",
+      "what": "build_agent now resolves the product catalog via build_catalog: the Shopify Admin API (ShopifyCatalog) when configured, else the local storefront. Discovery and the cart share that catalog, so a product added to the cart resolves to the same id search returned. Untracked inventory is treated as available (Reviews'23 has no stock). Added scripts/demo.py (journey walkthrough).",
+      "metric": "products available to discovery (catalog size)",
+      "before": 5,
+      "after": 317,
+      "note": "The demo journey now runs over the real imported catalog (All Beauty) instead of the 5-product seed catalog.",
+      "guardrails": "keyless integration + unit tests pass; the cart resolves the same ids; no write/charge tool added",
+      "blast_radius": "web/main.py, app/adapters/shopify_catalog.py, tests/unit/test_shopify_catalog.py, scripts/demo.py",
+      "rollback": "git revert the commit; discovery returns to the local storefront",
+      "verdict": "accepted",
+      "evidence": "scripts/demo.py, tests/unit/test_shopify_catalog.py"
     }
   ]
 }

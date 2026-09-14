@@ -23,7 +23,7 @@ query($q: String!, $n: Int!) {
       id
       title
       tags
-      variants(first: 1) { nodes { price inventoryQuantity } }
+      variants(first: 1) { nodes { price inventoryQuantity inventoryItem { tracked } } }
     }
   }
 }
@@ -35,7 +35,7 @@ query($id: ID!) {
     id
     title
     tags
-    variants(first: 1) { nodes { price inventoryQuantity } }
+    variants(first: 1) { nodes { price inventoryQuantity inventoryItem { tracked } } }
   }
 }
 """
@@ -97,7 +97,10 @@ def _product(node: dict) -> Product:
         price = float(first.get("price", 0) or 0)
     except (TypeError, ValueError):
         price = 0.0
-    stock = int(first.get("inventoryQuantity") or 0)
+    # Reviews'23 carries no stock; imported products use untracked inventory, which
+    # means "available". A tracked product reports its real quantity.
+    tracked = (first.get("inventoryItem") or {}).get("tracked")
+    stock = int(first.get("inventoryQuantity") or 0) if tracked else 1
     return Product(
         id=str(node["id"]),
         title=str(node["title"]),
