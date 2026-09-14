@@ -43,9 +43,11 @@ products, customers, and orders — so you are not testing against an empty stor
 3. **Create an app** → name it `post-purchase-agent`.
 4. Open **Configuration** → **Admin API integration** → **Configure**.
 5. Enable these scopes:
-   - `read_orders` (orders, fulfillments, returnable items)
+   - `read_orders` (orders, fulfillments, transactions)
    - `read_products` (product/title context)
-   - later, for the gated write in phase 3: `write_returns` (or `write_orders`)
+   - `read_returns` (**required** for `returnableFulfillments`)
+   - `write_returns` (the gated write in phase 3; add it now to avoid a second
+     install)
 6. **Save**.
 7. Open the **API credentials** tab → **Install app**.
 8. Copy the **Admin API access token** (starts with `shpat_`). It is shown once —
@@ -55,8 +57,8 @@ products, customers, and orders — so you are not testing against an empty stor
 
 1. Dev Dashboard → **Apps** → **Create app** → **Create app manually**.
 2. Copy the **Client ID** and **Client secret**.
-3. Under **Configuration → Admin API scopes**, add `read_orders`, `read_products`
-   (and `write_returns` later).
+3. Under **Configuration → Admin API scopes**, add `read_orders`, `read_products`,
+   `read_returns`, and `write_returns`.
 4. **Install** the app on your dev store (the dashboard offers a
    "Test on development store" / install link).
 5. Server-side, exchange the credentials for a token with the **client
@@ -145,7 +147,8 @@ A returnable item requires the order to be **fulfilled**. If
 | Symptom | Cause / fix |
 | --- | --- |
 | `401 Unauthorized` | Wrong/expired token, or the app is not installed on this store. |
-| `403 Forbidden` | The token is valid but lacks the scope — add `read_orders` and re-install. |
+| `403 Forbidden` | The token is valid but lacks the scope — add the missing scope and re-install. |
+| `Access denied for returnableFulfillments field` | Missing `read_returns`; add it and re-install the app. |
 | `Field 'returnableFulfillments' doesn't exist` | API version too old; set `SHOPIFY_API_VERSION` to a recent version (e.g. `2025-07`). |
 | `returnable_items` is empty | The order is not fulfilled, or everything is already refunded. |
 | `429` / throttled | Cost-based rate limit; watch `extensions.cost` (the client records `last_cost`). |
