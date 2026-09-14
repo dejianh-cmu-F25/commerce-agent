@@ -114,3 +114,20 @@ Changing the loop itself is the exception, not the rule. If you change
 `app/core/loop.py`, update this document in the same pull request. The loop
 closes each provider stream deterministically after the final event, so stopping
 on `Finish` never leaves an async generator to be collected mid-flight.
+
+## Runtime wiring: the journey agent (feature 046)
+
+`web/main.py:build_agent` wires the closed-loop tool set:
+
+- **storefront**: `search_products` (catalog), `cart_*` (cart), `search_knowledge`
+  (policy retrieval from the SoT-derived corpus).
+- **checkout**: `create/update/complete_checkout` over the simulated ACP adapter
+  (`complete_checkout` is HITL-gated).
+- **customer-accounts**: `get_order_status`, `list_returnable_items`,
+  `propose_return_decision`, validated at runtime by `PolicyGate`
+  (`app/gates/policy.py`) against the policy SoT (`config/policies/amazon.yaml`).
+
+The system prompt is `config/prompts/journey.md` and holds **only the procedure**,
+never policy facts. **Legacy path**: `app/tools/orders.py` and
+`app/returns/policy.py` are deprecated (kept for the legacy storefront evals) and
+are no longer wired into the app.

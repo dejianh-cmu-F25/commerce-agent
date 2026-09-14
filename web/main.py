@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
+from app.adapters.acp_checkout import AcpCheckout
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
@@ -27,10 +28,13 @@ from app.adapters.memory_memory import InMemoryMemoryStore
 from app.adapters.memory_sqlite import SqliteMemoryStore
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
+from app.adapters.post_purchase_memory import InMemoryPostPurchase
 from app.adapters.retriever_dense import DenseRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
+from app.adapters.shopify_client import ShopifyAdminClient
+from app.adapters.shopify_post_purchase import ShopifyPostPurchase
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.adapters.tracer_jsonl import JsonlTracer, NullTracer
@@ -44,19 +48,23 @@ from app.core.resilience import FallbackLLM, FallbackRetriever
 from app.core.session import derive_messages
 from app.core.settings import Settings, load_settings
 from app.core.types import Message
+from app.gates.policy import PolicyGate
 from app.knowledge.ingest import load_chunks
 from app.ports.memory import MemoryStore
 from app.ports.merchant import MerchantBackend
+from app.ports.post_purchase import LineItem, OrderView, PostPurchaseBackend, ReturnableItem
 from app.ports.retriever import Retriever
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
+from app.returns.amazon_policy import load_amazon_policy
 from app.skills.loader import SkillLibrary, load_skills
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
+from app.tools.checkout import register_checkout_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
-from app.tools.orders import register_order_tools
+from app.tools.post_purchase import register_post_purchase_tools
 from app.tools.registry import ToolRegistry
 from app.tools.skills import register_skill_tools
 from evals.runner import run_scenarios
@@ -224,6 +232,54 @@ def build_skill_library(settings: Settings) -> SkillLibrary:
     return load_skills(settings.skills.path)
 
 
+def _seed_post_purchase_orders() -> dict[str, OrderView]:
+    """A keyless demo order so the post-purchase path runs without a token (P8)."""
+    return {
+        "gid://shopify/Order/1001": OrderView(
+            id="gid://shopify/Order/1001",
+            name="#1001",
+            created_at="2026-08-20T10:00:00Z",
+            financial_status="PAID",
+            fulfillment_status="FULFILLED",
+            total=189.0,
+            currency="USD",
+            delivered_at="2026-09-01T12:00:00Z",
+            line_items=[
+                LineItem(
+                    id="gid://shopify/FulfillmentLineItem/1",
+                    title="2-Person Tent",
+                    quantity=1,
+                    sku="P-101",
+                    tags=("category:all",),
+                )
+            ],
+        )
+    }
+
+
+def build_post_purchase(settings: Settings) -> PostPurchaseBackend:
+    """Resolve the post-purchase backend (PB-1). Shopify when configured, else fixture."""
+    if settings.shopify.shop and settings.shopify.access_token:
+        client = ShopifyAdminClient(
+            settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
+        )
+        return ShopifyPostPurchase(client)
+    orders = _seed_post_purchase_orders()
+    returnable = {
+        order_id: [
+            ReturnableItem(
+                fulfillment_line_item_id=line.id,
+                title=line.title,
+                sku=line.sku,
+                quantity=line.quantity,
+            )
+            for line in order.line_items
+        ]
+        for order_id, order in orders.items()
+    }
+    return InMemoryPostPurchase(orders, returnable)
+
+
 def build_agent(
     settings: Settings,
     tracer: Tracer | None = None,
@@ -234,12 +290,15 @@ def build_agent(
     storefront = build_storefront(settings)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
-    register_order_tools(registry, storefront, settings.returns.window_days)
+    register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
+    register_post_purchase_tools(
+        registry, build_post_purchase(settings), policy_gate=PolicyGate(load_amazon_policy())
+    )
     if merchant is not None:
         register_merchant_tools(registry, merchant)
 
-    system_prompt = load_prompt("system")
+    system_prompt = load_prompt("journey")
     skills = build_skill_library(settings)
     if len(skills) > 0:
         register_skill_tools(registry, skills)

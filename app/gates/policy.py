@@ -26,6 +26,11 @@ class PolicyGate:
         )
         detail = "; ".join(decision.reasons) or decision.decision
         cited = f" [{' '.join(decision.cited_clauses)}]" if decision.cited_clauses else ""
+        if context.proposed and context.proposed != decision.decision:
+            return GateResult.block(
+                f"proposal {context.proposed!r} contradicts the policy "
+                f"({decision.decision!r}): {detail}{cited}"
+            )
         if decision.decision == ELIGIBLE:
             return GateResult.allow()
         return GateResult.block(f"{decision.decision}: {detail}{cited}")

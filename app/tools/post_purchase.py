@@ -12,7 +12,10 @@ from typing import Any
 
 from app.core.session import Session
 from app.core.types import ToolSpec
+from app.gates.base import GateContext
+from app.gates.policy import PolicyGate
 from app.ports.post_purchase import OrderView, PostPurchaseBackend
+from app.returns.amazon_policy import ReturnFacts
 from app.tools.registry import ToolRegistry, ToolResult
 
 GET_ORDER_SPEC = ToolSpec(
@@ -54,6 +57,18 @@ PROPOSE_SPEC = ToolSpec(
             "order_id": {"type": "string"},
             "fulfillment_line_item_id": {"type": "string"},
             "decision": {"type": "string", "enum": ["eligible", "ineligible", "escalate"]},
+            "reason": {
+                "type": "string",
+                "enum": [
+                    "unwanted",
+                    "size_too_small",
+                    "size_too_large",
+                    "damaged",
+                    "defective",
+                    "wrong_item",
+                    "missing",
+                ],
+            },
             "cited_clauses": {"type": "array", "items": {"type": "string"}},
         },
         "required": ["order_id", "fulfillment_line_item_id", "decision"],
@@ -61,6 +76,14 @@ PROPOSE_SPEC = ToolSpec(
 )
 
 _DECISIONS = {"eligible", "ineligible", "escalate"}
+
+
+def _category_from_tags(tags: tuple[str, ...]) -> str:
+    """A product's policy category: an explicit ``category:<x>`` tag, else ``all``."""
+    for tag in tags:
+        if tag.startswith("category:"):
+            return tag.split(":", 1)[1]
+    return "all"
 
 
 def _order_dict(order: OrderView) -> dict[str, Any]:
@@ -86,8 +109,18 @@ def _order_dict(order: OrderView) -> dict[str, Any]:
     }
 
 
-def register_post_purchase_tools(registry: ToolRegistry, backend: PostPurchaseBackend) -> None:
-    """Register the read tools and the (side-effect-free) proposal tool."""
+def register_post_purchase_tools(
+    registry: ToolRegistry,
+    backend: PostPurchaseBackend,
+    *,
+    policy_gate: PolicyGate | None = None,
+) -> None:
+    """Register the read tools and the (side-effect-free) proposal tool.
+
+    When ``policy_gate`` is provided, every proposal is validated against the
+    policy SoT at runtime (P3); a proposal that contradicts the policy is rejected
+    with ``validated=false`` rather than silently recorded.
+    """
 
     async def get_order_status(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", ""))
@@ -117,12 +150,38 @@ def register_post_purchase_tools(registry: ToolRegistry, backend: PostPurchaseBa
             return ToolResult(
                 content="decision must be one of eligible|ineligible|escalate", status="error"
             )
+        order_id = str(arguments.get("order_id", ""))
+        fli_id = str(arguments.get("fulfillment_line_item_id", ""))
         record = {
-            "order_id": str(arguments.get("order_id", "")),
-            "fulfillment_line_item_id": str(arguments.get("fulfillment_line_item_id", "")),
+            "order_id": order_id,
+            "fulfillment_line_item_id": fli_id,
             "decision": decision,
             "cited_clauses": [str(c) for c in arguments.get("cited_clauses", [])],
         }
+        if policy_gate is not None:
+            order = await backend.get_order(order_id)
+            items = order.line_items if order else []
+            item = next((line for line in items if line.id == fli_id), None) or (
+                items[0] if items else None
+            )
+            tags = tuple(item.tags) if item else ()
+            facts = ReturnFacts(
+                order_id=order_id,
+                fulfillment_line_item_id=fli_id,
+                reason=str(arguments.get("reason", "unwanted")),
+                delivered_at=order.delivered_at if order else None,
+                category=_category_from_tags(tags),
+                tags=tags,
+            )
+            verdict = policy_gate.check(
+                GateContext(session=session, facts=facts, proposed=decision)
+            )
+            if not verdict.allowed:
+                return ToolResult(
+                    content=json.dumps({**record, "validated": False, "policy": verdict.reason}),
+                    status="error",
+                )
+            record["validated"] = True
         return ToolResult(content=json.dumps(record), component="return_decision")
 
     registry.register(GET_ORDER_SPEC, get_order_status)

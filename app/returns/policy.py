@@ -1,5 +1,9 @@
 """Return eligibility policy (feature 014).
 
+**Deprecated (feature 046).** Superseded by ``app/returns/amazon_policy.py`` (the
+versioned policy SoT + full engine). Retained only for the legacy storefront evals;
+the journey agent validates proposals with ``app/gates/policy.py``.
+
 A pure, deterministic function of the order and the configured window. No model
 decides eligibility (computational control, HR-4); the tool renders the decision
 and its reason.

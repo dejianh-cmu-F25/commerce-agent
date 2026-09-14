@@ -1183,6 +1183,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "evals/passk.py, tests/unit/test_tenancy.py, tests/unit/test_passk.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#76 046-closed-loop P6/P7 (runtime rewire + runtime policy gate)",
+      "area": "agent",
+      "class": "measurable",
+      "what": "Rewired web/main.py:build_agent to the closed-loop tool set (catalog + cart + checkout(ACP-sim) + knowledge + Shopify/fixture post-purchase tools) with the journey prompt (config/prompts/journey.md, procedure only). propose_return_decision now validates every proposal against the policy SoT at runtime via PolicyGate (comparing the proposed decision to the engine). Deprecated the legacy path (app/tools/orders.py, app/returns/policy.py) and documented the wiring in docs/architecture.md.",
+      "metric": "runtime policy validation active on the agent path (0=off, 1=on)",
+      "before": 0,
+      "after": 1,
+      "note": "The journey prompt's quality delta is not yet measured; a real-model journey eval is a follow-up. This entry records the wiring and the runtime gate, which is a behavior change (the model now sees the journey tool set and the policy is enforced at runtime).",
+      "guardrails": "all keyless evals pass; 253 tests pass; no write/charge tool added; the gate is fail-closed (a contradicting proposal is rejected)",
+      "blast_radius": "web/main.py, config/prompts/journey.md, app/tools/post_purchase.py, app/gates/{base,policy}.py, docs/architecture.md",
+      "rollback": "git revert the commit; build_agent returns to the legacy wiring",
+      "verdict": "accepted",
+      "evidence": "tests/integration/test_journey_agent.py"
     }
   ]
 }

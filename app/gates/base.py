@@ -38,6 +38,7 @@ class GateContext:
     window_days: int = 30
     now: datetime | None = None
     facts: ReturnFacts | None = None
+    proposed: str = ""  # the model's proposed decision, when there is one
 
 
 class Gate(Protocol):
