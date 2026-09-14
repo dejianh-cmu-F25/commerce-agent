@@ -1159,6 +1159,18 @@
       "rollback": "delete the imported products (tag imported:reviews23) in the store; git revert the commit",
       "verdict": "accepted",
       "evidence": "tests/unit/test_shopify_catalog.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#74 046-closed-loop P3 (ACP-sim checkout)",
+      "area": "checkout",
+      "class": "no-behavior",
+      "what": "Added the checkout capability: port (app/ports/checkout.py, create/update/complete), an ACP-shaped simulated adapter (app/adapters/acp_checkout.py, placeholder payment token, charge_issued always False), and tools (app/tools/checkout.py) where complete_checkout is HITL-gated (pending_approval without approved=true). Added a keyless ACP conformance eval wired into the gate.",
+      "note": "No runtime behavior change: the checkout tools are not yet in the agent's tool set. No real payment is taken.",
+      "blast_radius": "app/ports/checkout.py, app/adapters/acp_checkout.py, app/tools/checkout.py, evals/acp_conformance.py, scripts/ci.sh, tests/unit/test_checkout.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "evals/acp_conformance.py, tests/unit/test_checkout.py"
     }
   ]
 }

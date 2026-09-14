@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 1.000 | 1.000 | 0.901 | 0.0 |
 | `dense-hash` | 0.963 | 0.963 | 0.821 | 0.5 |
-| `dense-chroma` | 0.963 | 0.963 | 0.821 | 0.5 |
+| `dense-chroma` | 0.963 | 0.963 | 0.821 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 20.1 | +4.6000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 17.7 | +2.2000 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 1.027 | +0.3708 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 32 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 15.3/21.2 | 15.4/25.5 | 46686 | 0 |
-| 4 | 15.3/21.2 | 15.1/16.8 | 54518 | 0 |
-| 16 | 15.0/19.9 | 15.0/20.1 | 49052 | 0 |
-| 64 | 15.5/57.2 | 15.0/32.4 | 47450 | 0 |
+| 1 | 15.3/20.9 | 15.1/19.7 | 49801 | 0 |
+| 4 | 14.8/19.8 | 15.0/18.2 | 45043 | 0 |
+| 16 | 15.3/21.4 | 14.9/17.7 | 54654 | 0 |
+| 64 | 16.8/48.4 | 15.2/44.4 | 40589 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4556.1/6549.5 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4453.0/6670.7 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **13200.1/15890.2 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **13113.3/16236.5 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.8 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.9 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -261,3 +261,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-15 | #71 046-closed-loop (policy corpus replacement) | data | `measurable` | Replaced the authored returns corpus (config/knowledge/returns.md, returns-v1.md) with the rendered Amazon policy (config/knowledge/amazon-returns.md), derived from the SoT (config/policies/amazon.yaml). Updated the renderer to emit only the active version, and updated the retrieval set, tests, and references. | retrieval hit-rate@3 (tfidf) | 0.963 → 1.0 | dense-hash/dense-chroma hit@3 unchanged (0.963); gate threshold 0.7 unchanged; all keyless evals and 19 affected tests pass | config/knowledge/*, app/returns/render.py, evals/retrieval_set.py, tests/**, app/core/settings.py, config/settings.yaml, docs/architecture.md | git revert the commit; the authored corpus returns | accepted | `evals/report.md (retrieval), evals/bench.py` |
 | 2026-09-15 | #72 046-closed-loop P1 (MCP tool surface) | mcp | `no-behavior` | Added the official MCP SDK (mcp>=2.2) and three MCP servers exposing the journey tools: storefront (search_products, cart tools, search_knowledge), customer-accounts (get_order_status, list_returnable_items, propose_return_decision), checkout (cart/checkout, simulated). Includes a generic ToolRegistry->MCP wrapper whose tool schema is derived from the tool's JSON schema. | — | No runtime behavior change: the servers expose the existing tools over MCP; they are not yet the agent's transport (the web app still calls tools in-process). | — | pyproject.toml, uv.lock, app/mcp/**, tests/unit/test_mcp_server.py | git revert the commit; uv sync removes the dependency | accepted | `tests/unit/test_mcp_server.py` |
 | 2026-09-15 | #73 046-closed-loop P2 (real catalog) | catalog | `no-behavior` | Imported ~300 real products (Amazon Reviews'23 item metadata: titles, prices, brands, categories) into the Shopify dev store via scripts/import_catalog.py (idempotent productSet). Added a read-only Shopify catalog adapter (app/adapters/shopify_catalog.py) mapping the Admin API to Product. | — | No runtime behavior change: the catalog adapter is not yet wired into the agent's catalog path. The store now holds real products (regenerate the sample with the importer; it is gitignored as research-licensed). | — | scripts/import_catalog.py, app/adapters/shopify_catalog.py, tests/unit/test_shopify_catalog.py, .gitignore | delete the imported products (tag imported:reviews23) in the store; git revert the commit | accepted | `tests/unit/test_shopify_catalog.py` |
+| 2026-09-15 | #74 046-closed-loop P3 (ACP-sim checkout) | checkout | `no-behavior` | Added the checkout capability: port (app/ports/checkout.py, create/update/complete), an ACP-shaped simulated adapter (app/adapters/acp_checkout.py, placeholder payment token, charge_issued always False), and tools (app/tools/checkout.py) where complete_checkout is HITL-gated (pending_approval without approved=true). Added a keyless ACP conformance eval wired into the gate. | — | No runtime behavior change: the checkout tools are not yet in the agent's tool set. No real payment is taken. | — | app/ports/checkout.py, app/adapters/acp_checkout.py, app/tools/checkout.py, evals/acp_conformance.py, scripts/ci.sh, tests/unit/test_checkout.py | git revert the commit | accepted | `evals/acp_conformance.py, tests/unit/test_checkout.py` |
