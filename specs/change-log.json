@@ -1171,6 +1171,18 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "evals/acp_conformance.py, tests/unit/test_checkout.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#75 046-closed-loop P4/P5 (tenancy + pass^k)",
+      "area": "evaluation",
+      "class": "no-behavior",
+      "what": "P4: simulated auth port (app/ports/auth.py, app/adapters/auth_memory.py) and a TenancyGate enforcing INV-7 (app/gates/tenancy.py). P5: Pass^k + tau-bench fault attribution (app/evaluation/passk.py) and a keyless self-test harness (evals/passk.py) wired into the gate.",
+      "note": "No runtime behavior change: the tenancy gate and the pass^k harness are not yet wired into the agent's turn path. tau-bench and AgentDojo external runs are opt-in follow-ups (they require dataset downloads).",
+      "blast_radius": "app/ports/auth.py, app/adapters/auth_memory.py, app/gates/tenancy.py, app/evaluation/passk.py, evals/passk.py, scripts/ci.sh, tests/unit/{test_tenancy,test_passk}.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "evals/passk.py, tests/unit/test_tenancy.py, tests/unit/test_passk.py"
     }
   ]
 }

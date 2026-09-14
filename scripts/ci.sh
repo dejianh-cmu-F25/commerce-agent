@@ -79,6 +79,9 @@ uv run python evals/engine_agreement.py
 step "Python: ACP checkout conformance (keyless)"
 uv run python evals/acp_conformance.py
 
+step "Python: pass^k harness self-test (keyless)"
+uv run python evals/passk.py
+
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
 
