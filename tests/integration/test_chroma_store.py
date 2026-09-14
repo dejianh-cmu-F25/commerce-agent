@@ -12,7 +12,7 @@ from app.core.types import Chunk
 
 def _chunks() -> list[Chunk]:
     return [
-        Chunk(id="returns", text="returns policy refund window", source="returns.md"),
+        Chunk(id="returns", text="returns policy refund window", source="amazon-returns.md"),
         Chunk(id="shipping", text="shipping delivery carriers", source="shipping.md"),
         Chunk(id="warranty", text="warranty defects coverage", source="warranty.md"),
     ]

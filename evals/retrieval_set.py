@@ -13,21 +13,21 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class RetrievalCase:
     query: str
-    expected_source: str  # the document file name, e.g. "returns.md"
+    expected_source: str  # the document file name, e.g. "amazon-returns.md"
     difficulty: str
 
 
 RETRIEVAL_SET: list[RetrievalCase] = [
-    # returns.md
-    RetrievalCase("how many days do I have to return an item?", "returns.md", "easy"),
-    RetrievalCase("can I get a full refund?", "returns.md", "easy"),
-    RetrievalCase("do items need to be unused to return?", "returns.md", "medium"),
-    RetrievalCase("how long for a refund to arrive?", "returns.md", "medium"),
-    RetrievalCase("who pays return shipping?", "returns.md", "medium"),
-    RetrievalCase("can I return final sale items or gift cards?", "returns.md", "easy"),
-    RetrievalCase("how do I start a return?", "returns.md", "easy"),
-    RetrievalCase("is return shipping free for a defective item?", "returns.md", "hard"),
-    RetrievalCase("can I send something back after I opened it?", "returns.md", "hard"),
+    # amazon-returns.md
+    RetrievalCase("how many days do I have to return an item?", "amazon-returns.md", "easy"),
+    RetrievalCase("can I get a full refund?", "amazon-returns.md", "easy"),
+    RetrievalCase("do items need to be unused to return?", "amazon-returns.md", "medium"),
+    RetrievalCase("how long for a refund to arrive?", "amazon-returns.md", "medium"),
+    RetrievalCase("who pays return shipping?", "amazon-returns.md", "medium"),
+    RetrievalCase("can I return final sale items or gift cards?", "amazon-returns.md", "easy"),
+    RetrievalCase("how do I start a return?", "amazon-returns.md", "easy"),
+    RetrievalCase("is return shipping free for a defective item?", "amazon-returns.md", "hard"),
+    RetrievalCase("can I send something back after I opened it?", "amazon-returns.md", "hard"),
     # shipping.md
     RetrievalCase("how much does standard shipping cost?", "shipping.md", "easy"),
     RetrievalCase("how fast is expedited shipping?", "shipping.md", "easy"),
@@ -65,12 +65,14 @@ class MultilingualCase:
 
 
 MULTILINGUAL_SET: list[MultilingualCase] = [
-    MultilingualCase("¿Cuántos días tengo para devolver un artículo?", "returns.md", "es"),
+    MultilingualCase("¿Cuántos días tengo para devolver un artículo?", "amazon-returns.md", "es"),
     MultilingualCase("¿Cuánto cuesta el envío estándar?", "shipping.md", "es"),
-    MultilingualCase("Combien de temps ai-je pour retourner un article ?", "returns.md", "fr"),
+    MultilingualCase(
+        "Combien de temps ai-je pour retourner un article ?", "amazon-returns.md", "fr"
+    ),
     MultilingualCase("Quel est le délai de livraison standard ?", "shipping.md", "fr"),
     MultilingualCase("Wie lange ist die Herstellergarantie?", "warranty.md", "de"),
     MultilingualCase("Wie viel kostet der Standardversand?", "shipping.md", "de"),
-    MultilingualCase("退货需要多少天？", "returns.md", "zh"),
+    MultilingualCase("退货需要多少天？", "amazon-returns.md", "zh"),
     MultilingualCase("标准运费是多少？", "shipping.md", "zh"),
 ]

@@ -109,7 +109,7 @@ knowledge:
   min_chars: 40
 
 # Post-purchase returns (feature 014). This is the machine-readable return
-# window; keep it in sync with config/knowledge/returns.md. A return is a
+# window; see config/policies/amazon.yaml (feature 046); the prose is derived. A return is a
 # request only — the harness never refunds or changes the order (P3).
 returns:
   window_days: 30

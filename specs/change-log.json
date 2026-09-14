@@ -1119,6 +1119,22 @@
       "rollback": "git revert the commit; the legacy gate (app/returns/policy.py) is untouched",
       "verdict": "accepted",
       "evidence": "evals/engine_agreement.py, tests/unit/test_amazon_policy.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#71 046-closed-loop (policy corpus replacement)",
+      "area": "data",
+      "class": "measurable",
+      "what": "Replaced the authored returns corpus (config/knowledge/returns.md, returns-v1.md) with the rendered Amazon policy (config/knowledge/amazon-returns.md), derived from the SoT (config/policies/amazon.yaml). Updated the renderer to emit only the active version, and updated the retrieval set, tests, and references.",
+      "metric": "retrieval hit-rate@3 (tfidf)",
+      "before": 0.963,
+      "after": 1.0,
+      "note": "The model now retrieves the real, cited policy instead of the authored one; the superseded version is no longer in the corpus (the engine keeps version history).",
+      "guardrails": "dense-hash/dense-chroma hit@3 unchanged (0.963); gate threshold 0.7 unchanged; all keyless evals and 19 affected tests pass",
+      "blast_radius": "config/knowledge/*, app/returns/render.py, evals/retrieval_set.py, tests/**, app/core/settings.py, config/settings.yaml, docs/architecture.md",
+      "rollback": "git revert the commit; the authored corpus returns",
+      "verdict": "accepted",
+      "evidence": "evals/report.md (retrieval), evals/bench.py"
     }
   ]
 }

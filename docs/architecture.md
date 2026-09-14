@@ -87,7 +87,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a commerce backend | Implement `PostPurchaseBackend` (`app/ports/post_purchase.py`); `post_purchase.provider` selects `shopify` (real, read-only) or `memory` |
 | Add a product catalog | Implement the `Catalog` port (planned, feature 045); the ESCI adapter ranks a real catalog against human relevance labels |
 | Add post-purchase orders | Extend `StorefrontBackend` (orders) and register tools in `app/tools/orders.py`; demo orders live in `app/adapters/order_seed.py` |
-| Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |
+| Change the return policy | Edit `config/policies/amazon.yaml` (feature 046); the prose and the engine derive from it |
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); `knowledge.provider` selects `memory` (keyless TF-IDF, default) or `dense` |
 | Add embeddings | Implement `EmbeddingProvider` (`app/ports/embedding.py`); `embedding.provider` selects keyless `hash` (default) or `openai` |
 | Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects persistent `chroma` (default) or in-process `memory` |

@@ -9,9 +9,9 @@ from app.core.types import Chunk
 def _chunks() -> list[Chunk]:
     return [
         Chunk(
-            id="returns.md#0",
+            id="amazon-returns.md#0",
             text="You may return most items within 30 days of delivery for a full refund.",
-            source="returns.md",
+            source="amazon-returns.md",
         ),
         Chunk(
             id="shipping.md#0",
@@ -30,7 +30,7 @@ def test_ranking_prefers_the_right_document():
     retriever = InMemoryRetriever()
     retriever.add(_chunks())
     hits = retriever.retrieve("what is your return policy?", 3)
-    assert hits and hits[0].source == "returns.md"
+    assert hits and hits[0].source == "amazon-returns.md"
 
 
 def test_add_is_idempotent():

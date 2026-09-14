@@ -25,4 +25,4 @@ shipping.
 ## Warranty is not a return
 
 A warranty claim is not a return. Warranty covers defects over the one-year term;
-a return is for a change of mind within the return window (see returns.md).
+a return is for a change of mind within the return window (see amazon-returns.md).

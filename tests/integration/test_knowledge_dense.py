@@ -25,7 +25,7 @@ def test_dense_retriever_answers_from_the_returns_document():
 
     hits = retriever.retrieve("what is the return policy and refund process?", 3)
     assert hits
-    assert hits[0].source.endswith("returns.md")
+    assert hits[0].source.endswith("amazon-returns.md")
 
 
 def test_keyless_dense_needs_no_key():

@@ -1,7 +1,7 @@
 # Machine-readable return policy clauses (feature 045).
 #
 # This is the authoritative, citable form of the policy. The prose in
-# config/knowledge/returns.md is what the model reads; these clauses are what the
+# config/knowledge/amazon-returns.md (derived from config/policies/amazon.yaml, feature 046) is what the model reads; these clauses are what the
 # harness verifies against. They must agree; a change to one updates the other.
 #
 # Versioning is deliberate: the active version is v2 (30-day window). v1 (14-day)

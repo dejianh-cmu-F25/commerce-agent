@@ -43,12 +43,11 @@ def main() -> int:
     from pathlib import Path
 
     policy = load_amazon_policy()
-    out = Path("config/knowledge/policies")
-    out.mkdir(parents=True, exist_ok=True)
-    for version in policy.versions:
-        path = out / f"amazon-returns-{version}.md"
-        path.write_text(render_policy(policy, version))
-        print(f"wrote {path}")
+    # The active version is what the model retrieves; superseded versions stay in
+    # the SoT only (the engine's concern) and are never rendered into the corpus.
+    path = Path("config/knowledge/amazon-returns.md")
+    path.write_text(render_policy(policy, policy.active_version))
+    print(f"wrote {path}")
     return 0
 
 

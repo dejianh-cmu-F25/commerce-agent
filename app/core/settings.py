@@ -154,7 +154,7 @@ class DataSettings(BaseModel):
 
 class ReturnsSettings(BaseModel):
     # The machine-readable return window; keep in sync with
-    # config/knowledge/returns.md (feature 014).
+    # config/knowledge/amazon-returns.md (feature 046, derived from config/policies/amazon.yaml).
     window_days: int = Field(default=30, gt=0)
 
 

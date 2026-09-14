@@ -119,7 +119,6 @@ def test_rendered_prose_matches_sot() -> None:
     """The committed prose is a build artifact; it must equal the rendered SoT."""
     from pathlib import Path
 
-    for version in POLICY.versions:
-        path = Path("config/knowledge/policies") / f"amazon-returns-{version}.md"
-        assert path.exists(), f"missing rendered prose: {path} (run python -m app.returns.render)"
-        assert path.read_text() == render_policy(POLICY, version)
+    path = Path("config/knowledge/amazon-returns.md")
+    assert path.exists(), f"missing rendered prose: {path} (run python -m app.returns.render)"
+    assert path.read_text() == render_policy(POLICY, POLICY.active_version)

@@ -14,17 +14,17 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
-| `tfidf` | 0.963 | 0.963 | 0.907 | 0.0 |
-| `dense-hash` | 0.963 | 0.963 | 0.827 | 0.4 |
-| `dense-chroma` | 0.963 | 0.963 | 0.827 | 0.4 |
+| `tfidf` | 1.000 | 1.000 | 0.901 | 0.0 |
+| `dense-hash` | 0.963 | 0.963 | 0.821 | 0.5 |
+| `dense-chroma` | 0.963 | 0.963 | 0.821 | 0.3 |
 
 hit-rate@3 by difficulty:
 
 | Config | easy hit@3 | hard hit@3 | medium hit@3 |
 | --- | ---: | ---: | ---: |
-| `tfidf` | 1.000 | 1.000 | 0.900 |
-| `dense-hash` | 0.917 | 1.000 | 1.000 |
-| `dense-chroma` | 0.917 | 1.000 | 1.000 |
+| `tfidf` | 1.000 | 1.000 | 1.000 |
+| `dense-hash` | 1.000 | 1.000 | 0.900 |
+| `dense-chroma` | 1.000 | 1.000 | 0.900 |
 
 Multilingual (not gated — a measured gap; the corpus is English): hit-rate@3 de 0.000 / es 0.500 / fr 0.500 / zh 0.000 over 8 queries.
 
@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 18.1 | +2.6000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 17.0 | +1.5000 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 1.027 | +0.3708 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -121,20 +121,20 @@ Each external dependency has a declared fallback that degrades observably rather
 
 ## Scale & SLOs (keyless)
 
-Keyless stack (catalog 5 products, 23 knowledge chunks); 64 ops per level. Declared budgets (`docs/scale.md`): retrieval p95 ≤ 2000 µs, turn p95 ≤ 10000 µs at concurrency 16, error rate 0.00.
+Keyless stack (catalog 5 products, 32 knowledge chunks); 64 ops per level. Declared budgets (`docs/scale.md`): retrieval p95 ≤ 2000 µs, turn p95 ≤ 10000 µs at concurrency 16, error rate 0.00.
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.8/17.8 | 14.5/17.7 | 52170 | 0 |
-| 4 | 12.0/17.1 | 14.4/16.4 | 57352 | 0 |
-| 16 | 12.0/16.7 | 14.5/18.1 | 56809 | 0 |
-| 64 | 11.9/16.8 | 14.8/18.1 | 56009 | 0 |
+| 1 | 15.5/20.9 | 15.6/20.0 | 48386 | 0 |
+| 4 | 14.7/19.7 | 15.2/18.3 | 51174 | 0 |
+| 16 | 14.0/20.1 | 14.7/17.0 | 56350 | 0 |
+| 64 | 14.8/19.7 | 15.1/18.6 | 49261 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5174.4/7556.8 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4163.4/6054.4 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12031.7/14920.4 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12306.6/14621.3 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.4 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -253,4 +253,9 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-14 | #63 045-post-purchase-pivot (live shopify) | integration | `no-behavior` | Opt-in live Shopify integration test (skipped without a token) exercising real auth, order read, and returnableFulfillments | — | Verified against post-purchase-agent.myshopify.com: order #1001 PAID/FULFILLED/$230, 1 returnable item; GraphQL cost captured | keyless default (skips without env); read-only; no writes | tests/integration/test_shopify_live.py | git revert the squash-merge commit | accepted | `docs/shopify-setup.md` |
 | 2026-09-14 | #64 045-post-purchase-pivot (invariants) | evaluation | `no-behavior` | Behavioral invariants as a first-class layer: docs/invariants.md (8 invariants), evals/invariant_cases.jsonl (17 cases), app/evaluation/invariants.py (pure checker) | — | Adds the 'must-always/must-never' layer beside per-case decision accuracy; INV-1 is strict for user input | unknown assertion fails loud; 9 keyless tests | docs/invariants.md, evals/invariant_cases.jsonl, app/evaluation/invariants.py | git revert the squash-merge commit | accepted | `docs/invariants.md` |
 | 2026-09-14 | #65 045-post-purchase-pivot (eval harness) | evaluation | `measurable` | Post-purchase agent (prompt + read/propose tools) and a two-layer evaluation harness (decision + invariant) against the real model | invariant_pass_rate (labeled behavioral set) | 0.0 → 0.941 | no-fail 1.000 (no input crashed the agent); never approved a refund (INV-6) | config/prompts/post_purchase.md, app/tools/post_purchase.py, evals/post_purchase_eval.py | git revert the squash-merge commit | accepted | `reports/post-purchase-eval.md` |
-| 2026-09-14 | #66 045-post-purchase-pivot (eval fixes) | safety | `no-behavior` | Broaden the input guard with policy-override phrasing (+ regression + tests); add a tenancy-escalation rule to the post-purchase prompt | — | Run 2: escalate-foreign-order fixed; ambiguous-01 regressed; decision 13/16 unchanged. Design questions recorded in reports/post-purchase-eval.md | adversarial safe-handling 1.000 (23/23); regression coverage 6/6 | app/safety/input_guard.py, config/prompts/post_purchase.md, evals/regressions.json | git revert the squash-merge commit | accepted | `reports/post-purchase-eval.md` |
+| 2026-09-14 | #66 045-post-purchase-pivot (eval fixes) | safety | `measurable` | Broaden the input guard with policy-override phrasing (+ regression + tests); add a tenancy-escalation rule to the post-purchase prompt | decision accuracy (16 labeled cases) | 0.812 → 0.812 | adversarial safe-handling 1.000 (23/23); regression coverage 6/6 | app/safety/input_guard.py, config/prompts/post_purchase.md, evals/regressions.json | git revert the squash-merge commit | accepted | `reports/post-purchase-eval.md` |
+| 2026-09-14 | #67 045-shopping-agent (spec-system remediation) | specs | `docs` | Added the umbrella spec 045-shopping-agent; aligned the template (RW-1..RW-4, EV-1..EV-6 + 7 best-practice sections); made the gate review the current branch's spec and enforce the new sections; archived 10 off-scope specs; backfilled the kept specs; aligned README/constitution/architecture to the shopping-agent positioning. | — | No runtime behavior change; the gate now reviews 045 and passes (22 auto, 6 manual, 0 failed). | — | .specify/templates/spec-template.md, scripts/spec_review.py, specs/**, docs/{production-conventions,architecture}.md, README.md, .specify/memory/constitution.md | git revert the squash-merge commit | accepted | `specs/045-shopping-agent/, tests/unit/test_spec_structure.py` |
+| 2026-09-15 | #68 045-shopping-agent (spec remediation R1-R4) | specs | `docs` | Remediated the spec corpus: fixed the 045 return-window conflict (14 -> 30 days, active v2) and the 029 latency budgets (250ms/2000ms -> 2000us/10000us, aligned to docs/scale.md); replaced phantom 'feature 080' refs with 007 (11 files); fixed stale claims (007 trace viewer shipped in 008, 001 model fallback in 039, README discovery planned / scenario runner); added a clause coverage map to the constitution; archived 002-web-experience and 011-evaluation; deduped the 007/008 entity definitions; cross-referenced 037/041. | — | No runtime change. spec_review PASS (22 auto, 6 manual, 0 failed); spec structure/coverage tests pass; ruff clean. | — | specs/**, .specify/memory/constitution.md, README.md | git revert the commit | accepted | `specs/045-shopping-agent/spec.md, specs/029-scale-slo/spec.md, .specify/memory/constitution.md` |
+| 2026-09-15 | #69 046-closed-loop (spec + plan + tasks) | specs | `docs` | Added the closed-loop feature spec: discovery, cart, ACP-sim checkout, WISMO, returns/exchanges, policy Q&A, accounts; MCP tool surface; policy single source of truth; runtime validation; HITL; data provenance; evaluation (keyless + sampled model + Pass^k k=4 + tau-bench + AgentDojo + error attribution). Superseded 014-post-purchase and 045-shopping-agent. Added plan.md + tasks.md. | — | No runtime change. spec_review PASS (22 auto, 6 manual, 0 failed); spec structure/coverage tests pass. | — | specs/046-closed-loop/**, specs/014-post-purchase/spec.md, specs/045-shopping-agent/spec.md, specs/change-log.json | git revert the commit | accepted | `specs/046-closed-loop/{spec,plan,tasks,review}.md` |
+| 2026-09-15 | #70 046-closed-loop P0 (policy SoT + engine + gate) | policy | `no-behavior` | Added the Amazon return-policy single source of truth (config/policies/amazon.yaml: versioned 2020-06 / 2026-09, each clause with id/category/paraphrase/rules/source), a loader + deterministic engine (app/returns/amazon_policy.py: category windows, non-returnable, exceptions, restocking fee, version selection), a renderer (app/returns/render.py -> config/knowledge/policies/*.md), a runtime PolicyGate (app/gates/policy.py), and a dual-run agreement check (evals/engine_agreement.py) wired into scripts/ci.sh. | — | No runtime behavior change: the new engine/gate are not yet wired into web/main.py (migration step 2). Shared-surface agreement with the legacy engine = 1.000; 10 new unit tests pass. | — | config/policies/amazon.yaml, config/knowledge/policies/*, app/returns/{amazon_policy,render}.py, app/gates/{base,policy}.py, evals/engine_agreement.py, scripts/ci.sh, tests/unit/test_amazon_policy.py | git revert the commit; the legacy gate (app/returns/policy.py) is untouched | accepted | `evals/engine_agreement.py, tests/unit/test_amazon_policy.py` |
+| 2026-09-15 | #71 046-closed-loop (policy corpus replacement) | data | `measurable` | Replaced the authored returns corpus (config/knowledge/returns.md, returns-v1.md) with the rendered Amazon policy (config/knowledge/amazon-returns.md), derived from the SoT (config/policies/amazon.yaml). Updated the renderer to emit only the active version, and updated the retrieval set, tests, and references. | retrieval hit-rate@3 (tfidf) | 0.963 → 1.0 | dense-hash/dense-chroma hit@3 unchanged (0.963); gate threshold 0.7 unchanged; all keyless evals and 19 affected tests pass | config/knowledge/*, app/returns/render.py, evals/retrieval_set.py, tests/**, app/core/settings.py, config/settings.yaml, docs/architecture.md | git revert the commit; the authored corpus returns | accepted | `evals/report.md (retrieval), evals/bench.py` |
