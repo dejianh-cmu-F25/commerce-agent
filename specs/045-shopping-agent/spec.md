@@ -187,12 +187,13 @@ Two layers, because they answer different questions (see `docs/invariants.md`).
 | Source | Use | License | Retrieved |
 | --- | --- | --- | --- |
 | **Shopify Admin API** (dev store) | orders, returnable items | platform API | 2026-09-14 |
-| **Retailer policy** (public page) | return rules | public policy page; rules paraphrased + cited | 2026-09-14 |
+| **Return policy** | return rules | **authored in-repo** (`config/knowledge/returns.md`) — *not yet* sourced from a real retailer | 2026-09-14 |
 | **Amazon ESCI** `[planned]` | discovery retrieval labels | **Apache-2.0** | — |
 
 Documented in `docs/shopify-setup.md` and (planned) `docs/data-provenance.md`.
-Test data (the dev store's catalog/orders) is generated; the **integration and
-domain logic are real** — stated honestly.
+**Honest gaps**: the store's orders/catalog are generated; the policy is authored
+in-repo (anchoring it to a real retailer's published policy is planned). The
+**integration and domain logic are real**.
 
 ## Non-Functional Requirements
 
@@ -270,6 +271,8 @@ domain logic are real** — stated honestly.
 - **SC-001**: Decision accuracy on the human-labeled set ≥ **0.90**.
 - **SC-002**: `invariant_pass_rate` = **1.000**; `no_fail_rate` = **1.000**.
 - **SC-003**: Every decision cites at least one supporting policy clause.
+  *(Not yet measured: `cited_clauses` is not populated by the tool — a known gap,
+  see below.)*
 - **SC-004**: A return is never approved or refunded by the agent (INV-6 holds).
 - **SC-005** `[planned]`: ESCI retrieval hit@k ≥ the TF-IDF baseline on the sampled
   benchmark; discovery constraint adherence ≥ 0.90.
@@ -283,6 +286,19 @@ domain logic are real** — stated honestly.
 | Invariant pass rate | 16/17 (0.941) | same |
 | No-fail rate | 1.000 | same |
 | Cost per full run | ≈ CNY 0.20 | same |
+
+## Known Gaps
+
+Tracked, not hidden. Each is a candidate task in [tasks.md](./tasks.md).
+
+- The evaluation harness does not enable the input guard (`SafetySettings()` is
+  not passed by `evals/post_purchase_eval.py`), so the injection case is scored
+  against a disabled guard.
+- `cited_clauses` is always empty → citation support (SC-003) is unmeasured.
+- `clarify` cases are scored without a `has_text` assertion.
+- INV-7's assertion (`no_tool_call`) forbids a legitimate read.
+- Decision accuracy is 0.812 (below the 0.90 target); invariant pass rate is
+  0.941 (below 1.000).
 
 ## Assumptions
 

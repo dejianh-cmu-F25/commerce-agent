@@ -161,8 +161,8 @@ Features: <feature ids>
 - Driver: Playwright against the FastAPI-served SPA, real DeepSeek.
 - Result: PASS. A grounded add renders a cart card; `render_checkout` renders a
   summary and states that nothing is charged (P3).
-- Card and details: `specs/009-cart-checkout/checkpoint.md`.
-- Screenshot: `specs/009-cart-checkout/checkpoint.png`.
+- Card and details: `specs/archive/009-cart-checkout/checkpoint.md`.
+- Screenshot: `specs/archive/009-cart-checkout/checkpoint.png`.
 
 ### 010 merchant agent — 2026-09-13
 
@@ -170,8 +170,8 @@ Features: <feature ids>
 - Result: PASS. The operator agent lists inventory and stages a price change; a
   human approves it in the Merchant view and only then does the product update
   (P3).
-- Card and details: `specs/010-merchant-agent/checkpoint.md`.
-- Screenshot: `specs/010-merchant-agent/checkpoint.png`.
+- Card and details: `specs/archive/010-merchant-agent/checkpoint.md`.
+- Screenshot: `specs/archive/010-merchant-agent/checkpoint.png`.
 
 ### 011 evaluation — 2026-09-13
 
@@ -195,8 +195,8 @@ Features: <feature ids>
   you avoid wool." from memory; the Memory view listed the facts and forgetting
   one removed it. `memory` spans recorded `extract` (stored=2) and `recall`
   (recalled=2).
-- Card and details: `specs/013-customer-memory/checkpoint.md`.
-- Screenshot: `specs/013-customer-memory/checkpoint.png`.
+- Card and details: `specs/archive/013-customer-memory/checkpoint.md`.
+- Screenshot: `specs/archive/013-customer-memory/checkpoint.png`.
 
 ### 025 eval report view — 2026-09-13
 
@@ -204,8 +204,8 @@ Features: <feature ids>
 - Result: PASS. The Report tab rendered `evals/report.md` — retrieval benchmark,
   feature ablation, real reliability/process/failure/judge tables — with no
   page-level horizontal scroll at 375px.
-- Card and details: `specs/025-eval-report-view/checkpoint.md`.
-- Screenshot: `specs/025-eval-report-view/checkpoint.png`.
+- Card and details: `specs/archive/025-eval-report-view/checkpoint.md`.
+- Screenshot: `specs/archive/025-eval-report-view/checkpoint.png`.
 
 ### 017 metrics dashboard — 2026-09-13
 
@@ -214,8 +214,8 @@ Features: <feature ids>
 - Result: PASS. The Metrics tab showed latency by span, token totals (incl. cache
   hits), cost, tool success/failure, and the budget; a new turn increased the span
   count and cache-hit tokens. No page-level horizontal scroll at 375px.
-- Card and details: `specs/017-metrics-dashboard/checkpoint.md`.
-- Screenshot: `specs/017-metrics-dashboard/checkpoint.png`.
+- Card and details: `specs/archive/017-metrics-dashboard/checkpoint.md`.
+- Screenshot: `specs/archive/017-metrics-dashboard/checkpoint.png`.
 - Bug found and fixed during the checkpoint: the sixth tab overflowed the header
   at 375px; `min-w-0` lets the tab group scroll inside itself.
 
@@ -226,8 +226,8 @@ Features: <feature ids>
 - Result: PASS. The Scenarios tab listed the 11 gold scenarios; "Run all" reported
   **11/11 passed** with each scenario's tool sequence and components; the header
   wrapped at 375px with no page-level horizontal scroll.
-- Card and details: `specs/016-scenario-runner/checkpoint.md`.
-- Screenshot: `specs/016-scenario-runner/checkpoint.png`.
+- Card and details: `specs/archive/016-scenario-runner/checkpoint.md`.
+- Screenshot: `specs/archive/016-scenario-runner/checkpoint.png`.
 
 ### 015 deployment hardening — 2026-09-13
 
