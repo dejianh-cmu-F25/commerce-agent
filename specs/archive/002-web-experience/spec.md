@@ -197,7 +197,7 @@ to confirm Retry.
 
 The UI renders the existing `TurnStart`/`TurnEnd`/`UsageReported`/`ErrorEvent`
 stream. No new backend events are required beyond what feature 001 emits; the
-turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
+turn `trace_id` remains the link to `logs/traces.jsonl` (feature 007).
 
 ## Success Criteria *(mandatory)*
 

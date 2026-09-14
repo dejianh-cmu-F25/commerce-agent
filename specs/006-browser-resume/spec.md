@@ -102,7 +102,7 @@ New chat: the transcript clears and a new session starts.
 
 ## Observability
 
-No new events; structured traces arrive with feature 080 (SL-2).
+No new events; structured traces shipped in feature 007 (SL-2).
 
 ## Success Criteria *(mandatory)*
 

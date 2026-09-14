@@ -3,10 +3,10 @@
 An interview-grade, **spec-driven** full-journey shopping agent built from scratch on a
 hand-written agent loop. Two stages of one journey:
 
-- **Discovery**: product search and ranking over a real catalog (ESCI), grounded in
-  human relevance labels.
-- **Post-purchase**: order status, returns, and refunds over a real store (Shopify),
-  grounded in a versioned, real retailer policy.
+- **Discovery** *(planned)*: product search and ranking over a real catalog (ESCI),
+  grounded in human relevance labels.
+- **Post-purchase** *(implemented)*: order status, returns, and refunds over a real
+  store (Shopify), grounded in a versioned retailer policy.
 
 The model (DeepSeek, provider-neutral) proposes. The harness disposes.
 
@@ -53,7 +53,7 @@ uv sync                     # install dependencies
 docker compose up --build   # app (SQLite embedded; data/logs on host volumes)
 ```
 
-Then open the web UI and try the Scenario Runner.
+Then open the web UI and chat with the agent.
 
 ## Deployment
 

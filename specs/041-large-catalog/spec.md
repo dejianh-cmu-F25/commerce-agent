@@ -8,6 +8,10 @@
 **Input**: Measure storefront search over a large catalog (5k products), gated,
 closing the RW-2/SC-1 data-volume residual.
 
+> Complementary to `037-scale-boundaries`: 037 measures the **corpus** (knowledge
+> chunks) and **session** boundaries; this spec measures the **catalog** boundary.
+> Both extend the `029-scale-slo` framework; neither replaces the other.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - A large catalog is measured (Priority: P1)

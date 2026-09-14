@@ -122,7 +122,7 @@ list the same product(s) as before — now served from the configured backend
 ## Observability
 
 No new events; the existing `ToolCallStarted`/`ToolResult`/`UIComponent` stream is
-unchanged. Structured traces arrive with feature 080 (SL-2).
+unchanged. Structured traces arrive with feature 007 (SL-2).
 
 ## Success Criteria *(mandatory)*
 

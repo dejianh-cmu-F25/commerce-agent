@@ -83,9 +83,8 @@ reloads the list.
 
 ### Key Entities
 
-- **TraceSummary**: `trace_id`, `start_ms`, `duration_ms`, `span_count`, `status`.
-- **Span**: `trace_id`, `span_id`, `parent_id`, `name`, `start_ms`, `end_ms`,
-  `status`, `attributes`.
+- **TraceSummary** / **Span**: defined by the observability producer (feature 007,
+  `## Key Entities`); this read-only view renders them and does not redefine them.
 
 ## UI Requirements
 

@@ -111,7 +111,7 @@ Open `/`, send a message. Then `GET /traces` lists a trace and
 
 This feature **is** the observability layer: `logs/traces.jsonl`, `trace_id`
 across turn/llm/tool, metrics (latency, tokens, cost, tool status), and redacted
-inputs/outputs (SL-2, OB-1/2/3/5). The web Trace Viewer (OB-4) is a follow-up.
+inputs/outputs (SL-2, OB-1/2/3/5). The web Trace Viewer (OB-4) shipped in feature 008.
 
 ## Success Criteria *(mandatory)*
 
@@ -135,7 +135,7 @@ inputs/outputs (SL-2, OB-1/2/3/5). The web Trace Viewer (OB-4) is a follow-up.
 
 - The trace file is `logs/traces.jsonl` (already in `observability.trace_file`).
 - The loop is the instrumentation point; adapters stay dumb.
-- A rich Trace Viewer UI (OB-4) is a follow-up feature.
+- A rich Trace Viewer UI (OB-4) shipped in feature 008.
 
 ## Real-World Coverage
 

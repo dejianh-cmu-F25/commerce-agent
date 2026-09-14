@@ -40,4 +40,4 @@ Features: 004
   keyless runs and tests.
 - The tool's model-facing contract and the `products` UI component are unchanged
   (FR-007); only the data source changed.
-- No new events; structured traces arrive with feature 080 (SL-2).
+- No new events; structured traces shipped in feature 007 (SL-2).

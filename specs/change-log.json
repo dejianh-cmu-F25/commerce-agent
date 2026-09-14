@@ -1083,6 +1083,18 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "specs/045-shopping-agent/, tests/unit/test_spec_structure.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#68 045-shopping-agent (spec remediation R1-R4)",
+      "area": "specs",
+      "class": "docs",
+      "what": "Remediated the spec corpus: fixed the 045 return-window conflict (14 -> 30 days, active v2) and the 029 latency budgets (250ms/2000ms -> 2000us/10000us, aligned to docs/scale.md); replaced phantom 'feature 080' refs with 007 (11 files); fixed stale claims (007 trace viewer shipped in 008, 001 model fallback in 039, README discovery planned / scenario runner); added a clause coverage map to the constitution; archived 002-web-experience and 011-evaluation; deduped the 007/008 entity definitions; cross-referenced 037/041.",
+      "note": "No runtime change. spec_review PASS (22 auto, 6 manual, 0 failed); spec structure/coverage tests pass; ruff clean.",
+      "blast_radius": "specs/**, .specify/memory/constitution.md, README.md",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "specs/045-shopping-agent/spec.md, specs/029-scale-slo/spec.md, .specify/memory/constitution.md"
     }
   ]
 }

@@ -116,7 +116,7 @@ messages. Restart the app and request the same id: the messages are still there.
 
 ## Observability
 
-No new events; structured traces arrive with feature 080 (SL-2).
+No new events; structured traces shipped in feature 007 (SL-2).
 
 ## Success Criteria *(mandatory)*
 

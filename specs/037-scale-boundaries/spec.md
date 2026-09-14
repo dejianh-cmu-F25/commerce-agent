@@ -2,6 +2,9 @@
 
 **Feature Branch**: `037-scale-boundaries`
 
+> Complementary to `041-large-catalog`: this spec measures the **corpus** and
+> **session** boundaries; 041 measures the **catalog** boundary.
+
 **Created**: 2026-09-13
 
 **Status**: Implemented

@@ -69,9 +69,9 @@ accuracy and citation support.
 
 **Acceptance Scenarios**:
 
-1. **Given** an item delivered 9 days ago under a 14-day policy, **When** the
-   shopper asks to return it, **Then** the decision is `eligible` and the window
-   clause is cited.
+1. **Given** an item delivered 9 days ago under the active 30-day policy, **When**
+   the shopper asks to return it, **Then** the decision is `eligible` and the
+   window clause is cited.
 2. **Given** a request to "just refund me", **When** the turn runs, **Then** the
    agent proposes a return and never approves or refunds (INV-6).
 
@@ -197,8 +197,9 @@ in-repo (anchoring it to a real retailer's published policy is planned). The
 
 ## Non-Functional Requirements
 
-- **Latency**: post-purchase p95 ≤ 2 s keyless (`docs/scale.md`); model turns
-  bounded by `max_turns`.
+- **Latency**: keyless post-purchase turn p95 ≤ 10,000 µs (the harness-overhead
+  guard in `docs/scale.md`); real-model turn latency is measured separately by
+  the real-model eval, and model turns are bounded by `max_turns`.
 - **Cost**: a real evaluation run ≤ `EVAL_MAX_COST_CNY`; the harness stops at the
   cap (HR-12).
 - **Security & privacy**: no cross-customer access (INV-7); no PII beyond what a

@@ -93,8 +93,9 @@ the gate.
 
 - **SC-001**: The benchmark runs at 1/4/16/64 concurrency and reports p50/p95 and
   throughput per level.
-- **SC-002**: At the target concurrency, retrieval p95 ≤ 250 ms, turn p95 ≤
-  2000 ms, error rate 0.
+- **SC-002**: At the target concurrency, retrieval p95 ≤ 2000 µs, turn p95 ≤
+  10000 µs, error rate 0 (the declared budgets in `docs/scale.md`; these guard
+  harness overhead, not provider latency).
 - **SC-003**: A breached budget fails the gate.
 - **SC-004**: The local gate passes.
 

@@ -292,4 +292,28 @@ justify the change, and will drift into unmeasured churn.
   carries numbers); semantic judgments — root cause, blast radius, data contracts — are
   reviewer-owned and recorded, not automated.
 
+### Clause coverage map
+
+Every clause is enforced in exactly one place. "Not spec-covered" below is
+**intentional** (P6), not a gap: process clauses are enforced by the gate or the
+PR checklist, and are not restated in feature specs.
+
+**Spec-covered** — a section or requirement in an active `specs/*/spec.md`:
+P3 · P4 · P5 · P7 · P8 · PB-1 · PB-2 · SL-1 · SL-2 · WV-1 · WV-3 · WV-5 · WV-6 ·
+WV-7 · WV-8 · WV-9 · OB-1..5 · DP-1..6 · HR-8 · HR-9 · HR-10 · HR-12 · RD-1 · RD-2 ·
+RW-1..4 · SC-1..4 · EV-1..5
+
+**Gate-covered** — a script in `scripts/ci.sh`, no feature spec needed:
+P1 (`spec_review.py`) · EV-1/EV-6 (`check_change_evidence.py`, `check_results.py`) ·
+EV-3/SC-3 guardrails (`evals/guardrails.py`) · DR-1..5 (`verify_notes.py`) ·
+TT-1/TT-2 (`pytest`, keyless evals) · TT-3 (`pyright`) · GH-4 (`ci.sh`)
+
+**Process-covered** — PR checklist / reviewer, by design (P6):
+P2 · P6 · PB-3 · PB-4 · PB-5 · WV-2 · WV-4 · HR-1..7 · HR-11 · SR-1..5 ·
+GH-1 · GH-2 · GH-3 · GH-5 · GH-6
+
+> **WV-4 note.** The Scenario Runner (`/scenarios`) is still wired in `web/main.py`,
+> but its spec (016-scenario-runner) is archived. Feature 046 must either re-spec
+> it or retire the endpoint; until then it is flagged, not silently uncovered.
+
 **Version**: 1.3.1 | **Ratified**: 2026-09-13 | **Last Amended**: 2026-09-13

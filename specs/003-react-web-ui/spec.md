@@ -177,7 +177,7 @@ error and Retry.
 ## Observability
 
 The UI consumes the existing 001/002 event stream; no new backend events. The
-turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
+turn `trace_id` remains the link to `logs/traces.jsonl` (feature 007).
 
 ## Success Criteria *(mandatory)*
 
