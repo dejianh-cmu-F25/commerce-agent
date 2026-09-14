@@ -1,0 +1,52 @@
+# Machine-readable return policy clauses (feature 045).
+#
+# This is the authoritative, citable form of the policy. The prose in
+# config/knowledge/returns.md is what the model reads; these clauses are what the
+# harness verifies against. They must agree; a change to one updates the other.
+#
+# Versioning is deliberate: the active version is v2 (30-day window). v1 (14-day)
+# is archived in the knowledge corpus as a conflict distractor. A clause carries
+# its own effective_from so the verifier can refuse a superseded clause.
+
+active_version: "v2"
+
+clauses:
+  - id: returns#window
+    version: v2
+    effective_from: "2026-01-01"
+    text: Most items can be returned within 30 days of delivery.
+    window_days: 30
+
+  - id: returns#condition
+    version: v2
+    effective_from: "2026-01-01"
+    text: Items must be unused and unopened, with original tags and packaging.
+
+  - id: returns#non-returnable
+    version: v2
+    effective_from: "2026-01-01"
+    text: Final-sale items, gift cards, intimate apparel, and hazardous materials cannot be returned.
+    non_returnable_tags: [final_sale, gift_card, intimate, hazmat]
+
+  - id: returns#restocking-fee
+    version: v2
+    effective_from: "2026-01-01"
+    text: A 15% restocking fee applies to non-defective returns of large items.
+    restocking_fee_pct: 15
+    applies_to_tags: [large]
+
+  - id: returns#exception
+    version: v2
+    effective_from: "2026-01-01"
+    text: Damaged, defective, or incorrect items are accepted outside the window and without a fee.
+    exception_reasons: [damaged, defective, wrong_item, missing]
+
+  - id: returns#return-shipping
+    version: v2
+    effective_from: "2026-01-01"
+    text: Return shipping is free for damaged, defective, or incorrectly shipped items; otherwise the customer pays.
+
+  - id: returns#refund-timeline
+    version: v2
+    effective_from: "2026-01-01"
+    text: Refunds are issued to the original payment method within 5 to 7 business days after inspection.

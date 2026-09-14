@@ -975,6 +975,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/design.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#61 045-post-purchase-pivot (eligibility core)",
+      "area": "returns",
+      "class": "no-behavior",
+      "what": "Machine-readable policy clauses + a deterministic return-eligibility decision engine; a 16-case decision set (draft) + labeling guide",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "The harness 'dispose' half: the model proposes, this decides; escalates on missing facts",
+      "guardrails": "escalates rather than guessing; cites clause ids; 11 keyless tests",
+      "blast_radius": "app/returns/clauses.py, app/returns/eligibility.py, config/policies/, evals/post_purchase_cases.jsonl",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/design.md"
     }
   ]
 }
