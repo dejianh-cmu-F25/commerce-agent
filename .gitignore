@@ -23,6 +23,8 @@ coverage.xml
 data/db/
 data/chroma/
 data/budget.json
+# Reviews'23 sample: research-licensed; not redistributed (regenerate with the importer).
+data/catalog/
 logs/
 *.sqlite
 *.sqlite3

@@ -1147,6 +1147,18 @@
       "rollback": "git revert the commit; uv sync removes the dependency",
       "verdict": "accepted",
       "evidence": "tests/unit/test_mcp_server.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#73 046-closed-loop P2 (real catalog)",
+      "area": "catalog",
+      "class": "no-behavior",
+      "what": "Imported ~300 real products (Amazon Reviews'23 item metadata: titles, prices, brands, categories) into the Shopify dev store via scripts/import_catalog.py (idempotent productSet). Added a read-only Shopify catalog adapter (app/adapters/shopify_catalog.py) mapping the Admin API to Product.",
+      "note": "No runtime behavior change: the catalog adapter is not yet wired into the agent's catalog path. The store now holds real products (regenerate the sample with the importer; it is gitignored as research-licensed).",
+      "blast_radius": "scripts/import_catalog.py, app/adapters/shopify_catalog.py, tests/unit/test_shopify_catalog.py, .gitignore",
+      "rollback": "delete the imported products (tag imported:reviews23) in the store; git revert the commit",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_shopify_catalog.py"
     }
   ]
 }
