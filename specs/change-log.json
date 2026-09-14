@@ -1039,6 +1039,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/invariants.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#65 045-post-purchase-pivot (eval harness)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Post-purchase agent (prompt + read/propose tools) and a two-layer evaluation harness (decision + invariant) against the real model",
+      "metric": "invariant_pass_rate (labeled behavioral set)",
+      "before": 0.0,
+      "after": 0.941,
+      "note": "First real run: decision 13/16 (0.812), invariant 16/17 (0.941), no-fail 1.000, ~CNY 0.20",
+      "guardrails": "no-fail 1.000 (no input crashed the agent); never approved a refund (INV-6)",
+      "blast_radius": "config/prompts/post_purchase.md, app/tools/post_purchase.py, evals/post_purchase_eval.py",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "reports/post-purchase-eval.md"
     }
   ]
 }

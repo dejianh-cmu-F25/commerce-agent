@@ -114,7 +114,8 @@
 ### Input distribution
 
 - The real inputs the feature must handle (phrasings, ambiguity, languages, adversarial).
-- Behavior for unseen / out-of-distribution input: clarify, refuse, or fall back.
+- Behavior for unseen / out-of-distribution input: clarify, redirect (off-topic),
+  refuse, or fall back.
 
 ### Data quality
 

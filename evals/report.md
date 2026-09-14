@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.907 | 0.0 |
 | `dense-hash` | 0.963 | 0.963 | 0.827 | 0.4 |
-| `dense-chroma` | 0.963 | 0.963 | 0.827 | 0.4 |
+| `dense-chroma` | 0.963 | 0.963 | 0.827 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -100,8 +100,8 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 18.6 | +3.1000 | 10000.0 | ≤ | `scale` | OK |
-| `cost:spent_cny` | 0.6562 | +0.0000 | 10.0 | ≤ | `budget` | OK |
+| `latency:turn_p95_us` | 18.1 | +2.6000 | 10000.0 | ≤ | `scale` | OK |
+| `cost:spent_cny` | 0.8529 | +0.1967 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
 
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 23 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.7/17.0 | 14.8/19.5 | 50023 | 0 |
-| 4 | 12.9/17.6 | 15.2/17.1 | 52973 | 0 |
-| 16 | 12.9/17.8 | 14.5/18.6 | 54900 | 0 |
-| 64 | 12.7/17.0 | 14.5/16.2 | 56923 | 0 |
+| 1 | 12.6/17.8 | 14.4/19.5 | 52167 | 0 |
+| 4 | 12.0/17.0 | 14.6/16.7 | 56758 | 0 |
+| 16 | 12.2/16.8 | 14.3/18.1 | 55032 | 0 |
+| 64 | 12.5/17.2 | 14.5/14.9 | 57166 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5811.1/8063.7 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5182.4/8104.3 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12288.6/15672.6 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12053.2/15313.7 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -246,3 +246,10 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-13 | #56 044-audit-update | docs | `docs` | Refresh the production audit: all 14 clauses Met; residual gaps as one honest boundary; follow-up features | — | Docs only; RW-3 and EV-3 now Met after features 035/036/042 | — | docs/production-audit.md only | git revert the squash-merge commit | accepted | `docs/production-audit.md` |
 | 2026-09-14 | #57 045-post-purchase-pivot (phase 0) | docs | `docs` | E-commerce domain primer: value chain, unit economics, KPIs, return/refund rules, Shopify return state machine, schema, policy versioning, failure modes, 30 interview questions | — | Pivot to a post-purchase resolution agent; this is the domain-learning deliverable | — | docs/ecommerce-primer.md only | git revert the squash-merge commit | accepted | `docs/ecommerce-primer.md` |
 | 2026-09-14 | #58 045-post-purchase-pivot (shopify read) | integration | `no-behavior` | Shopify Admin GraphQL client + read-only post-purchase adapter (orders, returnable fulfillments) with a keyless in-memory backend | — | Adds a real external integration seam; 9 keyless tests with a MockTransport | empty credentials fail loud; GraphQL/HTTP errors surfaced | app/ports/post_purchase.py, app/adapters/shopify_*.py, app/adapters/post_purchase_memory.py, settings | git revert the squash-merge commit; or unset SHOPIFY_SHOP | accepted | `docs/shopify-setup.md` |
+| 2026-09-14 | #59 045-post-purchase-pivot (policy corpus) | data | `no-behavior` | Replace the 3 toy knowledge docs with a structured, versioned policy corpus (returns v2 active + v1 superseded, shipping, warranty) | retrieval hit-rate@3 (tfidf) | 0.963 → 0.963 | retrieval gate threshold 0.7 unchanged; all configs pass | config/knowledge/*.md (content); retrieval benchmark numbers | git revert the squash-merge commit | accepted | `config/knowledge/returns.md` |
+| 2026-09-14 | #60 045-post-purchase-pivot (design) | docs | `docs` | docs/design.md: the problem, the key decisions, the rejected alternatives, the eval design, and the expansion ladder | — | Front-door design doc; makes the project legible and states what is real vs demo | — | docs/design.md only | git revert the squash-merge commit | accepted | `docs/design.md` |
+| 2026-09-14 | #61 045-post-purchase-pivot (eligibility core) | returns | `no-behavior` | Machine-readable policy clauses + a deterministic return-eligibility decision engine; a 16-case decision set (draft) + labeling guide | — | The harness 'dispose' half: the model proposes, this decides; escalates on missing facts | escalates rather than guessing; cites clause ids; 11 keyless tests | app/returns/clauses.py, app/returns/eligibility.py, config/policies/, evals/post_purchase_cases.jsonl | git revert the squash-merge commit | accepted | `docs/design.md` |
+| 2026-09-14 | #62 045-post-purchase-pivot (shopify setup doc) | docs | `docs` | Update docs/shopify-setup.md to the current Dev Dashboard / legacy custom app flow, with verification, test-order creation, and troubleshooting | — | Verified: real Admin API auth works against post-purchase-agent.myshopify.com | token kept in .env (gitignored), never committed | docs/shopify-setup.md only | git revert the squash-merge commit | accepted | `docs/shopify-setup.md` |
+| 2026-09-14 | #63 045-post-purchase-pivot (live shopify) | integration | `no-behavior` | Opt-in live Shopify integration test (skipped without a token) exercising real auth, order read, and returnableFulfillments | — | Verified against post-purchase-agent.myshopify.com: order #1001 PAID/FULFILLED/$230, 1 returnable item; GraphQL cost captured | keyless default (skips without env); read-only; no writes | tests/integration/test_shopify_live.py | git revert the squash-merge commit | accepted | `docs/shopify-setup.md` |
+| 2026-09-14 | #64 045-post-purchase-pivot (invariants) | evaluation | `no-behavior` | Behavioral invariants as a first-class layer: docs/invariants.md (8 invariants), evals/invariant_cases.jsonl (17 cases), app/evaluation/invariants.py (pure checker) | — | Adds the 'must-always/must-never' layer beside per-case decision accuracy; INV-1 is strict for user input | unknown assertion fails loud; 9 keyless tests | docs/invariants.md, evals/invariant_cases.jsonl, app/evaluation/invariants.py | git revert the squash-merge commit | accepted | `docs/invariants.md` |
+| 2026-09-14 | #65 045-post-purchase-pivot (eval harness) | evaluation | `measurable` | Post-purchase agent (prompt + read/propose tools) and a two-layer evaluation harness (decision + invariant) against the real model | invariant_pass_rate (labeled behavioral set) | 0.0 → 0.941 | no-fail 1.000 (no input crashed the agent); never approved a refund (INV-6) | config/prompts/post_purchase.md, app/tools/post_purchase.py, evals/post_purchase_eval.py | git revert the squash-merge commit | accepted | `reports/post-purchase-eval.md` |

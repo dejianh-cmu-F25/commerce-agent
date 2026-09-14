@@ -80,6 +80,19 @@ Dependencies point inward; adapters implement ports and are injected by config.
 
 ## Evaluation
 
+Quality is measured in **two layers**, because they answer different questions:
+
+- **Decision cases** (`evals/post_purchase_cases.jsonl`) — "is this answer
+  correct?" Per-case labels; the metric is `decision_accuracy` and
+  `policy_citation_support`.
+- **Behavioral invariants** (`evals/invariant_cases.jsonl`, `docs/invariants.md`)
+  — "does this property always hold?" (off-topic must redirect, missing detail
+  must clarify, no prompt leak, no unapproved write, …). The metric is
+  `invariant_pass_rate` per invariant, plus `no_fail_rate` across **all** cases.
+
+A system can score well on the decisions and still crash on a weather question;
+the invariant layer is what catches that.
+
 **Case schema** (`evals/post_purchase_cases.jsonl`):
 
 ```json

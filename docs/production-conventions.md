@@ -57,7 +57,7 @@ Reviewer-owned. Mark an item only when verified.
 
 ### Real-world fitness (RW)
 - [ ] The input distribution is enumerated, including adversarial and out-of-distribution input.
-- [ ] Unseen input has a defined behavior (clarify / refuse / fall back), not an implicit assumption.
+- [ ] Unseen input has a defined behavior (clarify / redirect / refuse / fall back), not an implicit assumption. Behavioral invariants (`docs/invariants.md`) are checked, not assumed.
 - [ ] Data boundaries validate and normalize; dirty/missing/conflicting data has defined behavior and a repair path.
 - [ ] Edge and failure modes are enumerated with a behavior each.
 - [ ] Fixes address the root cause and ship with a regression; no one-off special cases.

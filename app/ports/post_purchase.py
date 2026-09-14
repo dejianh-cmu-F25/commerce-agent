@@ -20,6 +20,9 @@ class LineItem:
     title: str
     quantity: int
     sku: str = ""
+    # Product tags (e.g. final_sale, large). Shopify exposes these on the product;
+    # the fixture sets them directly.
+    tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,7 @@ class OrderView:
     fulfillment_status: str
     total: float
     currency: str
+    delivered_at: str | None = None
     line_items: list[LineItem] = field(default_factory=list)
 
 
