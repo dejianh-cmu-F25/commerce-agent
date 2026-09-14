@@ -911,6 +911,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/production-audit.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#57 045-post-purchase-pivot (phase 0)",
+      "area": "docs",
+      "class": "docs",
+      "what": "E-commerce domain primer: value chain, unit economics, KPIs, return/refund rules, Shopify return state machine, schema, policy versioning, failure modes, 30 interview questions",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Pivot to a post-purchase resolution agent; this is the domain-learning deliverable",
+      "guardrails": null,
+      "blast_radius": "docs/ecommerce-primer.md only",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/ecommerce-primer.md"
     }
   ]
 }
