@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Introduce a `StorefrontBackend` port with in-memory and SQLite
 adapters, config-selected, replacing the in-memory catalog stand-in used by
 `search_products`. Keep server-issued ids for grounding and make seeding
@@ -134,6 +133,14 @@ unchanged. Structured traces arrive with feature 080 (SL-2).
 - **SC-003**: Switching `storefront.provider` changes the adapter with no code
   change; an unknown provider fails at load.
 - **SC-004**: No product id reaches the session that did not come from the backend.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

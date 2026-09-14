@@ -81,8 +81,10 @@ def main() -> int:
         print(f"FAIL: entry {entry.get('change')!r} has an invalid class {classification!r}.")
         return 1
 
-    # A change to the model/prompt/retrieval surface must be measured.
-    changed = _changed("origin/main") or _changed("main") or []
+    # A change to the model/prompt/retrieval surface must be measured. Audit the
+    # *current* change (the latest commit), not the whole branch: a branch may
+    # carry several changes, and only the latest one is under audit here.
+    changed = _changed("HEAD~1") or _changed("origin/main") or _changed("main") or []
     touches_model = any(marker in path for path in changed for marker in TRIGGERS)
     if touches_model and classification != "measurable":
         print(

@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Persist the session id in the browser and rehydrate the transcript from
 `GET /sessions/{id}` on load so a page reload resumes the conversation; add a
 New chat action.
@@ -111,6 +110,14 @@ No new events; structured traces arrive with feature 080 (SL-2).
 - **SC-002**: A message sent after a reload carries the same `session_id`.
 - **SC-003**: New chat clears storage and the transcript.
 - **SC-004**: An unknown stored id yields a usable empty state (no error).
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

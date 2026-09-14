@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Declare the scale dimensions and SLO budgets (latency, error rate,
 cost), measure the keyless envelope at increasing concurrency, render it, and
 fail the gate on regression (SC-1, SC-3).
@@ -98,6 +97,18 @@ the gate.
   2000 ms, error rate 0.
 - **SC-003**: A breached budget fails the gate.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

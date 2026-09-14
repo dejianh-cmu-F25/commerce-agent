@@ -1,12 +1,12 @@
 # Commerce Agent
 
-An interview-grade, **spec-driven** commerce agent built from scratch on a hand-written
-agent loop. Two faces:
+An interview-grade, **spec-driven** full-journey shopping agent built from scratch on a
+hand-written agent loop. Two stages of one journey:
 
-- **Shopping agent** for consumers: discover, compare, plan, cart, checkout handoff,
-  post-purchase care, and cross-session memory.
-- **Merchant agent** for operators: analytics, inventory, pricing, promotions, and
-  campaigns — every write staged and applied only after approval.
+- **Discovery**: product search and ranking over a real catalog (ESCI), grounded in
+  human relevance labels.
+- **Post-purchase**: order status, returns, and refunds over a real store (Shopify),
+  grounded in a versioned, real retailer policy.
 
 The model (DeepSeek, provider-neutral) proposes. The harness disposes.
 

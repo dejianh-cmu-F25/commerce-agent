@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Make deployment honest and verified: align `.env.example` and
 `docker-compose.yml` with the configuration the app actually reads, and add a
 keyless container smoke test to the local gate so the image is proven to run
@@ -166,6 +165,14 @@ chat turn. No component, state, or style changes.
 - **SC-003**: The built image contains no `.env` or key material.
 - **SC-004**: `make ci-fast` is unaffected and still passes without Docker.
 - **SC-005**: `docker compose config` validates.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

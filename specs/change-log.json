@@ -1071,6 +1071,18 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "reports/post-purchase-eval.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#67 045-shopping-agent (spec-system remediation)",
+      "area": "specs",
+      "class": "docs",
+      "what": "Added the umbrella spec 045-shopping-agent; aligned the template (RW-1..RW-4, EV-1..EV-6 + 7 best-practice sections); made the gate review the current branch's spec and enforce the new sections; archived 10 off-scope specs; backfilled the kept specs; aligned README/constitution/architecture to the shopping-agent positioning.",
+      "note": "No runtime behavior change; the gate now reviews 045 and passes (22 auto, 6 manual, 0 failed).",
+      "blast_radius": ".specify/templates/spec-template.md, scripts/spec_review.py, specs/**, docs/{production-conventions,architecture}.md, README.md, .specify/memory/constitution.md",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "specs/045-shopping-agent/, tests/unit/test_spec_structure.py"
     }
   ]
 }

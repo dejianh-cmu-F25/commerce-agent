@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Measure storefront search over a large catalog (5k products), gated,
 closing the RW-2/SC-1 data-volume residual.
 
@@ -64,6 +63,18 @@ the storefront's search is O(catalog) per query and must be measured.
 - **SC-001**: Large-catalog search p95 at concurrency 16 is measured and ≤ budget.
 - **SC-002**: The result is rendered and gated.
 - **SC-003**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

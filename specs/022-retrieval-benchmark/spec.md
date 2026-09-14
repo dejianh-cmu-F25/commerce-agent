@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: A keyless retrieval benchmark over the policy corpus: a labeled
 query set, hit-rate/recall/MRR metrics, and an ablation comparing TF-IDF,
 dense+hash, and dense+Chroma, with a committed report.
@@ -111,6 +110,18 @@ matches the benchmark output.
 - **SC-004**: `evals/report.md` is committed and states the command and metrics.
 - **SC-005**: The local gate (ruff, pyright, pytest, evals, spec self-review,
   frontend) passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

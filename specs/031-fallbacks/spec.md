@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Give each external dependency a deterministic, config-gated fallback
 that degrades observably; wrap the retriever (dense → keyless lexical) and score
 the coverage keylessly (RD-1).
@@ -99,6 +98,18 @@ fallback; the gate enforces it.
 - **SC-002**: A degraded retriever serves results and records one degradation.
 - **SC-003**: Disabling the fallback propagates the failure.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

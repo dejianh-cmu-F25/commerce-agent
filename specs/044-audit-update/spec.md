@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Refresh the production audit: mark RW-3 and EV-3 Met, update the
 residual gaps after features 037–043.
 
@@ -37,6 +36,14 @@ as Partial and several residuals as open. This updates it to the current state.
 - **SC-001**: All fourteen clauses show a current status with evidence.
 - **SC-002**: Residual gaps are listed with measured values where available.
 - **SC-003**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

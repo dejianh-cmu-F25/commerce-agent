@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Enumerate the cross-cutting edge/failure boundaries with a defined
 behavior each; strengthen the spec coverage check; refresh the stale per-spec
 gaps (RW-3).
@@ -84,6 +83,18 @@ now-measured system envelope (`docs/scale.md`).
 - **SC-002**: The review fails a spec with a missing/short bullet.
 - **SC-003**: `docs/edge-cases.md` covers ≥ 10 boundaries.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

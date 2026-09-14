@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Add paired significance to the evaluation report — a bootstrap 95%
 confidence interval on the ablation delta and a McNemar test against the naked
 baseline — so a "before → after" is statistically stated, not just a raw
@@ -81,6 +80,14 @@ The real-model Pass@1 is reported with a bootstrap 95% CI.
 - **SC-002**: The real section shows Pass@1 with a 95% CI.
 - **SC-003**: Deterministic across runs.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

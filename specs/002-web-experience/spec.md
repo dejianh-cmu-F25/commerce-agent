@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Polish the browser chat experience: render assistant markdown safely,
 show tool calls as distinct steps, add a streaming status with stop and retry,
 suggestion prompts for the empty state, sources/provenance display, a budget
@@ -214,6 +213,14 @@ turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
   browser checkpoint.
 - **SC-005**: Tool calls, sources, and the budget meter are each covered by an
   acceptance scenario and demonstrated in the checkpoint.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

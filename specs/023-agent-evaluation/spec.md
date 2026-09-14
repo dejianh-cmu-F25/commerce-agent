@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Upgrade the evaluation harness per the book's chapter 7: process
 metrics, failure attribution (first error), Pass@k / Pass^k, a Rubric
 LLM-as-a-Judge (DeepSeek), statistical reporting, and a feature ablation —
@@ -160,6 +159,14 @@ writes the report sections.
 - **SC-004**: The judge's veto fires on a fabricated answer; the fallback works.
 - **SC-005**: The local gate (ruff, pyright, pytest, evals, spec self-review,
   frontend) passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

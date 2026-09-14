@@ -1,8 +1,8 @@
 # Commerce Agent Constitution
 
-An interview-grade, spec-driven commerce agent. Two faces: a **shopping agent**
-for consumers and a **merchant agent** for operators. Single agent, skills, tools,
-and a harness that makes model decisions trustworthy.
+An interview-grade, spec-driven **full-journey shopping agent**: product discovery
+(catalog search and ranking) and post-purchase care (orders, returns, refunds).
+Single agent, tools, and a harness that makes model decisions trustworthy.
 
 ---
 

@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Validate and normalize data at the storefront boundaries; define
 behavior for missing, dirty, or conflicting rows; provide a repair path; and
 measure the normalization with a keyless benchmark (RW-2).
@@ -122,6 +121,18 @@ gate fails below the threshold.
 - **SC-003**: `strict` raises on an invalid row; `repair` skips it and continues.
 - **SC-004**: The repair rewrites fixable rows and removes unsalvageable ones.
 - **SC-005**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

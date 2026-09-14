@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: State the blast radius and rollback for every change: add the fields to
 the change log, gate them, document the seam map, and add a PR template (SC-4).
 
@@ -76,6 +75,14 @@ fails.
 - **SC-002**: Removing either fails the gate.
 - **SC-003**: The report renders both; `docs/change-safety.md` exists.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

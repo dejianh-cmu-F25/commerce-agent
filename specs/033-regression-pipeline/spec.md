@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Turn failures into named regressions with a root cause: a registry, a
 promotion script, a keyless runner in the gate, and a documented workflow
 (RW-4, EV-5).
@@ -77,6 +76,14 @@ reader can connect the guard to the incident.
 - **SC-002**: The gate runs them and fails on any failure.
 - **SC-003**: Promoting a failure without a root cause is rejected.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

@@ -103,6 +103,48 @@ def _latest_spec() -> Path | None:
     return dirs[-1] if dirs else None
 
 
+def _branch_spec() -> Path | None:
+    """The spec for the current git branch (``NNN-*``), if there is one.
+
+    The gate must review the *feature under construction*, not whatever spec
+    happens to have the highest number.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    match = re.match(r"^(\d+)-", out.stdout.strip())
+    if not match or not SPECS.exists():
+        return None
+    prefix = match.group(1)
+    for path in sorted(SPECS.iterdir()):
+        if path.is_dir() and path.name.startswith(f"{prefix}-"):
+            return path
+    return None
+
+
+def _requires_hitl(spec_md: str) -> bool:
+    lowered = spec_md.lower()
+    return any(
+        marker in lowered
+        for marker in ("propose", "approve", "refund", "human-in-the-loop", "human approval")
+    )
+
+
+def _requires_provenance(spec_md: str) -> bool:
+    lowered = spec_md.lower()
+    return any(
+        marker in lowered
+        for marker in ("license", "shopify", "esci", "public policy", "external data")
+    )
+
+
 def _tasks_complete(spec: Path) -> tuple[bool, str]:
     tasks = spec / "tasks.md"
     if not tasks.exists():
@@ -194,10 +236,11 @@ def check(spec: Path) -> list[Result]:
 
     # --- Web-visible & observability ---
     spec_md = (spec / "spec.md").read_text() if (spec / "spec.md").exists() else ""
+    web_visible = "## Web Acceptance" in spec_md
     results.append(
         Result(
             "WV web-visible acceptance",
-            PASS if "## Web Acceptance" in spec_md and "## Observability" in spec_md else MANUAL,
+            PASS if (not web_visible or "## Observability" in spec_md) else FAIL,
             "spec has Web Acceptance + Observability sections",
         )
     )
@@ -238,6 +281,30 @@ def check(spec: Path) -> list[Result]:
                 "all six coverage bullets present with content"
                 if not coverage_gaps
                 else f"missing/short: {', '.join(coverage_gaps)}",
+            )
+        )
+    # Best-practice sections for agent/LLM features (conditional).
+    results.append(
+        Result(
+            "EV evaluation plan",
+            PASS if (not requires_coverage or "## Evaluation Plan" in spec_md) else FAIL,
+            "spec has ## Evaluation Plan (or the feature does not touch the model/data)",
+        )
+    )
+    if _requires_hitl(spec_md):
+        results.append(
+            Result(
+                "HITL specified",
+                PASS if "## Human-in-the-Loop" in spec_md else FAIL,
+                "spec has ## Human-in-the-Loop (it proposes a state change)",
+            )
+        )
+    if _requires_provenance(spec_md):
+        results.append(
+            Result(
+                "Data provenance",
+                PASS if "## Data Provenance" in spec_md else FAIL,
+                "spec has ## Data Provenance & Licensing (it uses external data)",
             )
         )
     results.append(
@@ -339,7 +406,7 @@ def render(spec: Path, results: list[Result]) -> str:
 
 def main() -> int:
     feature = sys.argv[1] if len(sys.argv) > 1 else None
-    spec = SPECS / feature if feature else _latest_spec()
+    spec = SPECS / feature if feature else (_branch_spec() or _latest_spec())
     if spec is None or not spec.exists():
         print("No spec directory found. Pass a feature id, e.g.:")
         print("  python scripts/spec_review.py 001-agent-core")

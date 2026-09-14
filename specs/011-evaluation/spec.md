@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Add a keyless evaluation harness: a gold set of scenarios replayed with
 a scripted LLM over the real tools, asserting deterministic outcomes (tool
 sequence, final state, rendered component) and exiting non-zero on failure; wire
@@ -89,6 +88,14 @@ The harness prints a per-scenario report; it can emit spans through the same
 - **SC-002**: A regression makes the harness exit non-zero.
 - **SC-003**: The harness runs as part of `scripts/ci.sh`.
 - **SC-004**: No assertion depends on model prose.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

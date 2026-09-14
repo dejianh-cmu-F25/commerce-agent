@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Add a `Tracer` port and a JSONL adapter that writes structured spans
 (turn, LLM call, tool call) to `logs/traces.jsonl` with a `trace_id`, redacted
 inputs/outputs, duration, tokens and cost; expose read endpoints for a trace.
@@ -123,6 +122,14 @@ inputs/outputs (SL-2, OB-1/2/3/5). The web Trace Viewer (OB-4) is a follow-up.
 - **SC-003**: Redaction truncates long values.
 - **SC-004**: With tracing disabled, no spans are written and behavior is
   unchanged.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

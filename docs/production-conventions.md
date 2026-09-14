@@ -51,6 +51,23 @@ before/after record in `specs/RESULTS.md` / `evals/report.md`.
 - **Regressions from reality.** When something fails in real use, add it as an
   end-to-end and, where useful, a trajectory-prefix regression case.
 
+## Best-practice spec sections (feature 045)
+
+Beyond the core sections, an agent/LLM spec carries these. They are enforced by
+`scripts/spec_review.py` (the gate, on the current branch's spec) and
+`tests/unit/test_spec_structure.py` (every active spec). Add them when the feature
+triggers the condition; otherwise state `n/a` with a reason — do not omit.
+
+| Section | Required when | Why |
+| --- | --- | --- |
+| `## Tool Contracts` | the feature exposes tools to the model | the harness is the only executor (P3, PB-2); the schema is the contract |
+| `## Evaluation Plan` | the feature touches the model, prompt, retrieval, or data | a claim without a dataset, metric, and threshold cannot be checked (EV) |
+| `## Human-in-the-Loop` | the feature performs or proposes a state change | approval and authority must be explicit, not implied |
+| `## Data Provenance & Licensing` | the feature uses external data | state what is real vs generated, and the license |
+| `## Non-Functional Requirements` | always (may be `n/a`) | latency / cost / security / reliability budgets |
+| `## Out of Scope` | always (may be `n/a`) | "not doing X" is as important as "doing Y" |
+| `## Rollback & Versioning` | always (may be `n/a`) | prompt / model / data versions and how to undo |
+
 ## Review checklist
 
 Reviewer-owned. Mark an item only when verified.

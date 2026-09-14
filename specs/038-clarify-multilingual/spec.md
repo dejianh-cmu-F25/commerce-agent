@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Specify clarify-vs-refuse behavior with a gold scenario, and extend
 the input guard to non-English injection patterns with labeled cases (RW-1).
 
@@ -88,6 +87,14 @@ benign cases are allowed.
 - **SC-002**: Multilingual injection is blocked; multilingual benign is allowed;
   the adversarial safe-handling rate stays **1.000**.
 - **SC-003**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

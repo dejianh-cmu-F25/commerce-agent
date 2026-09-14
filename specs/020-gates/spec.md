@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Extract the inline write guardrails into an `app/gates/` pipeline
 (provenance, return eligibility) with a shared context, so guardrails have one
 home and can be composed and tested — preserving behavior exactly.
@@ -86,6 +85,14 @@ The tools use the gates but produce exactly the same outputs as before.
 - **SC-003**: No tool output or status changes.
 - **SC-004**: The local gate (ruff, pyright, pytest, evals, spec self-review,
   frontend) passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

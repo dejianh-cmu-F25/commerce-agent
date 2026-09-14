@@ -19,7 +19,7 @@ Dependencies point inward only.
 | L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
 | L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, SSE, CLI, storefront, session, tracer, merchant, memory, embedding, vector) | L1 |
-| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Embedding, VectorStore, Memory, EventSink) | L0 |
+| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Embedding, VectorStore, Memory, EventSink, PostPurchase, Catalog[planned]) | L0 |
 | L0 Core | `app/core` (loop, session, events, settings, prompts) | none |
 
 `app/core` imports only `app/ports`. Adapters implement the ports and are
@@ -84,6 +84,8 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a model-facing capability | Register a `ToolSpec` + handler in `app/tools/registry.py` |
 | Add a long-tail procedure | Add `skills/<name>/SKILL.md`; `app/skills/loader.py` advertises it in the system prompt and `use_skill` loads the body on demand |
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
+| Add a commerce backend | Implement `PostPurchaseBackend` (`app/ports/post_purchase.py`); `post_purchase.provider` selects `shopify` (real, read-only) or `memory` |
+| Add a product catalog | Implement the `Catalog` port (planned, feature 045); the ESCI adapter ranks a real catalog against human relevance labels |
 | Add post-purchase orders | Extend `StorefrontBackend` (orders) and register tools in `app/tools/orders.py`; demo orders live in `app/adapters/order_seed.py` |
 | Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); `knowledge.provider` selects `memory` (keyless TF-IDF, default) or `dense` |

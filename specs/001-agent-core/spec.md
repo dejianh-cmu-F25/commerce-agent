@@ -124,6 +124,14 @@ boundary it will attach to.
 - **SC-003**: `derive_messages` is deterministic.
 - **SC-004**: The web app starts and streams a reply in mock mode without any API key.
 
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
 ## Assumptions
 
 - The catalog is a small in-memory stand-in; feature 002 replaces it.
