@@ -14,14 +14,14 @@ def _chunks() -> list[Chunk]:
             source="amazon-returns.md",
         ),
         Chunk(
-            id="shipping.md#0",
+            id="amazon-shipping.md#0",
             text="Standard shipping takes 3 to 5 business days and costs 6 dollars.",
-            source="shipping.md",
+            source="amazon-shipping.md",
         ),
         Chunk(
-            id="warranty.md#0",
-            text="All outdoor gear carries a one-year manufacturer warranty against defects.",
-            source="warranty.md",
+            id="amazon-returns.md#1",
+            text="A restocking fee may apply to opened software and video games.",
+            source="amazon-returns.md",
         ),
     ]
 

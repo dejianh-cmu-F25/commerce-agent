@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.returns.clauses import load_policy
+from app.returns.amazon_policy import load_amazon_policy
 
 CASES = Path("evals/post_purchase_cases.jsonl")
-POLICY = load_policy("config/policies/policies.yaml")
+POLICY = load_amazon_policy("config/policies/amazon.yaml")
 DECISIONS = {"eligible", "ineligible", "escalate", "answer_status", "clarify"}
 REQUIRED = {"case_id", "intent", "message", "expected_decision", "status"}
 
@@ -28,7 +28,7 @@ def test_cases_are_well_formed() -> None:
 
 
 def test_policy_refs_resolve_to_real_clauses() -> None:
-    known = {clause.id for clause in POLICY.clauses} | {"warranty"}
+    known = {clause.id for clause in POLICY.clauses()} | {"warranty"}
     for case in _cases():
         for ref in case.get("expected_policy_refs", []):
             assert ref in known, f"{case['case_id']} cites unknown clause {ref!r}"

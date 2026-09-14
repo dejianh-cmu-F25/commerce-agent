@@ -177,6 +177,11 @@ class KnowledgeSettings(BaseModel):
     min_chars: int = 40
 
 
+class ReviewsSettings(BaseModel):
+    # Local real review store (feature 046, from Amazon Reviews'23).
+    path: str = "./data/reviews/reviews.sqlite"
+
+
 class Settings(BaseModel):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     agent: AgentSettings = Field(default_factory=AgentSettings)
@@ -193,6 +198,7 @@ class Settings(BaseModel):
     storefront: StorefrontSettings = Field(default_factory=StorefrontSettings)
     session: SessionSettings = Field(default_factory=SessionSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
+    reviews: ReviewsSettings = Field(default_factory=ReviewsSettings)
     returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
     skills: SkillsSettings = Field(default_factory=SkillsSettings)
     data: DataSettings = Field(default_factory=DataSettings)
@@ -244,6 +250,7 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
     "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
     "KNOWLEDGE_PATH": ("knowledge", "path", str),
+    "REVIEWS_PATH": ("reviews", "path", str),
     "MEMORY_PROVIDER": ("memory", "provider", str),
     "MEMORY_SQLITE_PATH": ("memory", "sqlite_path", str),
     "SKILLS_ENABLED": ("skills", "enabled", _to_bool),

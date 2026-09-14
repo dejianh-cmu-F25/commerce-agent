@@ -22,9 +22,11 @@ def _registry() -> ToolRegistry:
 
 
 async def test_search_knowledge_returns_sources():
-    result = await _registry().execute("search_knowledge", {"query": "warranty"}, Session(id="s1"))
+    result = await _registry().execute(
+        "search_knowledge", {"query": "return window"}, Session(id="s1")
+    )
     assert result.status == "ok"
-    assert "warranty.md" in result.content
+    assert "amazon-returns.md" in result.content
 
 
 async def test_search_knowledge_no_match():

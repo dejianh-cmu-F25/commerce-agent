@@ -20,7 +20,9 @@ def test_add_is_idempotent_and_retrieve_ranks_by_source():
             text="Returns: a 30 day return policy and the refund process",
             source="amazon-returns.md",
         ),
-        Chunk(id="shipping", text="Shipping: delivery times and carriers", source="shipping.md"),
+        Chunk(
+            id="shipping", text="Shipping: delivery times and carriers", source="amazon-shipping.md"
+        ),
     ]
     retriever.add(chunks)
     retriever.add(chunks)  # idempotent

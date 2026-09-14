@@ -31,6 +31,7 @@ from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.post_purchase_memory import InMemoryPostPurchase
 from app.adapters.retriever_dense import DenseRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
+from app.adapters.reviews_sqlite import SqliteReviewStore
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
 from app.adapters.shopify_catalog import ShopifyCatalog
@@ -67,6 +68,7 @@ from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
 from app.tools.post_purchase import register_post_purchase_tools
 from app.tools.registry import ToolRegistry
+from app.tools.reviews import register_review_tools
 from app.tools.skills import register_skill_tools
 from evals.runner import run_scenarios
 from evals.scenarios import SCENARIOS
@@ -142,6 +144,11 @@ def build_catalog(settings: Settings):
             settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
         )
     return build_storefront(settings)
+
+
+def build_reviews(settings: Settings) -> SqliteReviewStore:
+    """Resolve the local real-review store (PB-1). Empty store = no reviews."""
+    return SqliteReviewStore(settings.reviews.path)
 
 
 def build_session_store(settings: Settings) -> SessionRepository:
@@ -247,7 +254,11 @@ def build_skill_library(settings: Settings) -> SkillLibrary:
 
 
 def _seed_post_purchase_orders() -> dict[str, OrderView]:
-    """A keyless demo order so the post-purchase path runs without a token (P8)."""
+    """Keyless test fixture: one order so the post-purchase path runs without a token (P8).
+
+    **This is a fixture, not live data.** With Shopify configured, ``build_post_purchase``
+    uses the real store instead.
+    """
     return {
         "gid://shopify/Order/1001": OrderView(
             id="gid://shopify/Order/1001",
@@ -306,6 +317,7 @@ def build_agent(
     register_cart_tools(registry, catalog)
     register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
+    register_review_tools(registry, build_reviews(settings))
     register_post_purchase_tools(
         registry, build_post_purchase(settings), policy_gate=PolicyGate(load_amazon_policy())
     )

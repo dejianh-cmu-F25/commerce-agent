@@ -29,19 +29,18 @@ from app.core.session import AssistantMessage, Session, ToolResultEvent
 from app.core.settings import AgentSettings, load_settings
 from app.evaluation.invariants import RunOutcome, evaluate
 from app.ports.post_purchase import LineItem, OrderView, ReturnableItem
-from app.returns.clauses import load_policy
-from app.returns.eligibility import ReturnRequestFacts, decide_return
+from app.returns.amazon_policy import ReturnFacts, decide_return, load_amazon_policy
 from app.tools.post_purchase import register_post_purchase_tools
 from app.tools.registry import ToolRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 DECISION_CASES = ROOT / "evals" / "post_purchase_cases.jsonl"
 INVARIANT_CASES = ROOT / "evals" / "invariant_cases.jsonl"
-POLICY_PATH = "config/policies/policies.yaml"
+POLICY_PATH = "config/policies/amazon.yaml"
 RESULTS_PATH = ROOT / "evals" / "results-post-purchase.json"
 EVAL_NOW = datetime(2026, 3, 1, tzinfo=UTC)
 PROMPT = load_prompt("post_purchase")
-POLICY = load_policy(POLICY_PATH)
+POLICY = load_amazon_policy(POLICY_PATH)
 
 
 @dataclass
@@ -185,12 +184,12 @@ def _verifier_agrees(case: dict) -> bool | None:
     if case["expected_decision"] not in {"eligible", "ineligible", "escalate"}:
         return None
     days = case.get("delivered_days_ago")
-    facts = ReturnRequestFacts(
+    facts = ReturnFacts(
         order_id="x",
         fulfillment_line_item_id="y",
         reason=str(case.get("reason") or "unwanted"),
         delivered_at=(EVAL_NOW - timedelta(days=days)).isoformat() if days is not None else None,
-        item_tags=tuple(case.get("item_tags", [])),
+        tags=tuple(case.get("item_tags", [])),
     )
     return decide_return(facts, POLICY, now=EVAL_NOW).decision == case["expected_decision"]
 

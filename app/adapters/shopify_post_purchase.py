@@ -21,6 +21,8 @@ query GetOrder($id: ID!) {
     displayFinancialStatus
     displayFulfillmentStatus
     totalPriceSet { shopMoney { amount currencyCode } }
+    fulfillments(first: 1) { deliveredAt }
+    customAttributes { key value }
     lineItems(first: 50) {
       nodes {
         id
@@ -44,6 +46,9 @@ query GetOrderByName($q: String!) {
       displayFinancialStatus
       displayFulfillmentStatus
       totalPriceSet { shopMoney { amount currencyCode } }
+      fulfillments(first: 1) { deliveredAt }
+      customAttributes { key value }
+    customAttributes { key value }
       lineItems(first: 50) {
         nodes {
           id
@@ -84,6 +89,18 @@ def _money(bag: dict | None) -> tuple[float, str]:
     return float(money.get("amount", 0.0)), str(money.get("currencyCode", ""))
 
 
+def _delivered_at(node: dict[str, Any]) -> str | None:
+    """The delivery date: the fulfillment's ``deliveredAt``, else a generated
+    ``delivered_at`` order attribute (used when the store has no carrier data)."""
+    fulfillment = (((node.get("fulfillments") or {}).get("nodes") or [{}])[0]) or {}
+    if fulfillment.get("deliveredAt"):
+        return str(fulfillment["deliveredAt"])
+    for attribute in node.get("customAttributes") or []:
+        if attribute.get("key") == "delivered_at" and attribute.get("value"):
+            return str(attribute["value"])
+    return None
+
+
 def _to_order(node: dict[str, Any]) -> OrderView:
     total, currency = _money(node.get("totalPriceSet"))
     nodes = (node.get("lineItems") or {}).get("nodes") or []
@@ -95,6 +112,7 @@ def _to_order(node: dict[str, Any]) -> OrderView:
         fulfillment_status=str(node.get("displayFulfillmentStatus", "")),
         total=total,
         currency=currency,
+        delivered_at=_delivered_at(node),
         line_items=[
             LineItem(
                 id=str(item.get("id", "")),

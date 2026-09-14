@@ -1215,6 +1215,22 @@
       "rollback": "git revert the commit; discovery returns to the local storefront",
       "verdict": "accepted",
       "evidence": "scripts/demo.py, tests/unit/test_shopify_catalog.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#78 046-closed-loop (all-real data + reviews)",
+      "area": "data",
+      "class": "measurable",
+      "what": "Removed the fabricated Shopify demo catalog (17 products + order #1001). Imported 28 categories x 100 = ~3,000 real products from Amazon Reviews'23 (idempotent, category tags, ratings). Imported 6,548 real reviews into a local SQLite store (app/ports/reviews.py, app/adapters/reviews_sqlite.py) with a get_reviews tool wired into the agent. Deleted the fabricated shipping/warranty knowledge docs (shipping replaced by a sourced Amazon shipping doc) and the fabricated legacy policy (policies.yaml, clauses.py, eligibility.py); migrated the 045 eval + tests to the Amazon engine. Generated demo orders from real products (#1002-1004). Marked the seed catalog/orders as keyless test fixtures.",
+      "metric": "real products available to discovery",
+      "before": 5,
+      "after": 3000,
+      "note": "Discovery, cart, and post-purchase now run on real data. Orders are inherently private, so they are generated (from real products); the delivery date is a generated order attribute. 6,548 real reviews added.",
+      "guardrails": "keyless gate green; 249 tests pass; retrieval hit@3 = 1.000 on the real corpus; no write/charge tool added",
+      "blast_radius": "config/policies/**, config/knowledge/**, app/{ports,adapters,tools,returns,gates}/**, evals/**, tests/**, scripts/**, web/main.py, .gitignore, .env.example",
+      "rollback": "git revert the commit; the fabricated catalog is not restorable from the store (re-import with the scripts)",
+      "verdict": "accepted",
+      "evidence": "scripts/import_catalog.py, scripts/import_reviews.py, tests/unit/test_reviews.py"
     }
   ]
 }

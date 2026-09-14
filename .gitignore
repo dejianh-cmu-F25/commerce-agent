@@ -25,6 +25,7 @@ data/chroma/
 data/budget.json
 # Reviews'23 sample: research-licensed; not redistributed (regenerate with the importer).
 data/catalog/
+data/reviews/
 logs/
 *.sqlite
 *.sqlite3
