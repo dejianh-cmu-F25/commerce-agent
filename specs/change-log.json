@@ -943,6 +943,22 @@
       "rollback": "git revert the squash-merge commit; or unset SHOPIFY_SHOP",
       "verdict": "accepted",
       "evidence": "docs/shopify-setup.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#59 045-post-purchase-pivot (policy corpus)",
+      "area": "data",
+      "class": "no-behavior",
+      "what": "Replace the 3 toy knowledge docs with a structured, versioned policy corpus (returns v2 active + v1 superseded, shipping, warranty)",
+      "metric": "retrieval hit-rate@3 (tfidf)",
+      "before": 0.963,
+      "after": 0.963,
+      "note": "Same hit-rate with a harder distractor (returns-v1); MRR 0.926 -> 0.907",
+      "guardrails": "retrieval gate threshold 0.7 unchanged; all configs pass",
+      "blast_radius": "config/knowledge/*.md (content); retrieval benchmark numbers",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "config/knowledge/returns.md"
     }
   ]
 }
