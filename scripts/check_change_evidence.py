@@ -47,11 +47,14 @@ def _current_change() -> str:
 
 
 def _find_entry(entries: list[dict], branch: str) -> dict | None:
-    for entry in entries:
+    # The current change is the *latest* entry for the branch: a branch may carry
+    # several entries (a feature is built in steps), and the one under audit now
+    # is the newest.
+    for entry in reversed(entries):
         if branch and branch in entry.get("change", ""):
             return entry
     prefix = branch.split("-")[0] if branch else ""
-    for entry in entries:
+    for entry in reversed(entries):
         if prefix and prefix in entry.get("change", ""):
             return entry
     return None
