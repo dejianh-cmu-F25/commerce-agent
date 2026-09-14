@@ -16,7 +16,7 @@ Queries: 27 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 0.963 | 0.963 | 0.907 | 0.0 |
 | `dense-hash` | 0.963 | 0.963 | 0.827 | 0.4 |
-| `dense-chroma` | 0.963 | 0.963 | 0.827 | 0.3 |
+| `dense-chroma` | 0.963 | 0.963 | 0.827 | 0.4 |
 
 hit-rate@3 by difficulty:
 
@@ -101,7 +101,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
 | `latency:turn_p95_us` | 18.1 | +2.6000 | 10000.0 | ≤ | `scale` | OK |
-| `cost:spent_cny` | 0.8529 | +0.1967 | 10.0 | ≤ | `budget` | OK |
+| `cost:spent_cny` | 1.027 | +0.3708 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
 
@@ -109,7 +109,7 @@ Named, root-caused regressions for past failures (`docs/regressions.md`); the ga
 
 | Regressions | Passed | Coverage |
 | ---: | ---: | ---: |
-| 5 | 5 | 1.000 |
+| 6 | 6 | 1.000 |
 
 ## Dependency fallbacks (keyless)
 
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 23 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.6/17.8 | 14.4/19.5 | 52167 | 0 |
-| 4 | 12.0/17.0 | 14.6/16.7 | 56758 | 0 |
-| 16 | 12.2/16.8 | 14.3/18.1 | 55032 | 0 |
-| 64 | 12.5/17.2 | 14.5/14.9 | 57166 | 0 |
+| 1 | 12.8/17.8 | 14.5/17.7 | 52170 | 0 |
+| 4 | 12.0/17.1 | 14.4/16.4 | 57352 | 0 |
+| 16 | 12.0/16.7 | 14.5/18.1 | 56809 | 0 |
+| 64 | 11.9/16.8 | 14.8/18.1 | 56009 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5182.4/8104.3 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5174.4/7556.8 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12053.2/15313.7 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12031.7/14920.4 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -253,3 +253,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-14 | #63 045-post-purchase-pivot (live shopify) | integration | `no-behavior` | Opt-in live Shopify integration test (skipped without a token) exercising real auth, order read, and returnableFulfillments | — | Verified against post-purchase-agent.myshopify.com: order #1001 PAID/FULFILLED/$230, 1 returnable item; GraphQL cost captured | keyless default (skips without env); read-only; no writes | tests/integration/test_shopify_live.py | git revert the squash-merge commit | accepted | `docs/shopify-setup.md` |
 | 2026-09-14 | #64 045-post-purchase-pivot (invariants) | evaluation | `no-behavior` | Behavioral invariants as a first-class layer: docs/invariants.md (8 invariants), evals/invariant_cases.jsonl (17 cases), app/evaluation/invariants.py (pure checker) | — | Adds the 'must-always/must-never' layer beside per-case decision accuracy; INV-1 is strict for user input | unknown assertion fails loud; 9 keyless tests | docs/invariants.md, evals/invariant_cases.jsonl, app/evaluation/invariants.py | git revert the squash-merge commit | accepted | `docs/invariants.md` |
 | 2026-09-14 | #65 045-post-purchase-pivot (eval harness) | evaluation | `measurable` | Post-purchase agent (prompt + read/propose tools) and a two-layer evaluation harness (decision + invariant) against the real model | invariant_pass_rate (labeled behavioral set) | 0.0 → 0.941 | no-fail 1.000 (no input crashed the agent); never approved a refund (INV-6) | config/prompts/post_purchase.md, app/tools/post_purchase.py, evals/post_purchase_eval.py | git revert the squash-merge commit | accepted | `reports/post-purchase-eval.md` |
+| 2026-09-14 | #66 045-post-purchase-pivot (eval fixes) | safety | `no-behavior` | Broaden the input guard with policy-override phrasing (+ regression + tests); add a tenancy-escalation rule to the post-purchase prompt | — | Run 2: escalate-foreign-order fixed; ambiguous-01 regressed; decision 13/16 unchanged. Design questions recorded in reports/post-purchase-eval.md | adversarial safe-handling 1.000 (23/23); regression coverage 6/6 | app/safety/input_guard.py, config/prompts/post_purchase.md, evals/regressions.json | git revert the squash-merge commit | accepted | `reports/post-purchase-eval.md` |

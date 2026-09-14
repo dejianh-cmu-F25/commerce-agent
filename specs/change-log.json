@@ -1055,6 +1055,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "reports/post-purchase-eval.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#66 045-post-purchase-pivot (eval fixes)",
+      "area": "safety",
+      "class": "measurable",
+      "what": "Broaden the input guard with policy-override phrasing (+ regression + tests); add a tenancy-escalation rule to the post-purchase prompt",
+      "metric": "decision accuracy (16 labeled cases)",
+      "before": 0.812,
+      "after": 0.812,
+      "note": "Net unchanged: escalate-foreign-order fixed by the tenancy rule, ambiguous-01 regressed; adversarial safe-handling 1.000 (23/23)",
+      "guardrails": "adversarial safe-handling 1.000 (23/23); regression coverage 6/6",
+      "blast_radius": "app/safety/input_guard.py, config/prompts/post_purchase.md, evals/regressions.json",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "reports/post-purchase-eval.md"
     }
   ]
 }
