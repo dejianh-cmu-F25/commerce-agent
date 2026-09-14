@@ -1135,6 +1135,18 @@
       "rollback": "git revert the commit; the authored corpus returns",
       "verdict": "accepted",
       "evidence": "evals/report.md (retrieval), evals/bench.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#72 046-closed-loop P1 (MCP tool surface)",
+      "area": "mcp",
+      "class": "no-behavior",
+      "what": "Added the official MCP SDK (mcp>=2.2) and three MCP servers exposing the journey tools: storefront (search_products, cart tools, search_knowledge), customer-accounts (get_order_status, list_returnable_items, propose_return_decision), checkout (cart/checkout, simulated). Includes a generic ToolRegistry->MCP wrapper whose tool schema is derived from the tool's JSON schema.",
+      "note": "No runtime behavior change: the servers expose the existing tools over MCP; they are not yet the agent's transport (the web app still calls tools in-process).",
+      "blast_radius": "pyproject.toml, uv.lock, app/mcp/**, tests/unit/test_mcp_server.py",
+      "rollback": "git revert the commit; uv sync removes the dependency",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_mcp_server.py"
     }
   ]
 }

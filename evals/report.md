@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.0 | +1.5000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 15.5 | +0.0000 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 1.027 | +0.3708 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 32 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 15.5/20.9 | 15.6/20.0 | 48386 | 0 |
-| 4 | 14.7/19.7 | 15.2/18.3 | 51174 | 0 |
-| 16 | 14.0/20.1 | 14.7/17.0 | 56350 | 0 |
-| 64 | 14.8/19.7 | 15.1/18.6 | 49261 | 0 |
+| 1 | 15.0/20.5 | 14.7/19.0 | 51021 | 0 |
+| 4 | 14.5/19.9 | 15.1/19.3 | 51364 | 0 |
+| 16 | 14.8/20.7 | 14.7/15.5 | 56811 | 0 |
+| 64 | 14.3/18.5 | 14.7/17.4 | 55582 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4163.4/6054.4 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4187.8/6056.7 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12306.6/14621.3 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12059.5/14406.0 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.4 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -259,3 +259,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-15 | #69 046-closed-loop (spec + plan + tasks) | specs | `docs` | Added the closed-loop feature spec: discovery, cart, ACP-sim checkout, WISMO, returns/exchanges, policy Q&A, accounts; MCP tool surface; policy single source of truth; runtime validation; HITL; data provenance; evaluation (keyless + sampled model + Pass^k k=4 + tau-bench + AgentDojo + error attribution). Superseded 014-post-purchase and 045-shopping-agent. Added plan.md + tasks.md. | — | No runtime change. spec_review PASS (22 auto, 6 manual, 0 failed); spec structure/coverage tests pass. | — | specs/046-closed-loop/**, specs/014-post-purchase/spec.md, specs/045-shopping-agent/spec.md, specs/change-log.json | git revert the commit | accepted | `specs/046-closed-loop/{spec,plan,tasks,review}.md` |
 | 2026-09-15 | #70 046-closed-loop P0 (policy SoT + engine + gate) | policy | `no-behavior` | Added the Amazon return-policy single source of truth (config/policies/amazon.yaml: versioned 2020-06 / 2026-09, each clause with id/category/paraphrase/rules/source), a loader + deterministic engine (app/returns/amazon_policy.py: category windows, non-returnable, exceptions, restocking fee, version selection), a renderer (app/returns/render.py -> config/knowledge/policies/*.md), a runtime PolicyGate (app/gates/policy.py), and a dual-run agreement check (evals/engine_agreement.py) wired into scripts/ci.sh. | — | No runtime behavior change: the new engine/gate are not yet wired into web/main.py (migration step 2). Shared-surface agreement with the legacy engine = 1.000; 10 new unit tests pass. | — | config/policies/amazon.yaml, config/knowledge/policies/*, app/returns/{amazon_policy,render}.py, app/gates/{base,policy}.py, evals/engine_agreement.py, scripts/ci.sh, tests/unit/test_amazon_policy.py | git revert the commit; the legacy gate (app/returns/policy.py) is untouched | accepted | `evals/engine_agreement.py, tests/unit/test_amazon_policy.py` |
 | 2026-09-15 | #71 046-closed-loop (policy corpus replacement) | data | `measurable` | Replaced the authored returns corpus (config/knowledge/returns.md, returns-v1.md) with the rendered Amazon policy (config/knowledge/amazon-returns.md), derived from the SoT (config/policies/amazon.yaml). Updated the renderer to emit only the active version, and updated the retrieval set, tests, and references. | retrieval hit-rate@3 (tfidf) | 0.963 → 1.0 | dense-hash/dense-chroma hit@3 unchanged (0.963); gate threshold 0.7 unchanged; all keyless evals and 19 affected tests pass | config/knowledge/*, app/returns/render.py, evals/retrieval_set.py, tests/**, app/core/settings.py, config/settings.yaml, docs/architecture.md | git revert the commit; the authored corpus returns | accepted | `evals/report.md (retrieval), evals/bench.py` |
+| 2026-09-15 | #72 046-closed-loop P1 (MCP tool surface) | mcp | `no-behavior` | Added the official MCP SDK (mcp>=2.2) and three MCP servers exposing the journey tools: storefront (search_products, cart tools, search_knowledge), customer-accounts (get_order_status, list_returnable_items, propose_return_decision), checkout (cart/checkout, simulated). Includes a generic ToolRegistry->MCP wrapper whose tool schema is derived from the tool's JSON schema. | — | No runtime behavior change: the servers expose the existing tools over MCP; they are not yet the agent's transport (the web app still calls tools in-process). | — | pyproject.toml, uv.lock, app/mcp/**, tests/unit/test_mcp_server.py | git revert the commit; uv sync removes the dependency | accepted | `tests/unit/test_mcp_server.py` |
