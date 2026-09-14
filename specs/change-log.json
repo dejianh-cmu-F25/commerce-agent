@@ -1007,6 +1007,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/shopify-setup.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#63 045-post-purchase-pivot (live shopify)",
+      "area": "integration",
+      "class": "no-behavior",
+      "what": "Opt-in live Shopify integration test (skipped without a token) exercising real auth, order read, and returnableFulfillments",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Verified against post-purchase-agent.myshopify.com: order #1001 PAID/FULFILLED/$230, 1 returnable item; GraphQL cost captured",
+      "guardrails": "keyless default (skips without env); read-only; no writes",
+      "blast_radius": "tests/integration/test_shopify_live.py",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/shopify-setup.md"
     }
   ]
 }
