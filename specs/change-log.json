@@ -991,6 +991,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/design.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#62 045-post-purchase-pivot (shopify setup doc)",
+      "area": "docs",
+      "class": "docs",
+      "what": "Update docs/shopify-setup.md to the current Dev Dashboard / legacy custom app flow, with verification, test-order creation, and troubleshooting",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Verified: real Admin API auth works against post-purchase-agent.myshopify.com",
+      "guardrails": "token kept in .env (gitignored), never committed",
+      "blast_radius": "docs/shopify-setup.md only",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/shopify-setup.md"
     }
   ]
 }
