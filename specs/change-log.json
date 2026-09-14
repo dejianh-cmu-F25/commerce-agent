@@ -959,6 +959,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "config/knowledge/returns.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#60 045-post-purchase-pivot (design)",
+      "area": "docs",
+      "class": "docs",
+      "what": "docs/design.md: the problem, the key decisions, the rejected alternatives, the eval design, and the expansion ladder",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Front-door design doc; makes the project legible and states what is real vs demo",
+      "guardrails": null,
+      "blast_radius": "docs/design.md only",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/design.md"
     }
   ]
 }
