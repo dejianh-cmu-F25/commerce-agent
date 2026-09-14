@@ -125,6 +125,13 @@ skills:
 data:
   quality: repair           # repair | strict
 
+# Shopify: the real post-purchase system of record (feature 045). Empty shop /
+# token falls back to the keyless fixture backend. See docs/shopify-setup.md.
+shopify:
+  shop: ""                  # e.g. my-store.myshopify.com
+  access_token: ""          # Admin API access token (start with read_orders)
+  api_version: "2025-07"
+
 # Input guard (feature 028, RW-1). A deterministic guard classifies the message
 # before the model: injection attempts and oversized input are refused with a
 # safe message, calling no tool. On by default.

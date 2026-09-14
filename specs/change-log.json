@@ -927,6 +927,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/ecommerce-primer.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#58 045-post-purchase-pivot (shopify read)",
+      "area": "integration",
+      "class": "no-behavior",
+      "what": "Shopify Admin GraphQL client + read-only post-purchase adapter (orders, returnable fulfillments) with a keyless in-memory backend",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Adds a real external integration seam; 9 keyless tests with a MockTransport",
+      "guardrails": "empty credentials fail loud; GraphQL/HTTP errors surfaced",
+      "blast_radius": "app/ports/post_purchase.py, app/adapters/shopify_*.py, app/adapters/post_purchase_memory.py, settings",
+      "rollback": "git revert the squash-merge commit; or unset SHOPIFY_SHOP",
+      "verdict": "accepted",
+      "evidence": "docs/shopify-setup.md"
     }
   ]
 }

@@ -128,6 +128,13 @@ class StorefrontSettings(BaseModel):
     seed_orders: bool = True
 
 
+class ShopifySettings(BaseModel):
+    # Real post-purchase system of record (feature 045). Empty = keyless fixture.
+    shop: str = ""  # e.g. my-store.myshopify.com
+    access_token: str = ""
+    api_version: str = "2025-07"
+
+
 class SafetySettings(BaseModel):
     # Deterministic input guard before the model (feature 028, RW-1).
     input_guard: bool = True
@@ -189,6 +196,7 @@ class Settings(BaseModel):
     returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
     skills: SkillsSettings = Field(default_factory=SkillsSettings)
     data: DataSettings = Field(default_factory=DataSettings)
+    shopify: ShopifySettings = Field(default_factory=ShopifySettings)
     safety: SafetySettings = Field(default_factory=SafetySettings)
     resilience: ResilienceSettings = Field(default_factory=ResilienceSettings)
 
@@ -228,6 +236,9 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "SAFETY_INPUT_GUARD": ("safety", "input_guard", _to_bool),
     "SAFETY_MAX_INPUT_CHARS": ("safety", "max_input_chars", int),
     "RESILIENCE_FALLBACK_ENABLED": ("resilience", "fallback_enabled", _to_bool),
+    "SHOPIFY_SHOP": ("shopify", "shop", str),
+    "SHOPIFY_ACCESS_TOKEN": ("shopify", "access_token", str),
+    "SHOPIFY_API_VERSION": ("shopify", "api_version", str),
     "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
