@@ -1095,6 +1095,18 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "specs/045-shopping-agent/spec.md, specs/029-scale-slo/spec.md, .specify/memory/constitution.md"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#69 046-closed-loop (spec + plan + tasks)",
+      "area": "specs",
+      "class": "docs",
+      "what": "Added the closed-loop feature spec: discovery, cart, ACP-sim checkout, WISMO, returns/exchanges, policy Q&A, accounts; MCP tool surface; policy single source of truth; runtime validation; HITL; data provenance; evaluation (keyless + sampled model + Pass^k k=4 + tau-bench + AgentDojo + error attribution). Superseded 014-post-purchase and 045-shopping-agent. Added plan.md + tasks.md.",
+      "note": "No runtime change. spec_review PASS (22 auto, 6 manual, 0 failed); spec structure/coverage tests pass.",
+      "blast_radius": "specs/046-closed-loop/**, specs/014-post-purchase/spec.md, specs/045-shopping-agent/spec.md, specs/change-log.json",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "specs/046-closed-loop/{spec,plan,tasks,review}.md"
     }
   ]
 }

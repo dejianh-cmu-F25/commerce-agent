@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-14
 
-**Status**: Implemented (post-purchase) / Planned (discovery)
+**Status**: Superseded by `046-closed-loop` (post-purchase built under 045; discovery + closed loop in 046)
 
 **Input**: A shopping agent that covers the customer journey — **discovery**
 (find products) and **post-purchase** (order status, returns/refunds) — grounded

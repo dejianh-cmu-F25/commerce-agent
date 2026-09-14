@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Implemented
+**Status**: Superseded by `046-closed-loop` (still the production path during migration)
 **Input**: Post-purchase care for the shopping agent: grounded order status and a
 policy-gated, render-only return request. Orders live in the storefront system of
 record; the agent reads them through tools and never invents an order. A return
