@@ -1023,6 +1023,22 @@
       "rollback": "git revert the squash-merge commit",
       "verdict": "accepted",
       "evidence": "docs/shopify-setup.md"
+    },
+    {
+      "date": "2026-09-14",
+      "change": "#64 045-post-purchase-pivot (invariants)",
+      "area": "evaluation",
+      "class": "no-behavior",
+      "what": "Behavioral invariants as a first-class layer: docs/invariants.md (8 invariants), evals/invariant_cases.jsonl (17 cases), app/evaluation/invariants.py (pure checker)",
+      "metric": null,
+      "before": null,
+      "after": null,
+      "note": "Adds the 'must-always/must-never' layer beside per-case decision accuracy; INV-1 is strict for user input",
+      "guardrails": "unknown assertion fails loud; 9 keyless tests",
+      "blast_radius": "docs/invariants.md, evals/invariant_cases.jsonl, app/evaluation/invariants.py",
+      "rollback": "git revert the squash-merge commit",
+      "verdict": "accepted",
+      "evidence": "docs/invariants.md"
     }
   ]
 }
