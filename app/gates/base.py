@@ -12,6 +12,7 @@ from typing import Protocol
 
 from app.core.session import Session
 from app.core.types import Order
+from app.returns.amazon_policy import ReturnFacts
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,7 @@ class GateContext:
     product_id: str = ""
     window_days: int = 30
     now: datetime | None = None
+    facts: ReturnFacts | None = None
 
 
 class Gate(Protocol):

@@ -73,6 +73,9 @@ uv run python evals/scale.py
 step "Python: guardrails (keyless)"
 uv run python evals/guardrails.py
 
+step "Python: policy engine dual-run agreement (keyless)"
+uv run python evals/engine_agreement.py
+
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
 

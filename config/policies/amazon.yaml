@@ -1,0 +1,179 @@
+# Amazon return policy — the single source of truth (feature 046).
+#
+# Everything else derives from this file: the prose corpus (rendered), the model's
+# policy tool (search_policies), and the deterministic engine (decide_return).
+# Rules are paraphrased from the public policy pages (see `sources`) with citations;
+# no copyrighted text is copied verbatim.
+#
+# Versioning is real: `2020-06` is the archived policy, `2026-09` is current. The
+# active version is selected by `active_version`; a superseded clause must never be
+# applied to a decision.
+
+retailer: amazon
+active_version: "2026-09"
+
+sources:
+  - id: amazon-returns-2026
+    url: "https://www.amazon.com/gp/help/customer/display.html?nodeId=GKM69DUUYKQWKWX7"
+    retrieved_at: "2026-09-14"
+    title: "Amazon Return Policy (current)"
+  - id: amazon-returns-2020
+    url: "https://web.archive.org/web/20200624054055/https://www.amazon.com/gp/help/customer/display.html?nodeId=GKM69DUUYKQWKWX7"
+    retrieved_at: "2020-06-24"
+    title: "Amazon Return Policy (archived 2020)"
+
+versions:
+  "2026-09":
+    effective_from: "2026-09-14"
+    source: amazon-returns-2026
+    clauses:
+      - id: returns#window-default
+        category: all
+        paraphrase: "Most items can be returned within 30 days of delivery."
+        rules:
+          window_days: 30
+
+      - id: returns#window-category
+        category: by-category
+        paraphrase: "Some categories have shorter or longer windows (7 / 15 / 90 / 180 / 365 days)."
+        rules:
+          window_days_by_category:
+            digital_book: 7
+            digital_textbook: 7
+            digital_music: 7
+            apple_brand: 15
+            haul_over_3: 15
+            renewed_acceptable: 90
+            renewed_good: 90
+            renewed_excellent: 90
+            baby_nonperishable: 90
+            birthday_gift: 90
+            custom_gift_list: 90
+            mattress: 90
+            wedding_registry_gift: 180
+            renewed_premium: 365
+            baby_registry_gift: 365
+
+      - id: returns#non-returnable
+        category: all
+        paraphrase: "Perishables, health/safety-risk, shipping-restricted, customized, redeemable, pharmacy, pet medication, some digital, automobiles, and Final Sale items cannot be returned."
+        rules:
+          non_returnable_categories:
+            - perishable
+            - health_safety
+            - shipping_restricted
+            - customized
+            - redeemable
+            - pharmacy
+            - pet_medication
+            - digital_nonreturnable
+            - automobile
+            - final_sale
+            - trading_card_game
+            - haul_under_3
+
+      - id: returns#condition
+        category: all
+        paraphrase: "Items must be returned in original or unused condition with tags, seals, and original packaging."
+        rules:
+          condition_required: original_unused
+
+      - id: returns#fee-late
+        category: fees
+        paraphrase: "A late fee may apply if the item is not dropped off by the return-by date: 20% of the item price for the first 30 days after, then 100%."
+        rules:
+          late_fee_pct_first_30d: 20
+          late_fee_pct_after_30d: 100
+
+      - id: returns#fee-damage
+        category: fees
+        paraphrase: "A damage fee of up to 50% of the item price may apply if the item is damaged, missing parts, or not in original condition (100% for Luxury items)."
+        rules:
+          damage_fee_pct_max: 50
+          damage_fee_pct_luxury: 100
+
+      - id: returns#fee-restocking
+        category: fees
+        paraphrase: "A 100% restocking fee applies to opened, activated, or incomplete software, video games, and collectible cards."
+        rules:
+          restocking_fee_pct: 100
+          restocking_categories:
+            - opened_software
+            - video_games
+            - collectible_cards
+
+      - id: returns#exception
+        category: all
+        paraphrase: "A non-returnable or Final Sale item that arrives damaged, defective, or materially different is handled by Customer Service."
+        rules:
+          exception_reasons:
+            - damaged
+            - defective
+            - wrong_item
+            - missing
+
+      - id: returns#heavy-bulky
+        category: shipping
+        paraphrase: "Heavy/bulky items (>= 50 lb, longest side > 59 in, or girth > 130 in) may incur a variable return shipping fee."
+        rules:
+          heavy_bulky:
+            weight_lb: 50
+            longest_side_in: 59
+            girth_in: 130
+
+      - id: returns#bundle
+        category: all
+        paraphrase: "All items in a Bundle with Savings must be returned together; partial refunds are not available."
+        rules:
+          bundle_return_all: true
+
+      - id: returns#discount
+        category: all
+        paraphrase: "Returning an item that was part of a discount qualification reduces the refund accordingly."
+        rules:
+          discount_refund_reduction: true
+
+      - id: returns#warranty
+        category: warranty
+        paraphrase: "Manufacturer warranties are handled by the manufacturer, not as a return; a manufacturer warranty may not cover used products."
+        rules:
+          warranty_is_separate: true
+
+  "2020-06":
+    effective_from: "2020-06-24"
+    source: amazon-returns-2020
+    clauses:
+      - id: returns#window-default
+        category: all
+        paraphrase: "Most items could be returned within 30 days of receipt of shipment."
+        rules:
+          window_days: 30
+
+      - id: returns#temporary-covid
+        category: all
+        paraphrase: "Items ordered 2020-03-01..2020-04-30 could be returned until 2020-05-31 (a temporary extension)."
+        rules:
+          temporary_extension:
+            ordered_from: "2020-03-01"
+            ordered_to: "2020-04-30"
+            return_by: "2020-05-31"
+
+      - id: returns#fee-misrepresentation
+        category: fees
+        paraphrase: "A 15% fee could apply to computers returned because they 'didn't start' if the condition was misrepresented."
+        rules:
+          misrepresentation_fee_pct: 15
+          applies_to_categories:
+            - computer
+            - laptop
+            - tablet
+
+      - id: returns#exception
+        category: all
+        paraphrase: "Damaged, defective, or incorrect items were handled by Customer Service."
+        rules:
+          exception_reasons:
+            - damaged
+            - defective
+            - wrong_item
+            - missing

@@ -1107,6 +1107,18 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "specs/046-closed-loop/{spec,plan,tasks,review}.md"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#70 046-closed-loop P0 (policy SoT + engine + gate)",
+      "area": "policy",
+      "class": "no-behavior",
+      "what": "Added the Amazon return-policy single source of truth (config/policies/amazon.yaml: versioned 2020-06 / 2026-09, each clause with id/category/paraphrase/rules/source), a loader + deterministic engine (app/returns/amazon_policy.py: category windows, non-returnable, exceptions, restocking fee, version selection), a renderer (app/returns/render.py -> config/knowledge/policies/*.md), a runtime PolicyGate (app/gates/policy.py), and a dual-run agreement check (evals/engine_agreement.py) wired into scripts/ci.sh.",
+      "note": "No runtime behavior change: the new engine/gate are not yet wired into web/main.py (migration step 2). Shared-surface agreement with the legacy engine = 1.000; 10 new unit tests pass.",
+      "blast_radius": "config/policies/amazon.yaml, config/knowledge/policies/*, app/returns/{amazon_policy,render}.py, app/gates/{base,policy}.py, evals/engine_agreement.py, scripts/ci.sh, tests/unit/test_amazon_policy.py",
+      "rollback": "git revert the commit; the legacy gate (app/returns/policy.py) is untouched",
+      "verdict": "accepted",
+      "evidence": "evals/engine_agreement.py, tests/unit/test_amazon_policy.py"
     }
   ]
 }
