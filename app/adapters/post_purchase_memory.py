@@ -23,3 +23,13 @@ class InMemoryPostPurchase:
 
     async def returnable_items(self, order_id: str) -> list[ReturnableItem]:
         return list(self._returnable.get(order_id, []))
+
+    async def list_orders(self, customer_ref: str, limit: int = 10) -> list[OrderView]:
+        if not customer_ref:
+            return []
+        owned = [
+            order
+            for order in self._orders.values()
+            if str(getattr(order, "customer_id", "") or "") == customer_ref
+        ]
+        return sorted(owned, key=lambda order: order.created_at, reverse=True)[:limit]

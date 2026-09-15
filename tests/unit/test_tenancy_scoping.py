@@ -20,6 +20,21 @@ ME = "gid://shopify/Customer/1"
 SOMEONE_ELSE = "gid://shopify/Customer/2"
 
 
+def _order(order_id: str, owner: str) -> OrderView:
+    return OrderView(
+        id=order_id,
+        name=f"#{order_id}",
+        created_at="2026-02-20T00:00:00+00:00",
+        financial_status="PAID",
+        fulfillment_status="FULFILLED",
+        total=10.0,
+        currency="USD",
+        delivered_at="2026-02-25T00:00:00+00:00",
+        line_items=[LineItem(id=f"fli-{order_id}", title="Item", quantity=1, sku="SKU")],
+        customer_id=owner,
+    )
+
+
 def _registry(owner: str) -> ToolRegistry:
     order = OrderView(
         id="1006",
@@ -85,4 +100,29 @@ def test_an_order_with_no_declared_owner_is_readable():
 def test_an_authenticated_customer_is_required_for_an_owned_order():
     """The safe direction: an owned order plus no principal is refused, not trusted."""
     payload, _ = _call(SOMEONE_ELSE, "get_order_status", {"order_id": "1006"}, customer="")
+    assert payload["accessible"] is False
+
+
+def test_listing_is_scoped_to_the_principal():
+    registry = ToolRegistry()
+    backend = InMemoryPostPurchase(
+        {
+            "mine": _order("mine", ME),
+            "theirs": _order("theirs", SOMEONE_ELSE),
+        }
+    )
+    register_post_purchase_tools(registry, backend, tenancy_gate=TenancyGate())
+    result = asyncio.run(registry.execute("list_orders", {}, Session(id="t", customer_id=ME)))
+    items = json.loads(result.content)["orders"]
+    assert [item["id"] for item in items] == ["mine"]
+    assert set(items[0]) == {"id", "status", "placed_at", "delivered_at", "total", "item_count"}
+
+
+def test_listing_without_a_principal_refuses_rather_than_listing_the_shop():
+    registry = ToolRegistry()
+    backend = InMemoryPostPurchase({"mine": _order("mine", ME)})
+    register_post_purchase_tools(registry, backend, tenancy_gate=TenancyGate())
+    result = asyncio.run(registry.execute("list_orders", {}, Session(id="t")))
+    payload = json.loads(result.content)
+    assert payload["orders"] == []
     assert payload["accessible"] is False

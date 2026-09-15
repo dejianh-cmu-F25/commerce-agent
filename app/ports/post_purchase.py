@@ -64,3 +64,12 @@ class PostPurchaseBackend(Protocol):
         An order that is unfulfilled or unknown returns ``[]``.
         """
         ...
+
+    async def list_orders(self, customer_ref: str, limit: int = 10) -> list[OrderView]:
+        """Return ``customer_ref``'s orders, newest first.
+
+        ``customer_ref`` is the principal the caller authenticated as (an email or a
+        platform customer id). An empty reference returns ``[]``: listing must never
+        become "show me the shop".
+        """
+        ...

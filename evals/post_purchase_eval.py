@@ -307,6 +307,22 @@ async def run(
             "total": len(decision_cases),
             "passed": decision_passed,
             "accuracy": round(decision_passed / len(decision_cases), 4) if decision_cases else 0.0,
+            # Two estimators, because the model is stochastic: the expected accuracy for
+            # a single request (mean of the per-case pass rates over the runs) and the
+            # floor (cases that passed every run).
+            "accuracy_over_runs": round(
+                sum(per_case_pass.values()) / (len(per_case_pass) * max(1, repeat)), 4
+            )
+            if per_case_pass
+            else 0.0,
+            "accuracy_all_runs_floor": round(decision_passed / len(decision_cases), 4)
+            if decision_cases
+            else 0.0,
+            "flaky": {
+                case_id: round(passed / max(1, repeat), 3)
+                for case_id, passed in per_case_pass.items()
+                if 0 < passed < max(1, repeat)
+            },
             "failures": [r.case_id for r in decision_results if not r.ok],
             "verifier_agrees_with_label": f"{verifier_agrees}/{len(verifier_checked)}",
         },

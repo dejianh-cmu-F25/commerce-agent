@@ -126,3 +126,26 @@ sanitize first (e.g., DOMPurify). Never assign model-derived strings to
 - Vercel, *AI Elements* — https://ai-sdk.dev/elements
 - assistant-ui docs — https://www.assistant-ui.com/docs
 - Vercel, *AI SDK UI* (useChat status model) — https://ai-sdk.dev/docs/ai-sdk-ui/overview
+
+## Tool components reach the transcript by name (feature 046)
+
+A tool result may declare a `component` plus a `payload`; the loop forwards both, and
+`frontend/src/lib/transport.ts` maps the declared name onto a typed data part that
+`App.tsx` renders. Two rules make that contract safe:
+
+1. **A name the mapper does not know is a card nobody sees.** This is not hypothetical:
+   the closed-loop tools emit `return_decision`, `returnable_items` and `reviews` while
+   the mapper only knew `return`, so the return-decision card - the customer's view of
+   both the proposal and the harness's verdict on it - never rendered, and nothing
+   failed. Every new component name needs a mapping, a render branch and a mapper test.
+2. **A component with no payload renders nothing.** `list_returnable_items` emitted its
+   component without a payload. The mapper now skips an empty list rather than drawing
+   an empty card, and `transport.test.ts` pins that.
+
+The components the transcript renders today: `products` (sources list), `cart`,
+`checkout`, `orders`, `order`, `return` (legacy), `return_decision`, `returnable_items`,
+`reviews`.
+
+Render-level tests would need a DOM environment (jsdom + testing-library); the project
+deliberately keeps its frontend tests to the mapper and the stream contract, which is
+where this failure mode actually lives.

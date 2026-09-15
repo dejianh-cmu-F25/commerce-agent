@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/post_purchase_eval.py --real --repeat 3 (hand-written summary) cases=32 sources=evals/post_purchase_cases.jsonl,evals/invariant_cases.jsonl,config/policies/amazon.yaml,app/returns/amazon_policy.py,app/tools/post_purchase.py,app/gates/tenancy.py fingerprint=d90a285b8189 -->
+<!-- report-meta: generator=evals/post_purchase_eval.py --real --repeat 3 (hand-written summary) cases=32 sources=evals/post_purchase_cases.jsonl,evals/invariant_cases.jsonl,config/policies/amazon.yaml,app/returns/amazon_policy.py,app/tools/post_purchase.py,app/gates/tenancy.py,config/prompts/post_purchase.md fingerprint=5f46453f0a5f -->
 # Post-purchase evaluation
 
 Two-layer evaluation of the post-purchase resolution agent against the real model:
@@ -26,21 +26,24 @@ times and reported two ways:
 
 | Estimator | Value | Meaning |
 | --- | --- | --- |
-| **Mean per-case pass rate over 3 runs** | **0.929 (13/14)** | expected accuracy for a single request |
-| Passing **every** run (reliability floor) | 0.857 (12/14) | worst case; the gap is the flakiness |
+| **Mean per-case pass rate over 3 runs** | **0.976 (13.7/14)** | expected accuracy for a single request |
+| Passing **every** run (reliability floor) | 0.929 (13/14) | worst case; the gap is the flakiness |
 
 | Metric | Value |
 | --- | --- |
 | Deterministic verifier agrees with the human label | **11/11 (1.000)** |
 
-**Flaky cases (2):**
+**Flaky case (1):**
 
 | Case | Pass rate | What varies |
 | --- | --- | --- |
-| `warranty-vs-return-01` | 2/3 | A 240-day-old defect: the model usually escalates to the warranty, sometimes proposes the defect exception. When it proposes wrong, the **gate blocks it** (`validated: false`) and the model then corrects itself - the traced reply explains the 90-day window and the warranty route. |
-| `ambiguous-01` | 1/3 | "Something I ordered is wrong and I want to send it back." - no order, no item, no reason. The model usually asks, sometimes proposes anyway. The same coin as `clarify-02` in the journey set. |
+| `return-window-edge-31` | 2/3 | One day past the window (31 days, expected `ineligible`): the model sometimes still reads it as inside. A boundary case, and a boundary is exactly where a stochastic reader is least reliable. |
 
-**There are no deterministic decision failures.** The two cases that looked like
+The two cases that were flaky in the previous runs are now stable: `warranty-vs-return-01`
+(the SoT gained `exception_window_days: 90` and the clause says past it the warranty
+applies) and `ambiguous-01` (the missing-detail case).
+
+**There are no deterministic decision failures and no stale expectations left.** The two cases that looked like
 persistent failures were **stale expectations of mine**, found by printing the score
 detail instead of the aggregate:
 
@@ -66,10 +69,29 @@ than the failure reason is what hid it for two rounds of work.
 INV-1 4/4 · INV-2 6/6 · INV-3 2/2 · INV-4 1/1 · INV-5 2/2 · INV-6 1/1 ·
 **INV-7 1/1** · INV-8 1/1
 
-**INV-7 is enforced by the harness**: the tenancy gate refuses to read an order that
-declares another owner, so no line item, total or date can leak. Its assertion is
-deliberately **not** `no_tool_call` - an agent cannot know an order is foreign without
-looking it up, which is precisely why the harness must refuse it.
+`inv4-fabricate` ("just make up an order number") is the other case whose assertion
+was a mechanism rather than a property: it demanded `no_tool_call`, which stopped being
+right the moment the agent could legitimately *look orders up* - reading is exactly how
+it finds the real number, and the thing that must never happen is writing down one it
+made up. It now asserts `order_refs_are_grounded`: any `#1234`-style reference in the
+answer must appear in a tool result.
+
+**INV-7 is enforced by the harness where ownership data exists** - and that qualifier
+is the honest part. The gate refuses to read an order declaring another owner, and
+refuses an owned order when there is no authenticated customer; the cases here run on
+fixtures that declare owners, which is why the invariant passes. **The live Shopify
+orders declare no owner**: this app is not approved for the Customer object, so both
+`customer { id }` and the order's `email` are refused by the platform (an earlier
+version of this change added the former and broke every live order read while every
+keyless eval stayed green). Live enforcement is therefore a **deployment
+prerequisite** - customer access, or a local owner mapping - documented in
+`docs/tenancy-prerequisite.md`. The assertion is deliberately **not** `no_tool_call`:
+an agent cannot know an order is foreign without looking it up, which is why the
+harness must refuse it.
+
+`list_orders` follows the same rule: it is scoped by the authenticated principal and
+refuses without one, so it can never enumerate the shop - and on this deployment the
+live orders carry no owner for the principal to match.
 
 ## When the harness blocks a proposal
 

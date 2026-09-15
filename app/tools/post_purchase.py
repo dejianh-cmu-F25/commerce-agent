@@ -21,6 +21,38 @@ from app.ports.post_purchase import OrderView, PostPurchaseBackend
 from app.returns.amazon_policy import ReturnFacts
 from app.tools.registry import ToolRegistry, ToolResult
 
+LIST_ORDERS_SPEC = ToolSpec(
+    name="list_orders",
+    description=(
+        "List the customer's own orders (id, status, dates, total). Use this when they "
+        "ask about their orders without naming one, then call get_order_status with an "
+        "id from the result."
+    ),
+    parameters={
+        "type": "object",
+        "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 25}},
+    },
+)
+
+
+def _summary(order: OrderView) -> dict[str, Any]:
+    """The shape the transcript's orders card expects."""
+    if order.delivered_at:
+        status = "delivered"
+    elif "FULFILLED" in order.fulfillment_status.upper():
+        status = "shipped"
+    else:
+        status = "processing"
+    return {
+        "id": order.id,
+        "status": status,
+        "placed_at": order.created_at,
+        "delivered_at": order.delivered_at,
+        "total": order.total,
+        "item_count": sum(line.quantity for line in order.line_items),
+    }
+
+
 GET_ORDER_SPEC = ToolSpec(
     name="get_order_status",
     description=(
@@ -185,6 +217,34 @@ def register_post_purchase_tools(
             component="order",
         )
 
+    async def list_orders(arguments: dict[str, Any], session: Session) -> ToolResult:
+        # The listing is scoped by the authenticated principal, never by a value the
+        # model supplies: without a principal this refuses instead of widening the query
+        # to the whole shop.
+        customer = str(getattr(session, "customer_id", "") or "")
+        if not customer:
+            return ToolResult(
+                content=json.dumps(
+                    {
+                        "orders": [],
+                        "accessible": False,
+                        "reason": "no authenticated customer",
+                        "guidance": "Ask the customer to sign in, or for the order number.",
+                    }
+                ),
+                component="orders",
+                payload={"items": []},
+            )
+        limit = max(1, min(25, int(arguments.get("limit", 10))))
+        orders = await backend.list_orders(customer, limit)
+        items = [_summary(order) for order in orders]
+        session.remember_ids([order.id for order in orders])
+        return ToolResult(
+            content=json.dumps({"orders": items}),
+            component="orders",
+            payload={"items": items},
+        )
+
     async def get_order_status(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", ""))
         order, refused = await _readable_order(order_id, session)
@@ -213,7 +273,11 @@ def register_post_purchase_tools(
             }
             for item in items
         ]
-        return ToolResult(content=json.dumps(payload), component="returnable_items")
+        return ToolResult(
+            content=json.dumps(payload),
+            component="returnable_items",
+            payload={"items": payload},
+        )
 
     async def propose_return_decision(arguments: dict[str, Any], session: Session) -> ToolResult:
         decision = str(arguments.get("decision", "")).strip().lower()
@@ -295,6 +359,7 @@ def register_post_purchase_tools(
             record["validated"] = True
         return ToolResult(content=json.dumps(record), component="return_decision")
 
+    registry.register(LIST_ORDERS_SPEC, list_orders)
     registry.register(GET_ORDER_SPEC, get_order_status)
     registry.register(RETURNABLE_SPEC, list_returnable_items)
     registry.register(PROPOSE_SPEC, propose_return_decision)

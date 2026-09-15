@@ -130,3 +130,25 @@ def test_markdown_between_two_quotations_is_not_a_quotation() -> None:
         ),
     )
     assert ASSERTIONS["quotes_are_grounded"](outcome)
+
+
+def test_an_invented_order_number_is_caught_but_a_read_is_allowed():
+    """Reading is how the agent learns the real number; writing one down is not."""
+    grounded = RunOutcome(
+        final_text="I don't see any orders on your account - what is the order number?",
+        tool_calls=("list_orders",),
+        tool_output=('{"orders": []}',),
+    )
+    assert ASSERTIONS["order_refs_are_grounded"](grounded)
+
+    invented = RunOutcome(
+        final_text="Sure, use order #12345 and I'll proceed.",
+        tool_calls=("list_orders",),
+        tool_output=('{"orders": []}',),
+    )
+    assert not ASSERTIONS["order_refs_are_grounded"](invented)
+
+    quoted = RunOutcome(
+        final_text="Your order #1006 was delivered.", tool_output=("order #1006 delivered",)
+    )
+    assert ASSERTIONS["order_refs_are_grounded"](quoted)

@@ -22,7 +22,6 @@ query GetOrder($id: ID!) {
     displayFulfillmentStatus
     totalPriceSet { shopMoney { amount currencyCode } }
     fulfillments(first: 1) { deliveredAt }
-    customer { id }
     lineItems(first: 50) {
       nodes {
         id
@@ -47,7 +46,6 @@ query GetOrderByName($q: String!) {
       displayFulfillmentStatus
       totalPriceSet { shopMoney { amount currencyCode } }
       fulfillments(first: 1) { deliveredAt }
-    customer { id }
     customAttributes { key value }
       lineItems(first: 50) {
         nodes {
@@ -115,6 +113,10 @@ def _to_order(node: dict[str, Any]) -> OrderView:
         total=total,
         currency=currency,
         delivered_at=_delivered_at(node),
+        # Ownership is not available from this app: Shopify gates the Customer object
+        # (and even an order's email) behind PII approval, so the field is absent and
+        # the order declares no owner. The tenancy gate therefore allows the read -
+        # see docs/tenancy-prerequisite.md for what a deployment must supply.
         customer_id=str((node.get("customer") or {}).get("id") or ""),
         line_items=[
             LineItem(
@@ -139,6 +141,26 @@ def _to_returnable(node: dict[str, Any]) -> ReturnableItem:
     )
 
 
+_ORDERS_BY_CUSTOMER_QUERY = """
+query ListOrdersByCustomer($q: String!, $n: Int!) {
+  orders(first: $n, query: $q) {
+    nodes {
+      id
+      name
+      createdAt
+      displayFinancialStatus
+      displayFulfillmentStatus
+      totalPriceSet { shopMoney { amount currencyCode } }
+      fulfillments(first: 1) { deliveredAt }
+        lineItems(first: 50) {
+        nodes { id name quantity sku }
+      }
+    }
+  }
+}
+"""
+
+
 class ShopifyPostPurchase:
     """Reads orders and returnable items from the Shopify Admin API."""
 
@@ -155,6 +177,16 @@ class ShopifyPostPurchase:
         data = await self._client.query(_ORDER_QUERY, {"id": order_id})
         node = data.get("order")
         return _to_order(node) if node else None
+
+    async def list_orders(self, customer_ref: str, limit: int = 10) -> list[OrderView]:
+        if not customer_ref:
+            return []
+        # A principal is either an email or a platform customer id; Shopify filters on
+        # either, and the query is meaningless without one.
+        query = f"email:{customer_ref}" if "@" in customer_ref else f"customer_id:{customer_ref}"
+        data = await self._client.query(_ORDERS_BY_CUSTOMER_QUERY, {"q": query, "n": limit})
+        nodes = (data.get("orders") or {}).get("nodes") or []
+        return [_to_order(node) for node in nodes]
 
     async def returnable_items(self, order_id: str) -> list[ReturnableItem]:
         # returnableFulfillments(orderId:) requires a global id, but callers hold a

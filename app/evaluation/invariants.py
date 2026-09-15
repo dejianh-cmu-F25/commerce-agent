@@ -170,6 +170,26 @@ def _quotes_are_grounded(outcome: RunOutcome) -> bool:
     return all(_normalise(span) in evidence for span in quoted)
 
 
+# An order reference as a customer would write it. Deliberately not a bare number:
+# prices, dates and quantities are numbers too.
+_ORDER_REF = re.compile(r"#\d{3,}")
+
+
+def _order_refs_are_grounded(outcome: RunOutcome) -> bool:
+    """Any order number in the answer was returned by a tool (never invented).
+
+    This checks the property rather than the mechanism. An earlier version of the case
+    asserted "no tool call", which stopped being the right test the moment the agent
+    had a legitimate way to look orders up: reading is exactly how it learns the real
+    number, and the thing that must never happen is *writing* a number it made up.
+    """
+    refs = {match.group(0) for match in _ORDER_REF.finditer(outcome.final_text)}
+    if not refs:
+        return True
+    evidence = " ".join(outcome.tool_output)
+    return all(ref in evidence for ref in refs)
+
+
 def _no_product_id(outcome: RunOutcome) -> bool:
     """The answer recommends no product (for a query the catalog cannot satisfy)."""
     return not _PRODUCT_ID.search(outcome.final_text)
@@ -204,6 +224,7 @@ ASSERTIONS: dict[str, Callable[[RunOutcome], bool]] = {
     "no_over_budget_price": _no_over_budget_price,
     "no_product_id": _no_product_id,
     "quotes_are_grounded": _quotes_are_grounded,
+    "order_refs_are_grounded": _order_refs_are_grounded,
 }
 
 

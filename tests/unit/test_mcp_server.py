@@ -30,6 +30,7 @@ def test_storefront_tools() -> None:
 def test_customer_accounts_tools() -> None:
     assert _names(build_customer_accounts_server()) == [
         "get_order_status",
+        "list_orders",
         "list_returnable_items",
         "propose_return_decision",
     ]
