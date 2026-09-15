@@ -1247,6 +1247,22 @@
       "rollback": "git revert the commit; re-run scripts/seed_orders.py --reset",
       "verdict": "accepted",
       "evidence": "tests/unit/test_shopify_post_purchase.py, scripts/seed_orders.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#80 046-closed-loop (real-model journey evaluation)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Added evals/journey_eval.py: a real-model evaluation over 121 journey cases (discovery / cart / policy / WISMO / return / guardrails) run against the wired agent (real catalog, cart, checkout, knowledge, reviews, post-purchase). Metrics: tool accuracy, no-fail rate, Pass^k(4) on a stratified subset. build_agent now accepts an injected LLM for evaluation.",
+      "metric": "journey tool accuracy (real model, 121 cases)",
+      "before": 0.812,
+      "after": 0.983,
+      "note": "before = the 045 decision-accuracy baseline (16 cases); after = journey tool accuracy (121 cases). Different sets; both are recorded. no_fail = 1.000; Pass^4 = 1.000 (20 cases). The first journey run scored 0.911 because cart cases referenced products absent from the catalog; the cases were fixed to use real titles (0.983).",
+      "guardrails": "no_fail_rate = 1.000; guardrail cases (injection/off-topic) 32/32; keyless gate green; 250 tests pass",
+      "blast_radius": "evals/journey_eval.py, evals/results-journey.json, reports/journey-eval.md, web/main.py",
+      "rollback": "git revert the commit; the eval is opt-in (--real)",
+      "verdict": "accepted",
+      "evidence": "reports/journey-eval.md, evals/results-journey.json"
     }
   ]
 }

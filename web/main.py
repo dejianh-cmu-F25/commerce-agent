@@ -310,6 +310,7 @@ def build_agent(
     tracer: Tracer | None = None,
     merchant: MerchantBackend | None = None,
     memory: MemoryStore | None = None,
+    llm: object | None = None,
 ) -> Agent:
     registry = ToolRegistry()
     catalog = build_catalog(settings)
@@ -335,7 +336,7 @@ def build_agent(
         )
 
     return Agent(
-        llm=build_llm(settings),
+        llm=llm or build_llm(settings),
         tools=registry,
         settings=settings.agent,
         system_prompt=system_prompt,
