@@ -10,6 +10,7 @@ Deterministic and model-free, so results are reproducible (TT-2).
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -29,6 +30,45 @@ def reciprocal_rank(retrieved: list[str], relevant: set[str]) -> float:
         if identifier in relevant:
             return 1.0 / rank
     return 0.0
+
+
+def _dcg(gains: list[float], k: int) -> float:
+    return sum(gain / math.log2(rank + 2) for rank, gain in enumerate(gains[:k]))
+
+
+def ndcg_at_k(retrieved_gains: list[float], all_gains: list[float], k: int) -> float:
+    """Graded nDCG@k (feature 046, discovery): gains in retrieval order vs the ideal."""
+    ideal = _dcg(sorted(all_gains, reverse=True), k)
+    return _dcg(retrieved_gains, k) / ideal if ideal > 0 else 0.0
+
+
+@dataclass
+class GradedMetrics:
+    cases: int
+    ndcg: float
+    hit_rate: float
+    mrr: float
+
+
+def evaluate_graded(results: list[tuple[list[float], list[float]]], k: int = 10) -> GradedMetrics:
+    """Average nDCG@k, hit@k and MRR over ``(retrieved_gains, all_gains)`` pairs."""
+    if not results:
+        return GradedMetrics(cases=0, ndcg=0.0, hit_rate=0.0, mrr=0.0)
+    ndcgs = [ndcg_at_k(retrieved, all_gains, k) for retrieved, all_gains in results]
+    hits = [1.0 if any(g > 0 for g in retrieved[:k]) else 0.0 for retrieved, _ in results]
+    rrs = [
+        1.0 / next((rank for rank, g in enumerate(retrieved, start=1) if g > 0), 0)
+        if any(g > 0 for g in retrieved)
+        else 0.0
+        for retrieved, _ in results
+    ]
+    count = len(results)
+    return GradedMetrics(
+        cases=count,
+        ndcg=round(sum(ndcgs) / count, 4),
+        hit_rate=round(sum(hits) / count, 4),
+        mrr=round(sum(rrs) / count, 4),
+    )
 
 
 @dataclass

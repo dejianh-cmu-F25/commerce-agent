@@ -52,6 +52,7 @@ from app.core.settings import Settings, load_settings
 from app.core.types import Message
 from app.gates.policy import PolicyGate
 from app.knowledge.ingest import load_chunks
+from app.ports.llm import LLMClient
 from app.ports.memory import MemoryStore
 from app.ports.merchant import MerchantBackend
 from app.ports.post_purchase import LineItem, OrderView, PostPurchaseBackend, ReturnableItem
@@ -310,7 +311,7 @@ def build_agent(
     tracer: Tracer | None = None,
     merchant: MerchantBackend | None = None,
     memory: MemoryStore | None = None,
-    llm: object | None = None,
+    llm: LLMClient | None = None,
 ) -> Agent:
     registry = ToolRegistry()
     catalog = build_catalog(settings)

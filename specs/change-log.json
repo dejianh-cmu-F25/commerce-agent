@@ -1279,6 +1279,22 @@
       "rollback": "delete reports/tau-bench.md; the run lives in a temp dir",
       "verdict": "accepted",
       "evidence": "reports/tau-bench.md"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#82 046-closed-loop (discovery baseline: ESCI + rule set)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Added the discovery-layer evaluation: an ESCI external relevance benchmark (500 US-locale queries, nDCG@10, human E/S/C/I labels from tasksource/esci) and a rule-generated catalog benchmark (254 cases over the real 3,000-product catalog) comparing tfidf / dense-hash / the live Shopify keyword retriever. Added graded nDCG + evaluate_graded to app/evaluation/retrieval_metrics.py. Baseline and failure classification in reports/discovery-baseline.md.",
+      "metric": "ESCI nDCG@10 (tfidf, 500 US queries)",
+      "before": 0.0,
+      "after": 0.772,
+      "note": "First discovery baseline (0 -> measured). Catalog rule set: tfidf hit@10 0.992 / recall 0.720; dense-hash 0.713; live shopify-keyword 0.920 at 1313.7 ms/query. The measured headroom is semantic (ESCI 0.77 vs rule set 0.99); constraint failures point at a DiscoveryGate, not RAG.",
+      "guardrails": "keyless gate green; 254 tests pass; measurement only (no product/provider change)",
+      "blast_radius": "evals/{esci_bench,discovery_cases,bench_discovery}.py, app/evaluation/retrieval_metrics.py, reports/discovery-baseline.md, pyproject.toml, tests/unit/test_ndcg.py",
+      "rollback": "git revert the commit; the benchmarks are opt-in and not in the gate",
+      "verdict": "accepted",
+      "evidence": "reports/discovery-baseline.md, evals/results-esci.json, evals/results-discovery.json"
     }
   ]
 }

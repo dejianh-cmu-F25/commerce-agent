@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.4 | +1.9000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 14.9 | -0.6000 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 3.6029 | +2.9467 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 26 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.3/18.5 | 14.9/18.8 | 51045 | 0 |
-| 4 | 12.3/16.7 | 14.7/19.3 | 54544 | 0 |
-| 16 | 12.0/16.3 | 14.7/17.4 | 56332 | 0 |
-| 64 | 11.9/16.4 | 14.5/15.8 | 57160 | 0 |
+| 1 | 12.3/17.4 | 14.8/19.0 | 50810 | 0 |
+| 4 | 12.0/16.6 | 14.4/15.1 | 57079 | 0 |
+| 16 | 11.8/16.4 | 14.4/14.9 | 57160 | 0 |
+| 64 | 12.0/16.3 | 14.7/17.0 | 55846 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **3989.4/6180.1 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4102.8/6272.7 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12055.8/12568.1 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12202.3/13301.4 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **7.0 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -269,3 +269,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-15 | #79 046-closed-loop (real fulfillment; drop delivered_at hack) | orders | `measurable` | Rebuilt the demo orders on the real Shopify fulfillment lifecycle (orderCreate -> fulfillmentCreate -> fulfillmentEventCreate(DELIVERED)): 3 delivered, 2 in transit, 1 processing. Removed the generated customAttributes.delivered_at fallback; delivered_at now comes only from the fulfillment's real deliveredAt. | orders whose delivered_at contradicts fulfillment_status | 3 → 0 | keyless gate green; 250 tests pass; the engine still escalates rather than guessing when there is no delivery date | scripts/seed_orders.py, app/adapters/shopify_post_purchase.py, tests/unit/test_shopify_post_purchase.py | git revert the commit; re-run scripts/seed_orders.py --reset | accepted | `tests/unit/test_shopify_post_purchase.py, scripts/seed_orders.py` |
 | 2026-09-15 | #80 046-closed-loop (real-model journey evaluation) | evaluation | `measurable` | Added evals/journey_eval.py: a real-model evaluation over 121 journey cases (discovery / cart / policy / WISMO / return / guardrails) run against the wired agent (real catalog, cart, checkout, knowledge, reviews, post-purchase). Metrics: tool accuracy, no-fail rate, Pass^k(4) on a stratified subset. build_agent now accepts an injected LLM for evaluation. | journey tool accuracy (real model, 121 cases) | 0.812 → 0.983 | no_fail_rate = 1.000; guardrail cases (injection/off-topic) 32/32; keyless gate green; 250 tests pass | evals/journey_eval.py, evals/results-journey.json, reports/journey-eval.md, web/main.py | git revert the commit; the eval is opt-in (--real) | accepted | `reports/journey-eval.md, evals/results-journey.json` |
 | 2026-09-15 | #81 046-closed-loop (tau-bench external benchmark) | evaluation | `measurable` | Ran tau-bench (Sierra, MIT) retail domain with the project's model (deepseek-chat, temp 0) on a 20-task subset of the 115-task test split: Pass^1 = 0.850 (17/20). Documented in reports/tau-bench.md. | tau-bench retail Pass^1 (20-task subset) | 0.0 → 0.85 | n/a (external benchmark, no project guardrail affected); keyless gate green; 250 tests pass | reports/tau-bench.md | delete reports/tau-bench.md; the run lives in a temp dir | accepted | `reports/tau-bench.md` |
+| 2026-09-15 | #82 046-closed-loop (discovery baseline: ESCI + rule set) | evaluation | `measurable` | Added the discovery-layer evaluation: an ESCI external relevance benchmark (500 US-locale queries, nDCG@10, human E/S/C/I labels from tasksource/esci) and a rule-generated catalog benchmark (254 cases over the real 3,000-product catalog) comparing tfidf / dense-hash / the live Shopify keyword retriever. Added graded nDCG + evaluate_graded to app/evaluation/retrieval_metrics.py. Baseline and failure classification in reports/discovery-baseline.md. | ESCI nDCG@10 (tfidf, 500 US queries) | 0.0 → 0.772 | keyless gate green; 254 tests pass; measurement only (no product/provider change) | evals/{esci_bench,discovery_cases,bench_discovery}.py, app/evaluation/retrieval_metrics.py, reports/discovery-baseline.md, pyproject.toml, tests/unit/test_ndcg.py | git revert the commit; the benchmarks are opt-in and not in the gate | accepted | `reports/discovery-baseline.md, evals/results-esci.json, evals/results-discovery.json` |

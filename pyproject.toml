@@ -23,6 +23,7 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff>=0.6",
     "pyright>=1.1.380",
+    "datasets>=5.0.1",
 ]
 
 [build-system]

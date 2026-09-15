@@ -26,6 +26,8 @@ data/budget.json
 # Reviews'23 sample: research-licensed; not redistributed (regenerate with the importer).
 data/catalog/
 data/reviews/
+data/esci/
+data/discovery/
 logs/
 *.sqlite
 *.sqlite3
