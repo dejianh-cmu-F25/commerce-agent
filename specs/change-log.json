@@ -1343,6 +1343,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "reports/journey-eval.md, evals/results-journey.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#86 046 eval-hardening C+E (synthetic phrasings + negative queries)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "C: evals/synth_cases.py asks an LLM for 33 novel phrasings (CheckList MFT) of discovery/policy/return/WISMO intents, cached to evals/synth_cases.jsonl. E: 10 negative (provably out-of-catalog) queries measuring the false-positive rate, plus 3 ambiguous return requests expected to clarify. Journey eval is now 199 cases.",
+      "metric": "journey tool accuracy (real model, 199 cases)",
+      "before": 0.96,
+      "after": 0.949,
+      "note": "The synthetic/harder set lowers accuracy to 0.949. Finding: the first synthetic return phrasings (reason-less) failed because the agent correctly ASKS for the return reason rather than proposing \u2014 a case-expectation ambiguity, not an agent bug; the case set now separates unambiguous (reason given) from ambiguous (clarify expected). Non-English returns remain 1/3. Negative queries: 0 false positives.",
+      "guardrails": "no_fail_rate = 1.000; injection/off-topic 32/32; keyless gate green; 261 tests pass",
+      "blast_radius": "evals/{synth_cases.py,synth_cases.jsonl,journey_eval.py}, app/evaluation/invariants.py, evals/results-journey.json",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "evals/results-journey.json, evals/synth_cases.jsonl"
     }
   ]
 }

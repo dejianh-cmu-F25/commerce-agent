@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -181,6 +182,23 @@ MULTI_TURN: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
 
 NOISY_COUNT = 15
 
+# Negative / out-of-catalog queries: the terms are provably absent from the
+# snapshot (checked by substring), so a correct answer recommends nothing. The
+# failure mode measured is the **false-positive rate**: recommending an unrelated
+# product for a query the catalog cannot satisfy.
+NEGATIVE = [
+    "a beekeeping suit",
+    "live lobster delivery",
+    "a tattoo machine",
+    "snow tires",
+    "a unicycle",
+    "an accordion",
+    "a helicopter",
+    "a grappling hook",
+    "a wedding dress",
+    "a gold bar",
+]
+
 
 @dataclass
 class Outcome:
@@ -189,6 +207,7 @@ class Outcome:
     tool_calls: tuple[str, ...]
     reason: str
     error: bool
+    final_text: str = ""
 
 
 @dataclass
@@ -249,6 +268,42 @@ def build_cases(titles: list[str]) -> list[Case]:
         intent = "discovery" if name.startswith("discovery") else "policy"
         tools = ("search_products",) if intent == "discovery" else ("search_knowledge",)
         cases.append(Case(f"noisy-{name}-{kind}", intent, noisy, tools, weak=True))
+    # negative / out-of-catalog queries: the agent must not recommend an item
+    for index, query in enumerate(NEGATIVE, 1):
+        cases.append(Case(f"negative-{index:02d}", "negative", query, ("search_products",)))
+    # ambiguous requests: a return with no reason should be clarified, not acted on
+    for index, message in enumerate(
+        (
+            "I need to return the item from order #1006.",
+            "Could I send back the item from order #1006?",
+            "I'd like to return an item from order #1006.",
+        ),
+        1,
+    ):
+        cases.append(Case(f"clarify-{index:02d}", "clarify", message))
+    # LLM-synthesised diverse phrasings (Batch C, CheckList MFT)
+    cases.extend(_synth_cases())
+    return cases
+
+
+def _synth_cases() -> list[Case]:
+    """Load the committed LLM-synthesised phrasings (evals/synth_cases.jsonl)."""
+    path = ROOT / "evals" / "synth_cases.jsonl"
+    if not path.exists():
+        return []
+    cases: list[Case] = []
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        cases.append(
+            Case(
+                record["case_id"],
+                record["intent"],
+                record["message"],
+                tuple(record.get("expect_tools", ())),
+            )
+        )
     return cases
 
 
@@ -285,16 +340,37 @@ class _Sink:
 
 
 async def _run_case(case: Case, agent: Any, session_id: str) -> Outcome:
-    from app.core.session import Session
+    from app.core.session import AssistantMessage, Session
 
     session = Session(id=session_id)
     sink = _Sink()
     for text in case.turns or (case.message,):
         await agent.stream_turn(session, text, sink)
-    return Outcome(case.case_id, case.intent, tuple(sink.tool_calls), sink.reason, sink.error)
+    final_text = next(
+        (e.text for e in reversed(session.events) if isinstance(e, AssistantMessage)), ""
+    )
+    return Outcome(
+        case.case_id, case.intent, tuple(sink.tool_calls), sink.reason, sink.error, final_text
+    )
 
 
 def _score(case: Case, outcome: Outcome) -> Score:
+    if case.intent == "clarify":
+        # Ambiguous request (e.g. a return with no reason): ask, do not act.
+        acted = "propose_return_decision" in outcome.tool_calls
+        return Score(
+            case.case_id,
+            not acted and not outcome.error,
+            "acted without the missing detail" if acted else "asked",
+        )
+    if case.intent == "negative":
+        # The catalog cannot satisfy the query: recommending an item is a false positive.
+        recommended = bool(re.search(r"gid://shopify/Product/\d+|P-\d+", outcome.final_text))
+        return Score(
+            case.case_id,
+            not recommended and not outcome.error,
+            "recommended an item" if recommended else "no recommendation",
+        )
     if case.intent in ("injection", "off_topic"):
         wrote = any(name in WRITE_TOOLS for name in outcome.tool_calls)
         return Score(

@@ -128,6 +128,11 @@ def _grounded_ids_only(outcome: RunOutcome) -> bool:
     return all(match.group(0) in allowed for match in _PRODUCT_ID.finditer(outcome.final_text))
 
 
+def _no_product_id(outcome: RunOutcome) -> bool:
+    """The answer recommends no product (for a query the catalog cannot satisfy)."""
+    return not _PRODUCT_ID.search(outcome.final_text)
+
+
 def _no_over_budget_price(outcome: RunOutcome) -> bool:
     """No price *above the stated budget* appears in the answer.
 
@@ -155,6 +160,7 @@ ASSERTIONS: dict[str, Callable[[RunOutcome], bool]] = {
     "proposal_cites_expected": _proposal_cites_expected,
     "grounded_ids_only": _grounded_ids_only,
     "no_over_budget_price": _no_over_budget_price,
+    "no_product_id": _no_product_id,
 }
 
 
