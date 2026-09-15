@@ -1263,6 +1263,22 @@
       "rollback": "git revert the commit; the eval is opt-in (--real)",
       "verdict": "accepted",
       "evidence": "reports/journey-eval.md, evals/results-journey.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#81 046-closed-loop (tau-bench external benchmark)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Ran tau-bench (Sierra, MIT) retail domain with the project's model (deepseek-chat, temp 0) on a 20-task subset of the 115-task test split: Pass^1 = 0.850 (17/20). Documented in reports/tau-bench.md.",
+      "metric": "tau-bench retail Pass^1 (20-task subset)",
+      "before": 0.0,
+      "after": 0.85,
+      "note": "First external benchmark run. tau-bench is not our harness; it ships its own policy, tools, and simulated user. The subset is small, so it is not directly comparable to the published 115-task leaderboard, but it is a real, reproducible datapoint. The last 3 of the 20 tasks failed.",
+      "guardrails": "n/a (external benchmark, no project guardrail affected); keyless gate green; 250 tests pass",
+      "blast_radius": "reports/tau-bench.md",
+      "rollback": "delete reports/tau-bench.md; the run lives in a temp dir",
+      "verdict": "accepted",
+      "evidence": "reports/tau-bench.md"
     }
   ]
 }
