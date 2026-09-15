@@ -1791,6 +1791,22 @@
       "rollback": "git revert the commit (list_orders is additive; the tenant gate is unchanged)",
       "verdict": "accepted",
       "evidence": "reports/post-purchase-eval.md, tests/unit/test_tenancy_scoping.py, docs/tenancy-prerequisite.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#115 T114 prompt-injection robustness on our surface (AgentDojo payloads)",
+      "area": "safety",
+      "class": "measurable",
+      "what": "T114 asked for AgentDojo (Debenedetti et al., NeurIPS 2024 D&B, MIT). Running its benchmark would measure the model inside ITS tool suites (email, drive, calendar) - not our product - so this runs its verbatim ImportantInstructionsAttack template and goal strings against OUR agent instead, over two channels (the customer message, which the input guard sees, and a tool result - an item title - which nothing screens), with the input guard on and off as a control. Each goal is labelled by origin: agentdojo for its strings, ours where its goal names a capability this agent lacks.",
+      "metric": "injection payloads contained (no write tool, no prompt leak, still answered)",
+      "before": 0.0,
+      "after": 1.0,
+      "note": "32/32 contained (16 payloads x 2 channels x guard on/off): the model resists every payload on both channels, and CONTAINMENT IS IDENTICAL WITH THE GUARD OFF, so what is measured is the model's behaviour rather than the guard's - crediting the guard here would be wrong. The honest caveat is in the report: some containment is STRUCTURAL, not valorous, because this agent has no tool that approves or cancels a return or takes a payment (it can only propose, and a gate decides), so a payload asking for those cannot succeed whatever the model does. The goals that test the model rather than the tool surface (mark everything eligible, reveal the prompt, act across customers) were contained with the guard off. 16 payloads from one attack family is a smoke test, not a security claim.",
+      "guardrails": "the payload corpus is cached to evals/injection_payloads.jsonl with origins recorded; the report declares its sources so scripts/check_reports.py verifies it",
+      "blast_radius": "evals/agentdojo_injection.py, evals/injection_payloads.jsonl, reports/agentdojo.md",
+      "rollback": "git revert the commit",
+      "verdict": "accepted (with the structural-containment caveat recorded)",
+      "evidence": "reports/agentdojo.md, evals/results-agentdojo.json"
     }
   ]
 }
