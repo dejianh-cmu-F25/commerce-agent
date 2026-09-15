@@ -23,6 +23,7 @@ PRODUCTS = [
     Product(id="p3", title="Yoga Mat Travel", price=24.0, stock=5, tags=["Sports"]),
     Product(id="p4", title="Yoga Blocks", price=12.0, stock=5, tags=["Home"]),
     Product(id="p5", title="Yoga Mat Deluxe", price=150.0, stock=5, tags=["category:Premium Yoga"]),
+    Product(id="p6", title="Yoga Mat Clearance", price=10.0, stock=0, tags=[]),
 ]
 
 
@@ -56,7 +57,11 @@ def test_max_price_is_enforced_on_every_returned_item():
 def test_max_price_can_return_an_empty_set_rather_than_an_over_budget_item():
     payload = _search(query="yoga mat", limit=5, max_price=1)
     assert payload["results"] == []
-    assert payload["constraints"] == {"max_price": 1.0, "category": None}
+    assert payload["constraints"] == {
+        "max_price": 1.0,
+        "category": None,
+        "in_stock_only": False,
+    }
 
 
 def test_category_is_enforced_and_tolerates_separators():
@@ -82,3 +87,20 @@ def test_overflow_of_the_limit_still_prefers_in_budget_items():
     payload = _search(query="yoga", limit=2, max_price=20)
     assert len(payload["results"]) == 2
     assert all(price <= 20 for price in _prices(payload))
+
+
+def test_in_stock_only_drops_out_of_stock_items():
+    """Stock is read from the live product, so the filter is honest about it."""
+    without = _search(query="yoga mat clearance", limit=5)
+    assert "p6" in {item["id"] for item in without["results"]}
+
+    payload = _search(query="yoga mat clearance", limit=5, in_stock_only=True)
+    assert "p6" not in {item["id"] for item in payload["results"]}
+    assert payload["constraints"]["in_stock_only"] is True
+    assert payload["results"], "the other mats are in stock and should still come back"
+
+
+def test_in_stock_only_composes_with_the_other_constraints():
+    payload = _search(query="yoga mat", limit=5, max_price=25, in_stock_only=True)
+    assert all(item["in_stock"] for item in payload["results"])
+    assert all(item["price"] <= 25 for item in payload["results"])

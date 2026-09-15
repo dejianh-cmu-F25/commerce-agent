@@ -1503,6 +1503,22 @@
       "rollback": "set catalog.provider: hybrid (the weighted fusion is wired) or git revert the commit",
       "verdict": "accepted",
       "evidence": "reports/discovery-rrf-weights.md, tests/unit/test_rrf_weights.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#97 A7 add an in_stock_only constraint to search_products",
+      "area": "storefront",
+      "class": "measurable",
+      "what": "The live pipeline's third hard constraint. search_products takes in_stock_only, folds it into the oversample decision (so filtering cannot be crowded out by the result limit), and applies it deterministically to the LIVE product rather than the index - stock is never read from the snapshot (step A2). The payload reports the enforced constraints so an empty result can be explained. Six unit tests already covered price/category; two more cover this filter and its composition with the others.",
+      "metric": "unit tests pinning the constraint filter",
+      "before": 6.0,
+      "after": 8.0,
+      "note": "Honest limitation, measured on the real catalog: every product has inventoryItem.tracked=false and inventoryQuantity=0, and the mapper treats untracked as available (stock=1), so in_stock_only currently filters NOTHING. The filter is correct and cheap but unexercised until the catalog tracks inventory - so the 'stock' stage of the pipeline is not genuinely demonstrable on this data. Recorded rather than dressed up: the shipped in_stock flag is a default, not real inventory.",
+      "guardrails": "289 tests pass; keyless gate green; the constraint is applied to live facts only",
+      "blast_radius": "app/tools/catalog.py, tests/unit/test_catalog_constraints.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_catalog_constraints.py"
     }
   ]
 }

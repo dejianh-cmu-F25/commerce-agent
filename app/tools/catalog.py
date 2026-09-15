@@ -44,6 +44,10 @@ SEARCH_PRODUCTS_SPEC = ToolSpec(
                 "type": "string",
                 "description": "Only return products in this category.",
             },
+            "in_stock_only": {
+                "type": "boolean",
+                "description": "Only return products that are in stock.",
+            },
         },
         "required": ["query"],
     },
@@ -78,13 +82,17 @@ def register_catalog_tools(registry: ToolRegistry, storefront: StorefrontBackend
         limit = clamp_limit(int(arguments.get("limit", 5)))
         max_price = arguments.get("max_price")
         category = str(arguments.get("category", "") or "").strip()
-        constrained = max_price is not None or bool(category)
+        in_stock_only = bool(arguments.get("in_stock_only", False))
+        constrained = max_price is not None or bool(category) or in_stock_only
 
         results = storefront.search(query, clamp_limit(limit * OVERFETCH) if constrained else limit)
         if max_price is not None:
             results = [p for p in results if p.price <= float(max_price)]
         if category:
             results = [p for p in results if _matches_category(p, category)]
+        if in_stock_only:
+            # Stock comes from the live product, never the index (step A2).
+            results = [p for p in results if p.in_stock]
         results = results[:limit]
         session.remember_ids([p.id for p in results])
 
@@ -95,6 +103,7 @@ def register_catalog_tools(registry: ToolRegistry, storefront: StorefrontBackend
             payload["constraints"] = {
                 "max_price": float(max_price) if max_price is not None else None,
                 "category": category or None,
+                "in_stock_only": in_stock_only,
             }
         return ToolResult(
             content=json.dumps(payload),
