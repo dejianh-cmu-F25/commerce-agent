@@ -1295,6 +1295,22 @@
       "rollback": "git revert the commit; the benchmarks are opt-in and not in the gate",
       "verdict": "accepted",
       "evidence": "reports/discovery-baseline.md, evals/results-esci.json, evals/results-discovery.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#83 046-closed-loop (RAG ablation: dense + hybrid)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "Added a cached OpenAI embedding provider (app/adapters/embedding_cache.py) and an RRF hybrid retriever (app/adapters/retriever_hybrid.py). Ran the ablation on both discovery benchmarks (ESCI 500 US queries; 254 rule cases): tfidf / dense-hash / dense-openai / hybrid-openai.",
+      "metric": "ESCI nDCG@10 (tfidf -> dense-openai)",
+      "before": 0.772,
+      "after": 0.88,
+      "note": "RAG helps only where the task is semantic: ESCI nDCG@10 0.772 -> 0.880 (+14%). On the lexical rule set tfidf stays best (0.992) and dense-openai is worse (0.921); hybrid is near-best on both (ESCI 0.869, catalog 0.988). Keyless dense-hash is lexical, not RAG, and is worse everywhere. Constraint failures remain (category_price recall 0.72) and need a DiscoveryGate.",
+      "guardrails": "catalog hit@10 did not regress with hybrid (0.988 vs tfidf 0.992; pure dense 0.921); keyless fallback (tfidf) unchanged; keyless gate green; 256 tests pass",
+      "blast_radius": "app/adapters/{embedding_cache,retriever_hybrid}.py, evals/{esci_bench,bench_discovery}.py, reports/discovery-rag.md, pyproject.toml, tests/unit/test_hybrid_retriever.py",
+      "rollback": "git revert the commit; the benchmarks are opt-in",
+      "verdict": "accepted",
+      "evidence": "reports/discovery-rag.md, evals/results-esci.json, evals/results-discovery.json"
     }
   ]
 }

@@ -31,7 +31,8 @@ RESULTS = ROOT / "evals" / "results-esci.json"
 GAINS = {"Exact": 1.0, "Substitute": 0.1, "Complement": 0.01, "Irrelevant": 0.0}
 K = 10
 DIMS = 256
-CONFIGS = ["tfidf", "dense-hash"]
+CONFIGS = ["tfidf", "dense-hash", "dense-openai", "hybrid-openai"]
+EMBEDDING_CACHE = ROOT / "data" / "embeddings.sqlite"
 BASE = "https://huggingface.co/datasets/tasksource/esci/resolve/main/data"
 SHARDS = [
     "test-00000-of-00004-d48474212b95f33b.parquet",
@@ -121,17 +122,42 @@ def load_cases(n: int, rebuild: bool, shards: int) -> list[dict]:
     return cases
 
 
-def _retriever(config: str):
+def _embedding(config: str):
+    """One embedding provider per config (cached on disk for re-runs)."""
     from app.adapters.embedding_hash import HashEmbeddingProvider
+
+    if config == "tfidf":
+        return None
+    if config == "dense-hash":
+        return HashEmbeddingProvider(DIMS)
+    if config in ("dense-openai", "hybrid-openai"):
+        from app.adapters.embedding_cache import CachedEmbeddingProvider
+        from app.adapters.embedding_openai import OpenAIEmbeddingProvider
+        from app.core.settings import load_settings
+
+        settings = load_settings()
+        base = OpenAIEmbeddingProvider(
+            model=settings.embedding.model,
+            api_key=settings.embedding.api_key,
+            base_url=settings.embedding.base_url,
+        )
+        return CachedEmbeddingProvider(base, EMBEDDING_CACHE)
+    raise ValueError(config)
+
+
+def _retriever(config: str, embedding):
     from app.adapters.retriever_dense import DenseRetriever
     from app.adapters.retriever_memory import InMemoryRetriever
     from app.adapters.vector_memory import InMemoryVectorStore
 
     if config == "tfidf":
         return InMemoryRetriever()
-    if config == "dense-hash":
-        return DenseRetriever(HashEmbeddingProvider(DIMS), InMemoryVectorStore())
-    raise ValueError(config)
+    dense = DenseRetriever(embedding, InMemoryVectorStore())
+    if config == "hybrid-openai":
+        from app.adapters.retriever_hybrid import HybridRetriever
+
+        return HybridRetriever(InMemoryRetriever(), dense)
+    return dense
 
 
 def run(cases: list[dict]) -> dict:
@@ -140,10 +166,14 @@ def run(cases: list[dict]) -> dict:
 
     result: dict = {"k": K, "cases": len(cases), "configs": {}}
     for config in CONFIGS:
+        embedding = _embedding(config)
         pairs: list[tuple[list[float], list[float]]] = []
         latencies: list[float] = []
-        for case in cases:
-            retriever = _retriever(config)
+        total = len(cases)
+        for index, case in enumerate(cases, 1):
+            if (index % 100 == 0 or index == total) and config == "dense-openai":
+                print(f"  {config} [{index}/{total}]", flush=True)
+            retriever = _retriever(config, embedding)
             retriever.add(
                 [
                     Chunk(id=c["product_id"], text=c["text"], source=c["product_id"])
