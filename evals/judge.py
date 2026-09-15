@@ -29,16 +29,24 @@ REPORT = ROOT / "reports" / "judge-alignment.md"
 
 JUDGE_PROMPT = """You are auditing an e-commerce assistant's answer.
 
-Tool facts:
-- order: {order}
-- the assistant's recorded return proposal: {proposal}
-- policy clauses available: {clauses}
+Order facts (from the tool backend):
+{order}
+
+Policy extract (the only source of return rules):
+- the return window is 30 days from delivery
+- some categories are non-returnable (final sale)
+- a restocking fee may apply
+- damaged/defective items may be an exception inside the window
+
+The assistant's recorded return proposal: {proposal}
 
 Assistant answer:
 {answer}
 
-Question: is the answer CONSISTENT with the tool facts and the proposal (no
-invented order, price, date, or decision)? Answer with JSON only:
+Question: is the answer CONSISTENT with the order facts and the recorded
+proposal? Inconsistent means it invents an order, price or date, states a
+decision that differs from the proposal, or asserts a policy rule that is not in
+the extract. Answer with JSON only:
 {{"consistent": true|false, "reason": "<short>"}}"""
 
 
@@ -53,16 +61,22 @@ def _oracle_consistent(case: dict, outcome: object) -> bool:
 
 async def _judge(llm: object, case: dict, outcome: object) -> bool | None:
     from app.core.types import Message
+    from evals.post_purchase_eval import _backend_for
 
-    proposal = getattr(outcome, "proposal", None)
-    order = case.get("order_fixture", "order-1001")
+    backend, order_id = _backend_for(case)
+    order = await backend.get_order(order_id)
+    facts = "no order on file for this customer"
+    if order is not None:
+        items = "; ".join(
+            f"{line.title} (tags: {', '.join(line.tags) or 'none'})" for line in order.line_items
+        )
+        facts = (
+            f"order {order.id}, status {order.fulfillment_status}, "
+            f"delivered_at {order.delivered_at}, items: {items}"
+        )
     prompt = JUDGE_PROMPT.format(
-        order=order,
-        proposal=json.dumps(proposal),
-        clauses=(
-            "returns#window-default, returns#exception, "
-            "returns#non-returnable, returns#fee-restocking"
-        ),
+        order=facts,
+        proposal=json.dumps(getattr(outcome, "proposal", None)),
         answer=getattr(outcome, "final_text", ""),
     )
     text = ""

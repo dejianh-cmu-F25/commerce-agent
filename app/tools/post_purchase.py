@@ -7,9 +7,8 @@ proposal against the order and the policy. Nothing here approves or refunds (P3)
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import json
+from datetime import datetime
 from typing import Any
 
 from app.core.session import Session

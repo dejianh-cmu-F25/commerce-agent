@@ -1375,6 +1375,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "evals/results-post-purchase.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#88 046 Batch D: LLM-judge alignment (negative result)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "evals/judge.py asks a model whether an answer is consistent with the order facts, a policy extract and the recorded proposal, then reports precision/recall against the verifiable labels (decision matches the policy engine + engine-authored citations). 16 labeled cases, real model.",
+      "metric": "judge precision / recall vs verifiable labels",
+      "before": 0.0,
+      "after": 0.0,
+      "note": "Result is a NEGATIVE finding: precision 1.000 but recall 0.071 (tp=1 fp=0 tn=2 fn=13) - the judge flags 13 of 14 verifiably-consistent answers as inconsistent, most likely because the answers cite clause ids its extract does not enumerate. Conclusion: an uncalibrated judge must not gate anything; the deterministic decision/citation/grounding checks stay primary. Reporting precision/recall rather than agreement is what exposed this.",
+      "guardrails": "no eval gate depends on the judge; evals/report.md keyless checks unchanged",
+      "blast_radius": "evals/judge.py, reports/judge-alignment.md",
+      "rollback": "git revert the commit",
+      "verdict": "accepted (negative result documented)",
+      "evidence": "reports/judge-alignment.md"
     }
   ]
 }
