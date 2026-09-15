@@ -59,6 +59,11 @@ class RetrievalSettings(BaseModel):
     sparse_top_k: int = 20
     fusion_top_k: int = 10
     rrf_k: int = 60
+    # RRF weights (sparse, dense). Equal weights let the weaker retriever drag the
+    # fused ranking down, so these are tuned on a held-out split of the rule set
+    # (evals/tune_rrf.py) rather than guessed.
+    sparse_weight: float = 1.0
+    dense_weight: float = 1.0
 
 
 class RerankSettings(BaseModel):

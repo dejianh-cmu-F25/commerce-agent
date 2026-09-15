@@ -37,6 +37,10 @@ retrieval:
   sparse_top_k: 20
   fusion_top_k: 10
   rrf_k: 60
+  # RRF weights. Equal weights let the weaker leg drag the fusion down (measured:
+  # val hit@10 0.983 at 1:1 vs 0.991 at 2:1), so the dense leg is down-weighted.
+  sparse_weight: 2.0
+  dense_weight: 1.0
 
 rerank:
   enabled: false
@@ -109,8 +113,12 @@ session:
 # search: measured hit@10 0.991 vs 0.920 at ~0.6 ms vs ~1360 ms. `hybrid` fuses
 # the keyless lexical retriever with a real embedding (needs a real
 # `embedding.provider`); `tfidf` stays keyless.
+# Provider chosen by measurement, not taste: on the 216-case rule set the weighted
+# hybrid only catches up to the lexical retriever (val hit@10 0.991 vs tfidf 0.991,
+# full set 0.986 vs 0.991) while costing an embedding call per query, so the live
+# path ships lexical. See reports/discovery-rrf-weights.md.
 catalog:
-  provider: hybrid          # hybrid (lexical + real embedding, RRF) | tfidf (keyless)
+  provider: tfidf           # tfidf (keyless, shipped) | hybrid (lexical + embedding, RRF)
   index_path: ./data/discovery/products.json
   collection_name: catalog
   overfetch: 4

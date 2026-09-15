@@ -1487,6 +1487,22 @@
       "rollback": "set budget.enabled: true (the cap path is intact) or git revert the commit",
       "verdict": "accepted",
       "evidence": "docs/guardrails.md, config/settings.yaml"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#96 A5 weighted RRF: measure the fusion weights, ship the lexical retriever",
+      "area": "retrieval",
+      "class": "measurable",
+      "what": "HybridRetriever took equal RRF weights, and equal weights let the weaker leg drag the fused ranking (Qdrant's documented failure mode). Added weights to the fusion, extracted the fusion into a pure rrf_fuse() so rankings are computed once and re-fused per weight pair, exposed sparse_weight/dense_weight in retrieval settings, and added evals/tune_rrf.py which splits the 216-case rule set 108/108 by a stable hash of the case id, selects on train and reports on val. Weighted config names ('hybrid-openai-w2:1') are now first-class in both benchmarks via evals/retriever_configs.py.",
+      "metric": "rule-set hit@10 on the held-out half (val)",
+      "before": 0.983,
+      "after": 0.991,
+      "note": "Down-weighting the dense leg (2:1) recovers 0.8 points on val (0.983 -> 0.991), reproducing Qdrant's warning with our own data. But it only CATCHES UP: pure lexical scores 0.991 on the full set (hybrid 1:1 0.986), so the dense leg adds no top-10 hit the lexical leg did not already have here. Train could not discriminate at all (every weighting scored 0.990), which is why the report states the val column is informational rather than tuned - choosing the val winner would be tuning on the held-out half. Decision recorded in config: live discovery ships on tfidf (equal accuracy, no embedding call per query, no provider dependency), with the weights set to 2:1 so a future hybrid config is not the degraded variant.",
+      "guardrails": "283 tests pass; keyless gate green; the weighted path remains available and is what the enriched-document step re-measures",
+      "blast_radius": "app/adapters/retriever_hybrid.py, app/core/settings.py, web/main.py, config/settings.yaml, evals/{retriever_configs,tune_rrf,bench_discovery,esci_bench}.py",
+      "rollback": "set catalog.provider: hybrid (the weighted fusion is wired) or git revert the commit",
+      "verdict": "accepted",
+      "evidence": "reports/discovery-rrf-weights.md, tests/unit/test_rrf_weights.py"
     }
   ]
 }

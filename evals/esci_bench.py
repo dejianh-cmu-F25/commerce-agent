@@ -23,6 +23,8 @@ import sys
 import time
 from pathlib import Path
 
+from evals.retriever_configs import parse_config
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "esci"
 CACHE = DATA / "cases.json"
@@ -122,15 +124,15 @@ def load_cases(n: int, rebuild: bool, shards: int) -> list[dict]:
     return cases
 
 
-def _embedding(config: str):
-    """One embedding provider per config (cached on disk for re-runs)."""
+def _embedding(kind: str):
+    """One embedding provider per retriever kind (cached on disk for re-runs)."""
     from app.adapters.embedding_hash import HashEmbeddingProvider
 
-    if config == "tfidf":
+    if kind == "tfidf":
         return None
-    if config == "dense-hash":
+    if kind == "dense-hash":
         return HashEmbeddingProvider(DIMS)
-    if config in ("dense-openai", "hybrid-openai"):
+    if kind in ("dense-openai", "hybrid-openai", "hybrid-bm25"):
         from app.adapters.embedding_cache import CachedEmbeddingProvider
         from app.adapters.embedding_openai import OpenAIEmbeddingProvider
         from app.core.settings import load_settings
@@ -142,21 +144,21 @@ def _embedding(config: str):
             base_url=settings.embedding.base_url,
         )
         return CachedEmbeddingProvider(base, EMBEDDING_CACHE)
-    raise ValueError(config)
+    raise ValueError(kind)
 
 
 def _retriever(config: str, embedding):
     from app.adapters.retriever_dense import DenseRetriever
+    from app.adapters.retriever_hybrid import HybridRetriever
     from app.adapters.retriever_memory import InMemoryRetriever
     from app.adapters.vector_memory import InMemoryVectorStore
 
-    if config == "tfidf":
+    kind, weights = parse_config(config)
+    if kind == "tfidf":
         return InMemoryRetriever()
     dense = DenseRetriever(embedding, InMemoryVectorStore())
-    if config == "hybrid-openai":
-        from app.adapters.retriever_hybrid import HybridRetriever
-
-        return HybridRetriever(InMemoryRetriever(), dense)
+    if kind.startswith("hybrid"):
+        return HybridRetriever(InMemoryRetriever(), dense, weights=weights or (1.0, 1.0))
     return dense
 
 
@@ -166,7 +168,8 @@ def run(cases: list[dict]) -> dict:
 
     result: dict = {"k": K, "cases": len(cases), "configs": {}}
     for config in CONFIGS:
-        embedding = _embedding(config)
+        # A weighted name ("hybrid-openai-w3:1") shares the kind's embedding.
+        embedding = _embedding(parse_config(config)[0])
         pairs: list[tuple[list[float], list[float]]] = []
         latencies: list[float] = []
         total = len(cases)

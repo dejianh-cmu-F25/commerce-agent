@@ -179,6 +179,7 @@ def build_catalog_index(settings: Settings) -> CatalogIndex | None:
         DenseRetriever(embedding, store),
         rrf_k=settings.retrieval.rrf_k,
         candidate_k=settings.retrieval.dense_top_k,
+        weights=(settings.retrieval.sparse_weight, settings.retrieval.dense_weight),
     )
     # Dense retrieval degrades to the keyless lexical retriever on an outage (RD-1).
     if settings.resilience.fallback_enabled:

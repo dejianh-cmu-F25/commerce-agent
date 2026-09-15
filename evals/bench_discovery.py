@@ -67,20 +67,21 @@ def _embedding(config: str):
 
 def _local_retriever(config: str, products: list[dict]):
     from app.adapters.retriever_dense import DenseRetriever
+    from app.adapters.retriever_hybrid import HybridRetriever
     from app.adapters.retriever_memory import InMemoryRetriever
     from app.adapters.vector_memory import InMemoryVectorStore
     from app.core.types import Chunk
+    from evals.retriever_configs import parse_config
 
-    if config == "tfidf":
+    kind, weights = parse_config(config)
+    if kind == "tfidf":
         retriever = InMemoryRetriever()
     else:
-        embedding = _embedding(config)
+        embedding = _embedding(kind)
         assert embedding is not None
         dense = DenseRetriever(embedding, InMemoryVectorStore())
-        if config == "hybrid-openai":
-            from app.adapters.retriever_hybrid import HybridRetriever
-
-            retriever = HybridRetriever(InMemoryRetriever(), dense)
+        if kind.startswith("hybrid"):
+            retriever = HybridRetriever(InMemoryRetriever(), dense, weights=weights or (1.0, 1.0))
         else:
             retriever = dense
     retriever.add([Chunk(id=p["id"], text=_document(p), source=p["id"]) for p in products])
