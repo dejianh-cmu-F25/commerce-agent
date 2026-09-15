@@ -19,6 +19,7 @@ ORDER_RESPONSE = {
             "displayFinancialStatus": "PAID",
             "displayFulfillmentStatus": "FULFILLED",
             "totalPriceSet": {"shopMoney": {"amount": "189.00", "currencyCode": "USD"}},
+            "fulfillments": {"nodes": [{"deliveredAt": "2026-08-05T10:00:00Z"}]},
             "lineItems": {
                 "nodes": [
                     {
@@ -106,9 +107,22 @@ async def test_get_order_maps_to_domain() -> None:
         "FULFILLED",
     )
     assert (order.total, order.currency) == (189.0, "USD")
+    assert order.delivered_at == "2026-08-05T10:00:00Z"
     assert order.line_items == [
         LineItem(id="gid://shopify/LineItem/11", title="2-Person Tent", quantity=1, sku="TENT-2P")
     ]
+
+
+async def test_get_order_in_transit_has_no_delivery_date() -> None:
+    """A fulfilled order with no DELIVERED event has no delivery date (escalate)."""
+    import copy
+
+    payload = copy.deepcopy(ORDER_RESPONSE)
+    payload["data"]["order"]["fulfillments"] = {"nodes": [{"deliveredAt": None}]}
+    backend = ShopifyPostPurchase(_admin(lambda request: httpx.Response(200, json=payload)))
+    order = await backend.get_order("gid://shopify/Order/1")
+    assert order is not None
+    assert order.delivered_at is None
 
 
 async def test_get_order_unknown_returns_none() -> None:

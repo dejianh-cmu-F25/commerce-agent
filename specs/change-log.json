@@ -1231,6 +1231,22 @@
       "rollback": "git revert the commit; the fabricated catalog is not restorable from the store (re-import with the scripts)",
       "verdict": "accepted",
       "evidence": "scripts/import_catalog.py, scripts/import_reviews.py, tests/unit/test_reviews.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#79 046-closed-loop (real fulfillment; drop delivered_at hack)",
+      "area": "orders",
+      "class": "measurable",
+      "what": "Rebuilt the demo orders on the real Shopify fulfillment lifecycle (orderCreate -> fulfillmentCreate -> fulfillmentEventCreate(DELIVERED)): 3 delivered, 2 in transit, 1 processing. Removed the generated customAttributes.delivered_at fallback; delivered_at now comes only from the fulfillment's real deliveredAt.",
+      "metric": "orders whose delivered_at contradicts fulfillment_status",
+      "before": 3,
+      "after": 0,
+      "note": "Delivered orders (with a DELIVERED fulfillment event) yield delivered_at and are eligible; in-transit/unfulfilled orders have none and escalate. No fabricated delivery dates.",
+      "guardrails": "keyless gate green; 250 tests pass; the engine still escalates rather than guessing when there is no delivery date",
+      "blast_radius": "scripts/seed_orders.py, app/adapters/shopify_post_purchase.py, tests/unit/test_shopify_post_purchase.py",
+      "rollback": "git revert the commit; re-run scripts/seed_orders.py --reset",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_shopify_post_purchase.py, scripts/seed_orders.py"
     }
   ]
 }

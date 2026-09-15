@@ -22,7 +22,6 @@ query GetOrder($id: ID!) {
     displayFulfillmentStatus
     totalPriceSet { shopMoney { amount currencyCode } }
     fulfillments(first: 1) { deliveredAt }
-    customAttributes { key value }
     lineItems(first: 50) {
       nodes {
         id
@@ -47,7 +46,6 @@ query GetOrderByName($q: String!) {
       displayFulfillmentStatus
       totalPriceSet { shopMoney { amount currencyCode } }
       fulfillments(first: 1) { deliveredAt }
-      customAttributes { key value }
     customAttributes { key value }
       lineItems(first: 50) {
         nodes {
@@ -90,15 +88,17 @@ def _money(bag: dict | None) -> tuple[float, str]:
 
 
 def _delivered_at(node: dict[str, Any]) -> str | None:
-    """The delivery date: the fulfillment's ``deliveredAt``, else a generated
-    ``delivered_at`` order attribute (used when the store has no carrier data)."""
-    fulfillment = (((node.get("fulfillments") or {}).get("nodes") or [{}])[0]) or {}
-    if fulfillment.get("deliveredAt"):
-        return str(fulfillment["deliveredAt"])
-    for attribute in node.get("customAttributes") or []:
-        if attribute.get("key") == "delivered_at" and attribute.get("value"):
-            return str(attribute["value"])
-    return None
+    """The fulfillment's real ``deliveredAt`` (set by a DELIVERED fulfillment event).
+
+    ``None`` when the order is not delivered (in transit or unfulfilled); the
+    engine escalates rather than guessing a window.
+    """
+    fulfillments = node.get("fulfillments") or []
+    if isinstance(fulfillments, dict):
+        fulfillments = fulfillments.get("nodes") or []
+    fulfillment = fulfillments[0] if fulfillments else {}
+    delivered = fulfillment.get("deliveredAt")
+    return str(delivered) if delivered else None
 
 
 def _to_order(node: dict[str, Any]) -> OrderView:
