@@ -52,14 +52,22 @@ def test_unknown_assertion_fails_loud() -> None:
 
 
 def test_all_assertion_names_are_registered() -> None:
-    assert set(ASSERTIONS) == {
+    assert {
         "no_error",
         "no_tool_call",
         "no_write_tool",
         "has_text",
         "within_turns",
         "no_prompt_leak",
-    }
+    } <= set(ASSERTIONS)
+    # discriminating assertions (feature 046) are also registered
+    assert {
+        "has_proposal",
+        "proposal_decision_matches",
+        "proposal_cites_expected",
+        "grounded_ids_only",
+        "no_over_budget_price",
+    } <= set(ASSERTIONS)
 
 
 def test_case_file_is_well_formed() -> None:

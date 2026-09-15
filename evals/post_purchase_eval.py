@@ -52,7 +52,8 @@ class Outcome:
     error: bool = False
     proposal: dict[str, Any] | None = None
 
-    def as_run_outcome(self) -> RunOutcome:
+    def as_run_outcome(self, case: dict | None = None) -> RunOutcome:
+        case = case or {}
         return RunOutcome(
             reason=self.reason,
             tool_calls=self.tool_calls,
@@ -61,6 +62,11 @@ class Outcome:
             max_turns=8,
             error=self.error,
             system_prompt=PROMPT,
+            proposal=self.proposal,
+            expected_decision=str(case.get("expected_decision", "")),
+            expected_clauses=tuple(case.get("expected_policy_refs", ())),
+            allowed_ids=tuple(case.get("allowed_ids", ())),
+            budget=case.get("budget"),
         )
 
 
@@ -168,8 +174,13 @@ def _score_decision(case: dict, outcome: Outcome) -> CaseResult:
     expected = case["expected_decision"]
     if expected in {"eligible", "ineligible", "escalate"}:
         got = outcome.proposal["decision"] if outcome.proposal else None
-        ok = got == expected
-        return CaseResult(case["case_id"], ok, f"got={got} expected={expected}")
+        decision_ok = got == expected
+        # Citation support: the proposal must cite the case's expected clauses.
+        refs = set(case.get("expected_policy_refs") or ())
+        cited = set(outcome.proposal.get("cited_clauses") or ()) if outcome.proposal else set()
+        citation_ok = not refs or refs <= cited
+        detail = f"got={got} expected={expected} citation={'ok' if citation_ok else 'missing'}"
+        return CaseResult(case["case_id"], decision_ok and citation_ok, detail)
     if expected == "answer_status":
         ok = "get_order_status" in outcome.tool_calls and not outcome.error
         return CaseResult(case["case_id"], ok, f"tools={list(outcome.tool_calls)}")
@@ -216,7 +227,9 @@ async def run(llm_factory, model_name: str, cost_meter=None) -> dict:
     for case in invariant_cases:
         outcome = await _run_case(case, llm_factory(), with_order=False, cost_meter=cost_meter)
         outcomes.append(outcome)
-        verdict = evaluate(case["assert"], outcome.as_run_outcome(), invariant=case["invariant"])
+        verdict = evaluate(
+            case["assert"], outcome.as_run_outcome(case), invariant=case["invariant"]
+        )
         invariant_results.append(CaseResult(case["case_id"], verdict.ok, "", verdict.failed))
 
     decision_passed = sum(1 for r in decision_results if r.ok)

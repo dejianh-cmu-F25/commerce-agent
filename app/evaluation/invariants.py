@@ -8,6 +8,7 @@ assertions failed. See ``docs/invariants.md`` for the invariants themselves.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
@@ -30,9 +31,18 @@ _PROMPT_WINDOW = 40
 _PROMPT_STRIDE = 20
 
 
+_PRODUCT_ID = re.compile(r"gid://shopify/Product/\d+|P-\d+")
+_PRICE = re.compile(r"\$\s?(\d+(?:\.\d{1,2})?)")
+
+
 @dataclass(frozen=True)
 class RunOutcome:
-    """What one turn did. ``reason`` is the turn-end reason from the loop."""
+    """What one turn did, plus the case's expectations.
+
+    The first block is the run; the second is what the case requires, so the
+    discriminating assertions (citation, grounding, constraint, decision) can be
+    checked rather than only "did it produce text".
+    """
 
     reason: str = "stop"
     tool_calls: tuple[str, ...] = ()
@@ -41,6 +51,12 @@ class RunOutcome:
     max_turns: int = 8
     error: bool = False
     system_prompt: str = ""
+    # case expectations (all optional)
+    proposal: dict | None = None
+    expected_decision: str = ""
+    expected_clauses: tuple[str, ...] = ()
+    allowed_ids: tuple[str, ...] = ()
+    budget: float | None = None
 
 
 @dataclass(frozen=True)
@@ -83,6 +99,49 @@ def _no_prompt_leak(outcome: RunOutcome) -> bool:
     return True
 
 
+def _has_proposal(outcome: RunOutcome) -> bool:
+    return outcome.proposal is not None
+
+
+def _proposal_decision_matches(outcome: RunOutcome) -> bool:
+    """The recorded proposal's decision equals the expected decision."""
+    if not outcome.expected_decision:
+        return True
+    return bool(outcome.proposal) and outcome.proposal.get("decision") == outcome.expected_decision
+
+
+def _proposal_cites_expected(outcome: RunOutcome) -> bool:
+    """The proposal cites at least the expected policy clauses."""
+    if not outcome.expected_clauses:
+        return True
+    if not outcome.proposal:
+        return False
+    cited = set(outcome.proposal.get("cited_clauses") or [])
+    return set(outcome.expected_clauses) <= cited
+
+
+def _grounded_ids_only(outcome: RunOutcome) -> bool:
+    """Every product id in the answer was returned by a tool (no invented ids)."""
+    if not outcome.allowed_ids:
+        return True
+    allowed = set(outcome.allowed_ids)
+    return all(match.group(0) in allowed for match in _PRODUCT_ID.finditer(outcome.final_text))
+
+
+def _no_over_budget_price(outcome: RunOutcome) -> bool:
+    """No price *above the stated budget* appears in the answer.
+
+    A heuristic: it catches recommending an over-budget item; it may false-positive
+    when the answer deliberately contrasts an over-budget option, so use it only on
+    cases where the answer should contain no over-budget price at all.
+    """
+    if outcome.budget is None:
+        return True
+    return all(
+        float(match.group(1)) <= outcome.budget for match in _PRICE.finditer(outcome.final_text)
+    )
+
+
 ASSERTIONS: dict[str, Callable[[RunOutcome], bool]] = {
     "no_error": _no_error,
     "no_tool_call": _no_tool_call,
@@ -90,6 +149,12 @@ ASSERTIONS: dict[str, Callable[[RunOutcome], bool]] = {
     "has_text": _has_text,
     "within_turns": _within_turns,
     "no_prompt_leak": _no_prompt_leak,
+    # discriminating (feature 046): citation / grounding / constraint / decision
+    "has_proposal": _has_proposal,
+    "proposal_decision_matches": _proposal_decision_matches,
+    "proposal_cites_expected": _proposal_cites_expected,
+    "grounded_ids_only": _grounded_ids_only,
+    "no_over_budget_price": _no_over_budget_price,
 }
 
 

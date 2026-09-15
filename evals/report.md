@@ -100,7 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 15.6 | +0.1000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 15.5 | +0.0000 | 10000.0 | ≤ | `scale` | OK |
 | `cost:spent_cny` | 3.6029 | +2.9467 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 26 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.4/17.4 | 14.7/18.6 | 51050 | 0 |
-| 4 | 12.0/16.6 | 14.7/16.4 | 55958 | 0 |
-| 16 | 13.1/21.0 | 14.8/15.6 | 54024 | 0 |
-| 64 | 12.1/17.0 | 14.9/17.0 | 54746 | 0 |
+| 1 | 12.9/17.8 | 15.3/19.5 | 50065 | 0 |
+| 4 | 12.3/16.5 | 14.8/18.9 | 54791 | 0 |
+| 16 | 12.0/16.4 | 14.4/15.5 | 57217 | 0 |
+| 64 | 12.0/16.3 | 14.5/15.0 | 57386 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4038.7/6114.6 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4117.9/6241.9 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12200.3/12740.5 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12279.6/12839.2 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -271,3 +271,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-15 | #81 046-closed-loop (tau-bench external benchmark) | evaluation | `measurable` | Ran tau-bench (Sierra, MIT) retail domain with the project's model (deepseek-chat, temp 0) on a 20-task subset of the 115-task test split: Pass^1 = 0.850 (17/20). Documented in reports/tau-bench.md. | tau-bench retail Pass^1 (20-task subset) | 0.0 → 0.85 | n/a (external benchmark, no project guardrail affected); keyless gate green; 250 tests pass | reports/tau-bench.md | delete reports/tau-bench.md; the run lives in a temp dir | accepted | `reports/tau-bench.md` |
 | 2026-09-15 | #82 046-closed-loop (discovery baseline: ESCI + rule set) | evaluation | `measurable` | Added the discovery-layer evaluation: an ESCI external relevance benchmark (500 US-locale queries, nDCG@10, human E/S/C/I labels from tasksource/esci) and a rule-generated catalog benchmark (254 cases over the real 3,000-product catalog) comparing tfidf / dense-hash / the live Shopify keyword retriever. Added graded nDCG + evaluate_graded to app/evaluation/retrieval_metrics.py. Baseline and failure classification in reports/discovery-baseline.md. | ESCI nDCG@10 (tfidf, 500 US queries) | 0.0 → 0.772 | keyless gate green; 254 tests pass; measurement only (no product/provider change) | evals/{esci_bench,discovery_cases,bench_discovery}.py, app/evaluation/retrieval_metrics.py, reports/discovery-baseline.md, pyproject.toml, tests/unit/test_ndcg.py | git revert the commit; the benchmarks are opt-in and not in the gate | accepted | `reports/discovery-baseline.md, evals/results-esci.json, evals/results-discovery.json` |
 | 2026-09-15 | #83 046-closed-loop (RAG ablation: dense + hybrid) | discovery | `measurable` | Added a cached OpenAI embedding provider (app/adapters/embedding_cache.py) and an RRF hybrid retriever (app/adapters/retriever_hybrid.py). Ran the ablation on both discovery benchmarks (ESCI 500 US queries; 254 rule cases): tfidf / dense-hash / dense-openai / hybrid-openai. | ESCI nDCG@10 (tfidf -> dense-openai) | 0.772 → 0.88 | catalog hit@10 did not regress with hybrid (0.988 vs tfidf 0.992; pure dense 0.921); keyless fallback (tfidf) unchanged; keyless gate green; 256 tests pass | app/adapters/{embedding_cache,retriever_hybrid}.py, evals/{esci_bench,bench_discovery}.py, reports/discovery-rag.md, pyproject.toml, tests/unit/test_hybrid_retriever.py | git revert the commit; the benchmarks are opt-in | accepted | `reports/discovery-rag.md, evals/results-esci.json, evals/results-discovery.json` |
+| 2026-09-15 | #84 046 eval-hardening A (discriminating assertions) | evaluation | `measurable` | Added discriminating invariant assertions: has_proposal, proposal_decision_matches, proposal_cites_expected, grounded_ids_only, no_over_budget_price (app/evaluation/invariants.py), each with a negative-control test proving it can fail. The post-purchase decision score now also requires citation support (expected_policy_refs subset of cited_clauses). Strengthened the invariant corpus so no_write_tool applies to every case. | invariant cases carrying a write-tool assertion (fraction) | 0.235 → 1.0 | keyless gate green; 261 tests pass; negative controls prove each new assertion rejects a bad outcome | app/evaluation/invariants.py, evals/{post_purchase_eval.py,invariant_cases.jsonl}, tests/unit/{test_invariants,test_invariant_discriminating}.py | git revert the commit | accepted | `tests/unit/test_invariant_discriminating.py` |

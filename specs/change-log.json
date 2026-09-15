@@ -1311,6 +1311,22 @@
       "rollback": "git revert the commit; the benchmarks are opt-in",
       "verdict": "accepted",
       "evidence": "reports/discovery-rag.md, evals/results-esci.json, evals/results-discovery.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#84 046 eval-hardening A (discriminating assertions)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Added discriminating invariant assertions: has_proposal, proposal_decision_matches, proposal_cites_expected, grounded_ids_only, no_over_budget_price (app/evaluation/invariants.py), each with a negative-control test proving it can fail. The post-purchase decision score now also requires citation support (expected_policy_refs subset of cited_clauses). Strengthened the invariant corpus so no_write_tool applies to every case.",
+      "metric": "invariant cases carrying a write-tool assertion (fraction)",
+      "before": 0.235,
+      "after": 1.0,
+      "note": "The invariant layer was previously passable by any text-producing turn (has_text/no_error in 17/17); it now has assertions that reject a wrong decision, a missing citation, an invented product id, and an over-budget price. Keyless eval still 17/17 (the scripted run is trivially safe); the effect shows on real runs.",
+      "guardrails": "keyless gate green; 261 tests pass; negative controls prove each new assertion rejects a bad outcome",
+      "blast_radius": "app/evaluation/invariants.py, evals/{post_purchase_eval.py,invariant_cases.jsonl}, tests/unit/{test_invariants,test_invariant_discriminating}.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_invariant_discriminating.py"
     }
   ]
 }
