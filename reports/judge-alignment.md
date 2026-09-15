@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/judge.py cases=14 sources=evals/post_purchase_cases.jsonl,evals/judge.py fingerprint=dadaa2c91a39 -->
+<!-- report-meta: generator=evals/judge.py cases=14 sources=evals/post_purchase_cases.jsonl,evals/judge.py fingerprint=9a241983cd54 -->
 
 # LLM-judge alignment (vs verifiable facts)
 
@@ -8,10 +8,10 @@
 
 | | judge says consistent | judge says inconsistent |
 | --- | --- | --- |
-| **verifiable: consistent** | 2 | 10 |
-| **verifiable: inconsistent** | 0 | 2 |
+| **verifiable: consistent** | 1 | 13 |
+| **verifiable: inconsistent** | 0 | 0 |
 
-- **Precision: 1.000**  ·  **Recall: 0.167**
+- **Precision: 1.000**  ·  **Recall: 0.071**
 
 ## Per case
 
@@ -26,9 +26,9 @@
 | final-sale-01 | ok | bad |
 | damaged-01 | ok | bad |
 | damaged-out-of-window | ok | bad |
-| restocking-fee-01 | bad | bad |
-| warranty-vs-return-01 | bad | bad |
-| ambiguous-01 | ok | ok |
+| restocking-fee-01 | ok | bad |
+| warranty-vs-return-01 | ok | bad |
+| ambiguous-01 | ok | bad |
 | escalate-no-delivery-date | ok | bad |
 | exchange-01 | ok | bad |
 

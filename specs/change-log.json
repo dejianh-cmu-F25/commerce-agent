@@ -1727,6 +1727,38 @@
       "rollback": "git revert the commit (the tenancy gate is injected, so removing the injection restores the previous behaviour)",
       "verdict": "accepted",
       "evidence": "reports/post-purchase-eval.md, tests/unit/test_tenancy_scoping.py"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#111 the last two 'model failures' were my stale case expectations",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Printing the score DETAIL instead of the aggregate showed that both remaining decision failures were citation mismatches against expectations I had written wrong: warranty-vs-return-01 expected the clause id 'warranty' (the real id is returns#warranty, and the model cited it correctly), and restocking-fee-01 expected returns#fee-restocking (a clause the SoT scopes to opened software, video games and collectible cards - a large item is a heavy/bulky shipping fee, and the engine correctly cites only the window). Both DECISIONS were right all along. Fixed the two expectations, and removed the `| {'warranty'}` tolerance in tests/unit/test_post_purchase_cases.py: that tolerance is exactly what let a nonexistent clause id sit in the corpus unnoticed.",
+      "metric": "post-purchase decision accuracy (mean per-case pass rate over 3 runs)",
+      "before": 0.857,
+      "after": 0.929,
+      "note": "0.929 >= the 0.90 success criterion, so SC-001 is met, reported with its estimator: 0.929 mean per-case pass rate over 3 runs, 0.857 passing EVERY run (the reliability floor), and two flaky cases named with their rates (warranty-vs-return-01 2/3, ambiguous-01 1/3). No deterministic failure remains. The lesson is recorded because it cost two rounds of work: an aggregate hid a case-data bug, and the case-data bug was itself enabled by a test tolerance. Also added the per-run estimator to the eval output so a stochastic system is never summarised by one number again.",
+      "guardrails": "291 unit tests pass (the expectation test now rejects any clause id that does not exist); invariants 18/18; engine-vs-label 11/11; all 12 reports verified",
+      "blast_radius": "evals/{post_purchase_cases.jsonl,post_purchase_eval.py}, tests/unit/test_post_purchase_cases.py, reports/{post-purchase-eval,judge-alignment}.md",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "evals/results-post-purchase.json, tests/unit/test_post_purchase_cases.py"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#112 report the harness-block path, and both accuracy estimators",
+      "area": "evaluation",
+      "class": "docs",
+      "what": "The post-purchase report now documents what the customer sees when the harness refuses a proposal (the interesting path, previously undocumented): the tool returns validated=false with the engine's reason and clause ids, the model sees it and re-proposes, a refusal is not a system error so it never counts as a failure, and nothing wrong is ever recorded as approved. Provenance tables and the two accuracy estimators (mean per-case pass rate over runs, and the all-runs floor) are stated explicitly.",
+      "metric": "--",
+      "before": null,
+      "after": null,
+      "note": "Traced on a real run: the model proposed eligible for a 240-day-old defect, the gate refused it with the engine's reasoning, the model re-proposed escalate (validated=true), and the reply explained the 90-day window and the manufacturer warranty route - i.e. the block improves the answer instead of degrading it.",
+      "guardrails": "reports verified against their corpus; no behaviour change",
+      "blast_radius": "reports/post-purchase-eval.md, evals/post_purchase_eval.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "reports/post-purchase-eval.md"
     }
   ]
 }

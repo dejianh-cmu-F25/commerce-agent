@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=5e31d7e3d4d0 -->
+<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=3001b454a87c -->
 
 # Evaluation report
 
@@ -102,7 +102,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.8 | +2.3000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 16.3 | +0.8000 | 10000.0 | ≤ | `scale` | OK |
 
 ## Regressions (keyless)
 
@@ -126,16 +126,16 @@ Keyless stack (catalog 5 products, 14 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 9.6/14.0 | 15.2/21.2 | 48060 | 0 |
-| 4 | 9.0/12.4 | 14.9/18.9 | 53778 | 0 |
-| 16 | 8.5/12.2 | 14.7/17.8 | 54536 | 0 |
-| 64 | 8.6/11.8 | 14.8/17.5 | 54646 | 0 |
+| 1 | 9.8/19.4 | 15.8/25.1 | 46460 | 0 |
+| 4 | 9.3/13.0 | 15.5/34.1 | 46602 | 0 |
+| 16 | 9.5/13.5 | 15.2/16.3 | 54005 | 0 |
+| 64 | 8.6/12.0 | 15.3/16.4 | 53906 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5654.2/8451.5 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **6096.4/8570.3 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12588.3/16084.5 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **13027.6/16567.3 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.8 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -298,3 +298,5 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-16 | #108 selective journey runs (--changed) and the data-provenance doc | evaluation | `docs` | journey_eval.py gained --changed: it maps the branch's changed files to the intents they can affect and runs only those, printing what it decided. Unmapped paths and prompt changes fall back to the FULL set, because an unmapped change is exactly when a full run is warranted. Also added docs/data-provenance.md: every corpus, its origin, whether it is real or generated, its licence, how to rebuild it, and what a fresh clone can and cannot run (data/ is largely gitignored). | -- | The selective mode is conservative by construction and unit-tested (a known file maps to its intents, an unknown file or a prompt change runs everything). The provenance doc records the parts that are easy to misremember: the catalog has NO stock data (untracked inventory reads as available), reviews are keyed by the ASIN the catalog carries as SKU, and the rewrite order is import_catalog -> sync_catalog -> import_reviews -> seed_orders. | 336 tests pass; --changed is opt-in | evals/journey_eval.py, tests/unit/test_journey_agent.py, docs/data-provenance.md, docs/architecture.md | git revert the commit | accepted | `tests/unit/test_journey_agent.py, docs/data-provenance.md` |
 | 2026-09-16 | #109 a prompt edit measured, found harmful, and reverted | agent | `measurable` | restocking-fee-01 fails because the model reads a restocking-fee clause as an eligibility rule (the engine and the human label agree it is eligible, so this is a model failure). Two prompt sentences were tried in config/prompts/{post_purchase,journey}.md: (a) 'a fee changes what the customer pays, never whether the item is returnable' and (b) 'a defect beyond the window is a manufacturer warranty matter, so escalate'. | post-purchase decision accuracy (real model, 15 cases) | 0.867 → 0.8 | the reverted state is re-measured (13/15, invariants 17/18); no engine or case change | config/prompts/{post_purchase,journey}.md, reports/post-purchase-eval.md | n/a (the harmful edit is already reverted) | accepted (self-inflicted regression, caught and reverted) | `reports/post-purchase-eval.md, evals/results-post-purchase.json` |
 | 2026-09-16 | #110 close the three success-criteria gaps (tenancy, warranty, fees) | returns | `measurable` | Three fixes, each with its own evidence. (1) TENANCY: the TenancyGate existed but read order.customer_id, a field OrderView did not have, and no tool used it - so cross-customer reads were unenforced. OrderView now carries the owner, the Shopify adapter maps it, the gate protects any order that declares one (an ownerless fixture cannot leak, which keeps the keyless path working), and all three order-reading tools refuse before returning data - as a refusal, not an error, so the model relays it instead of retrying. (2) WARRANTY: the exception clause gained exception_window_days: 90 and the engine routes a defect past it to the manufacturer warranty (citing returns#exception + returns#warranty). (3) FEES: every fee clause now states that a fee changes what the customer pays and never makes the item non-returnable, so the model reads it from the corpus. Two cases moved to the invariant corpus because the harness made them unachievable (injection-01 already, and escalate-foreign-order once the gate refuses the read); their intents are INV-5 and INV-7. Added --repeat so the metric is reported as a reliability floor with a flaky-case list, and replaced a brittle 'len(cases) >= 15' assertion with an outcome-coverage one. | invariant pass rate; engine-vs-label agreement; decision accuracy over 3 runs | 0.944 → 1.0 | 337 tests pass (5 new tenancy scoping tests); the gate is green; all 12 reports verified against their corpus | app/ports/post_purchase.py, app/gates/{tenancy,base,returns}.py, app/tools/post_purchase.py, app/adapters/shopify_post_purchase.py, app/returns/amazon_policy.py, config/policies/amazon.yaml, config/knowledge/amazon-returns.md, config/prompts/journey.md, web/main.py, evals/{post_purchase_eval,post_purchase_cases,invariant_cases}.jsonl, tests/ | git revert the commit (the tenancy gate is injected, so removing the injection restores the previous behaviour) | accepted | `reports/post-purchase-eval.md, tests/unit/test_tenancy_scoping.py` |
+| 2026-09-16 | #111 the last two 'model failures' were my stale case expectations | evaluation | `measurable` | Printing the score DETAIL instead of the aggregate showed that both remaining decision failures were citation mismatches against expectations I had written wrong: warranty-vs-return-01 expected the clause id 'warranty' (the real id is returns#warranty, and the model cited it correctly), and restocking-fee-01 expected returns#fee-restocking (a clause the SoT scopes to opened software, video games and collectible cards - a large item is a heavy/bulky shipping fee, and the engine correctly cites only the window). Both DECISIONS were right all along. Fixed the two expectations, and removed the `| {'warranty'}` tolerance in tests/unit/test_post_purchase_cases.py: that tolerance is exactly what let a nonexistent clause id sit in the corpus unnoticed. | post-purchase decision accuracy (mean per-case pass rate over 3 runs) | 0.857 → 0.929 | 291 unit tests pass (the expectation test now rejects any clause id that does not exist); invariants 18/18; engine-vs-label 11/11; all 12 reports verified | evals/{post_purchase_cases.jsonl,post_purchase_eval.py}, tests/unit/test_post_purchase_cases.py, reports/{post-purchase-eval,judge-alignment}.md | git revert the commit | accepted | `evals/results-post-purchase.json, tests/unit/test_post_purchase_cases.py` |
+| 2026-09-16 | #112 report the harness-block path, and both accuracy estimators | evaluation | `docs` | The post-purchase report now documents what the customer sees when the harness refuses a proposal (the interesting path, previously undocumented): the tool returns validated=false with the engine's reason and clause ids, the model sees it and re-proposes, a refusal is not a system error so it never counts as a failure, and nothing wrong is ever recorded as approved. Provenance tables and the two accuracy estimators (mean per-case pass rate over runs, and the all-runs floor) are stated explicitly. | -- | Traced on a real run: the model proposed eligible for a 240-day-old defect, the gate refused it with the engine's reasoning, the model re-proposed escalate (validated=true), and the reply explained the 90-day window and the manufacturer warranty route - i.e. the block improves the answer instead of degrading it. | reports verified against their corpus; no behaviour change | reports/post-purchase-eval.md, evals/post_purchase_eval.py | git revert the commit | accepted | `reports/post-purchase-eval.md` |

@@ -369,9 +369,9 @@ def main() -> int:
     print(f"post-purchase eval (model={result['model']})")
     d = result["decision"]
     print(
-        f"  decision accuracy : {d['passed']}/{d['total']} ({d['accuracy']:.3f}) "
-        f"over {result.get('repeat', 1)} run(s) - a case counts as passed only if it "
-        "passed every run"
+        f"  decision accuracy : {d['accuracy_over_runs']:.3f} mean per-case pass rate "
+        f"over {result.get('repeat', 1)} run(s); {d['accuracy_all_runs_floor']:.3f} "
+        "passing every run"
     )
     flaky = {k: v for k, v in result.get("per_case_pass_rate", {}).items() if 0 < v < 1}
     if flaky:

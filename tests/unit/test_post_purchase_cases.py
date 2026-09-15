@@ -34,7 +34,10 @@ def test_every_outcome_the_corpus_claims_to_measure_is_present() -> None:
 
 
 def test_policy_refs_resolve_to_real_clauses() -> None:
-    known = {clause.id for clause in POLICY.clauses()} | {"warranty"}
+    # No tolerance list: an expectation naming a clause that does not exist is a stale
+    # expectation, and the tolerance is what let one hide (it read "warranty" where the
+    # clause is "returns#warranty").
+    known = {clause.id for clause in POLICY.clauses()}
     for case in _cases():
         for ref in case.get("expected_policy_refs", []):
             assert ref in known, f"{case['case_id']} cites unknown clause {ref!r}"
