@@ -1471,6 +1471,22 @@
       "rollback": "git revert the commit (the code and the case file are unchanged)",
       "verdict": "accepted",
       "evidence": "reports/discovery-baseline.md, evals/results-discovery.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#95 make the cost meter report-only (in-app cap off by default)",
+      "area": "process",
+      "class": "docs",
+      "what": "The harness used to stop the loop at CNY 10 and the gate declared that cap as a guardrail. HR-12 already says the console-side hard limit is the deployment's responsibility, so the shipped configuration is now report-only: budget.enabled is false, the meter still records every call's usage and reports the running total, and the cap can be re-armed from config. Removed as a consequence: the cost:spent_cny guardrail (a cap that is not enforced cannot be a floor), its docs/report rows, the concurrency headroom machinery (it existed only to protect the cap), and the '\u00a5x / \u00a510' display in the CLI and the budget meter (a zero limit now renders as spend only).",
+      "metric": "--",
+      "before": null,
+      "after": null,
+      "note": "Behaviour change, deliberately recorded: the loop no longer halts on spend. The honest side effect kept: the meter still records, so the per-run cost_cny in every result file stays accurate - and the LLM listwise reranker (step A6) must record its usage too, or the reported cost would understate it. Docs updated: guardrails, scale, edge-cases, degradation, design, ui-conventions, invariants, RESULTS.",
+      "guardrails": "the other floors are unchanged (gold, adversarial, regressions, data quality, fallbacks, latency); 279 tests pass",
+      "blast_radius": "config/settings.yaml, app/ports/cost_meter.py, app/adapters/cost_meter.py, app/adapters/cli_sink.py, evals/{guardrails,journey_eval,post_purchase_eval}.py, scripts/check_results.py, frontend/src/components/app/budget-meter.tsx, docs/*",
+      "rollback": "set budget.enabled: true (the cap path is intact) or git revert the commit",
+      "verdict": "accepted",
+      "evidence": "docs/guardrails.md, config/settings.yaml"
     }
   ]
 }

@@ -15,7 +15,7 @@ and the gate enforces it.
 | Concurrent operations | 1 / 4 / 16 / 64 | `evals/scale.py` |
 | Ops per level | 64 | `evals/scale.py` |
 | Session length | 24 turns cap; **100 turns** measured | `agent.max_turns`, `evals/scale.py` |
-| Cost | ¥10 total cap | `data/budget.json` (HR-12) |
+| Cost | metered per run (no in-app cap by default) | `data/budget.json` (HR-12) |
 
 These are the **tested** dimensions. Larger catalogs and higher concurrency are an
 explicit, documented gap (see "Boundary" below).
@@ -30,7 +30,7 @@ explicit, documented gap (see "Boundary" below).
 | Large-catalog search | p95 ≤ **50000 µs** | SQLite storefront, 5,000 products |
 | Long-session | ≤ **5000 ms** | 100 turns, reconstructable log (SL-1) |
 | Error rate | **0.00** | failed ops / total |
-| Cost | **¥10.00** | harness-enforced (HR-12) |
+| Cost | per-run CNY reported | metered (HR-12); the hard limit is the deployment's |
 
 The latency budgets are **regression guards with large headroom**: the keyless
 stack measures in the tens of microseconds, so a breach means an order-of-magnitude

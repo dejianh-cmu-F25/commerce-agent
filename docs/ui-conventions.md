@@ -39,7 +39,7 @@ model (`submitted → streaming → ready/error`). Adopt selectively:
 - **Suggestion chips** — empty-state prompts that seed the first message.
 - **Prompt input** — auto-resize, Enter submits, Send disabled while in flight,
   a Stop button while streaming.
-- **Budget meter** — spend vs limit as a progress bar (HR-12).
+- **Budget meter** — model spend; a progress bar appears only when a cap is configured (HR-12).
 - **Error state** — inline message with Retry; never a silent failure.
 
 ## Layout & responsive constraints

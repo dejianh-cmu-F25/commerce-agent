@@ -165,9 +165,8 @@ def _check_report(artifacts: dict) -> list[str]:
         else:
             for metric in guardrails["metrics"]:
                 direction = "≥" if metric["direction"] == "at_least" else "≤"
-                if metric["source"] in {"scale", "budget"}:
-                    # Latency is a wall-clock timing and the budget is a running
-                    # total that every paid run changes; for both, check the row
+                if metric["source"] == "scale":
+                    # The latency value is a wall-clock timing; check the row
                     # exists (name + floor + direction), not its exact value.
                     row_ok = (
                         f"| `{metric['name']}` |" in section

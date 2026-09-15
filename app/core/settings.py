@@ -43,6 +43,9 @@ class EmbeddingSettings(BaseModel):
     dimensions: int = 256
     base_url: str = ""
     api_key: str = ""
+    # Vectors are cached by text so re-indexing a catalog (or re-running a
+    # benchmark) does not pay for the same embedding twice.
+    cache_path: str = "./data/embeddings.sqlite"
 
 
 class VectorStoreSettings(BaseModel):
@@ -128,6 +131,22 @@ class StorefrontSettings(BaseModel):
     seed_orders: bool = True
 
 
+class CatalogSettings(BaseModel):
+    """Local discovery retrieval (feature 046 step A).
+
+    The live catalog is searched from a local index (``scripts/sync_catalog.py``).
+    ``tfidf`` is keyless (P8); ``hybrid`` fuses it with a real embedding, which
+    needs ``embedding.provider`` to be a real provider.
+    """
+
+    provider: Literal["tfidf", "hybrid"] = "tfidf"
+    index_path: str = "./data/discovery/products.json"
+    collection_name: str = "catalog"
+    # Widen the retrieval window before mapping ids to live products, so a product
+    # that has left the shop does not silently shrink the result set.
+    overfetch: int = 4
+
+
 class ShopifySettings(BaseModel):
     # Real post-purchase system of record (feature 045). Empty = keyless fixture.
     shop: str = ""  # e.g. my-store.myshopify.com
@@ -196,6 +215,7 @@ class Settings(BaseModel):
     budget: BudgetSettings = Field(default_factory=BudgetSettings)
     web: WebSettings = Field(default_factory=WebSettings)
     storefront: StorefrontSettings = Field(default_factory=StorefrontSettings)
+    catalog: CatalogSettings = Field(default_factory=CatalogSettings)
     session: SessionSettings = Field(default_factory=SessionSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
     reviews: ReviewsSettings = Field(default_factory=ReviewsSettings)
@@ -248,6 +268,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
+    "CATALOG_PROVIDER": ("catalog", "provider", str),
+    "CATALOG_INDEX_PATH": ("catalog", "index_path", str),
     "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
     "KNOWLEDGE_PATH": ("knowledge", "path", str),
     "REVIEWS_PATH": ("reviews", "path", str),

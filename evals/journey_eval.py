@@ -24,18 +24,16 @@ import json
 import re
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from app.core.session import ToolResultEvent
 from app.core.settings import load_settings
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "evals" / "results-journey.json"
-# Budget reserved per in-flight case: the loop checks the cap once per turn, so
-# N concurrent turns need N x (cost of a turn) of headroom for the cap to hold.
-HEADROOM_PER_TURN_CNY = 0.02
 REPORT = ROOT / "reports" / "journey-eval.md"
 ORDERS = [f"#{n}" for n in range(1006, 1012)]
 
@@ -135,6 +133,24 @@ class Case:
     expect_tools: tuple[str, ...] = ()
     turns: tuple[str, ...] = ()  # multi-turn: run all on one session
     weak: bool = False  # weak signal (no verifiable ground truth, e.g. non-English)
+    max_price: float | None = None  # stated budget the answer must respect
+
+
+# The stated budget in a query, in the phrasings the corpus uses.
+_BUDGET_PATTERNS = (
+    re.compile(r"under\s*\$(\d+(?:\.\d+)?)", re.I),
+    re.compile(r"less than\s*\$?(\d+(?:\.\d+)?)", re.I),
+    re.compile(r"menos de\s*\$?(\d+(?:\.\d+)?)", re.I),
+    re.compile(r"(\d+(?:\.\d+)?)\s*美元以内"),
+)
+
+
+def _budget(message: str) -> float | None:
+    for pattern in _BUDGET_PATTERNS:
+        match = pattern.search(message)
+        if match:
+            return float(match.group(1))
+    return None
 
 
 # Non-English *intents* (not off-topic): the agent should still act.
@@ -222,6 +238,7 @@ class Outcome:
     reason: str
     error: bool
     final_text: str = ""
+    search_results: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -238,7 +255,15 @@ def build_cases(titles: list[str]) -> list[Case]:
     """~124 cases. Cart cases use **real product titles** so a match exists."""
     cases: list[Case] = []
     for index, query in enumerate(DISCOVERY, 1):
-        cases.append(Case(f"discovery-{index:02d}", "discovery", query, ("search_products",)))
+        cases.append(
+            Case(
+                f"discovery-{index:02d}",
+                "discovery",
+                query,
+                ("search_products",),
+                max_price=_budget(query),
+            )
+        )
     for index in range(20):
         title = titles[index % len(titles)] if titles else DISCOVERY[index % len(DISCOVERY)]
         cases.append(Case(f"cart-{index:02d}", "cart", f"add {title} to my cart", ("add_to_cart",)))
@@ -365,12 +390,40 @@ async def _run_case(case: Case, agent: Any, session_id: str) -> Outcome:
     final_text = next(
         (e.text for e in reversed(session.events) if isinstance(e, AssistantMessage)), ""
     )
+    search_results: list[dict] = []
+    for event in session.events:
+        if isinstance(event, ToolResultEvent) and event.name == "search_products":
+            try:
+                search_results.append(json.loads(event.content))
+            except json.JSONDecodeError:
+                continue
     return Outcome(
-        case.case_id, case.intent, tuple(sink.tool_calls), sink.reason, sink.error, final_text
+        case.case_id,
+        case.intent,
+        tuple(sink.tool_calls),
+        sink.reason,
+        sink.error,
+        final_text,
+        search_results,
     )
 
 
 def _score(case: Case, outcome: Outcome) -> Score:
+    if case.max_price is not None:
+        # A stated budget must be respected by what the tool actually returned,
+        # not merely by the tool-call list (which is all this set used to check).
+        over = [
+            item
+            for payload in outcome.search_results
+            for item in payload.get("results", [])
+            if float(item.get("price", 0)) > case.max_price
+        ]
+        if over:
+            return Score(
+                case.case_id,
+                False,
+                f"{len(over)} result(s) over the stated budget {case.max_price}",
+            )
     if case.intent == "clarify":
         # Ambiguous request (e.g. a return with no reason): ask, do not act.
         acted = "propose_return_decision" in outcome.tool_calls
@@ -424,10 +477,8 @@ async def run(
     if only:
         wanted = {name.strip() for name in only.split(",") if name.strip()}
         cases = [case for case in cases if case.intent in wanted]
-    # Reserve budget for the turns that can be in flight at once, so the cap still
-    # holds when many cases start before any of them is accounted for.
+    # Report-only meter (the in-app cap is off, HR-12 leaves it to the deployment).
     meter = UsageCostMeter(settings.budget)
-    meter.set_headroom(concurrency * HEADROOM_PER_TURN_CNY)
     agent = build_agent(settings, llm=llm, cost_meter=meter)
 
     progress = ROOT / "data" / "journey_eval_progress.json"

@@ -101,7 +101,7 @@ counter-example, how it is enforced, and how it is measured. The cases live in
   ends gracefully within the budget.
 - **Counter-example:** the model keeps retrying a failing tool until the process
   is killed.
-- **Enforced by:** `agent.max_turns`, the cost meter (HR-12).
+- **Enforced by:** `agent.max_turns`; the cost meter records spend (a cap is opt-in, HR-12).
 - **Tested by:** `INV-8` cases.
 - **Metric:** `invariant_pass_rate[INV-8]` (assert: turn count within bound).
 

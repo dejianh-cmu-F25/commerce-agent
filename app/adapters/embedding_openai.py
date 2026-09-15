@@ -12,6 +12,10 @@ from typing import Any
 
 from openai import OpenAI
 
+# The API rejects an `input` array longer than 2048 items (and caps request size),
+# so a caller embedding a whole catalog must be batched here, not by luck.
+MAX_BATCH = 256
+
 
 class OpenAIEmbeddingProvider:
     def __init__(
@@ -28,5 +32,9 @@ class OpenAIEmbeddingProvider:
     def embed(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        response = self._client.embeddings.create(model=self._model, input=texts)
-        return [list(item.embedding) for item in response.data]
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), MAX_BATCH):
+            batch = texts[start : start + MAX_BATCH]
+            response = self._client.embeddings.create(model=self._model, input=batch)
+            vectors.extend(list(item.embedding) for item in response.data)
+        return vectors

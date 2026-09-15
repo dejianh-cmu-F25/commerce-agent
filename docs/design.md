@@ -45,7 +45,7 @@ notices. One harness, many workflows.
 | 4 | **Policy as versioned, citable clauses** | The most common real failure is citing a superseded policy. Clauses with `effective_from` make version conflicts a first-class, testable case. |
 | 5 | **Decision eval, human-labeled, with citation support** | The model's *judgment* is the load-bearing part; it must be measured, not asserted. |
 | 6 | **Keyless default, real model opt-in** | Reproducible without a key (P8) and still able to produce real evidence on a budget. |
-| 7 | **Budget enforced in the harness** | Runaway loops are a top production failure; a hard cap is cheap insurance. |
+| 7 | **Spend metered, cap configurable** | Runaway loops are a top production failure, so every call's usage is recorded and reported; the *hard* limit belongs to the deployment (HR-12), where a provider-side cap actually bites. |
 
 ## Alternatives rejected
 

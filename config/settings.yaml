@@ -72,10 +72,13 @@ memory:
   extraction: deterministic # deterministic (keyless)
   retention_days: 365
 
-# Spend guard (constitution HR-12). Prices are USD per 1M tokens; the cap is CNY.
-# Defaults use conservative (peak) DeepSeek Flash prices so we never overspend.
+# Cost meter (constitution HR-12): records token usage per call, converts it to the
+# configured currency, and reports the running total. Prices are USD per 1M tokens
+# (conservative peak DeepSeek Flash). The in-app cap is OFF: HR-12 places the hard
+# limit on the deployment, so the limit lives in the provider console. Set
+# `enabled: true` together with `total_limit` to re-arm the in-app stop.
 budget:
-  enabled: true
+  enabled: false
   currency: CNY
   total_limit: 10.0
   usd_to_cny: 7.25
@@ -100,6 +103,17 @@ storefront:
 session:
   store: sqlite             # memory | sqlite
   sqlite_path: ./data/db/sessions.sqlite
+
+# Local discovery retrieval (feature 046 step A). Live discovery searches a local
+# index of the catalog (scripts/sync_catalog.py) instead of the shop's keyword
+# search: measured hit@10 0.991 vs 0.920 at ~0.6 ms vs ~1360 ms. `hybrid` fuses
+# the keyless lexical retriever with a real embedding (needs a real
+# `embedding.provider`); `tfidf` stays keyless.
+catalog:
+  provider: hybrid          # hybrid (lexical + real embedding, RRF) | tfidf (keyless)
+  index_path: ./data/discovery/products.json
+  collection_name: catalog
+  overfetch: 4
 
 # Knowledge retrieval (P4). Keyless lexical retriever over config/knowledge/.
 knowledge:

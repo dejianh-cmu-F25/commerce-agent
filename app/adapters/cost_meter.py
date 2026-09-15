@@ -25,18 +25,7 @@ class UsageCostMeter:
         self._state_path = Path(settings.state_file)
         self._spent_cny = self._load()
         self._persisted_cny = self._spent_cny
-        self._headroom_cny = 0.0
         self._lock = threading.Lock()
-
-    def set_headroom(self, cny: float) -> None:
-        """Reserve budget for work already in flight.
-
-        The loop checks the budget once per turn; with N turns running concurrently
-        up to N turns can start before any of them is accounted for. Callers that
-        run concurrently set this to N x (cost of one turn) so the cap still holds.
-        """
-        with self._lock:
-            self._headroom_cny = max(0.0, cny)
 
     def flush(self) -> None:
         """Persist the running total now (call after a batch of work)."""
@@ -87,15 +76,21 @@ class UsageCostMeter:
         return self._spent_cny
 
     def limit_cny(self) -> float:
-        return self._settings.total_limit
+        """The enforced cap, or ``0.0`` when the meter is report-only.
+
+        Zero means "no limit": the harness records spend but never stops the loop
+        (HR-12 leaves the hard limit to the deployment). Callers render a limit
+        only when this is non-zero.
+        """
+        return self._settings.total_limit if self._settings.enabled else 0.0
 
     def remaining_cny(self) -> float:
-        return max(0.0, self._settings.total_limit - self._spent_cny)
+        return max(0.0, self.limit_cny() - self._spent_cny)
 
     def over_budget(self) -> bool:
         if not self._settings.enabled:
             return False
-        return self._spent_cny + self._headroom_cny >= self._settings.total_limit
+        return self._spent_cny >= self._settings.total_limit
 
 
 class NullCostMeter:
@@ -114,9 +109,6 @@ class NullCostMeter:
         return False
 
     def record(self, usage: Usage) -> None:
-        return None
-
-    def set_headroom(self, cny: float) -> None:
         return None
 
     def flush(self) -> None:

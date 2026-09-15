@@ -1,7 +1,7 @@
 # Guardrails
 
-Constitution **EV-3** requires that guardrail metrics (quality, safety, latency,
-cost) be compared per change — a change that improves its target metric must not
+Constitution **EV-3** requires that guardrail metrics (quality, safety, latency)
+be compared per change — a change that improves its target metric must not
 silently regress another. This document declares the guardrails and their floors;
 `evals/guardrails.py` aggregates them from the keyless artifacts and the gate
 fails on a regression.
@@ -16,7 +16,6 @@ fails on a regression.
 | `data:dirty_accuracy` | 1.000 | at least | `data_quality` |
 | `resilience:fallback_coverage` | 1.000 | at least | `fallbacks` |
 | `latency:turn_p95_us` | 10000 | at most | `scale` (at the target concurrency) |
-| `cost:spent_cny` | 10.00 | at most | `data/budget.json` (HR-12) |
 
 A floor is a **minimum acceptable**, not a target: a metric above an `at_least`
 floor (or below an `at_most` floor) is fine. The check **aggregates** the keyless

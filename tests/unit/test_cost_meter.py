@@ -50,16 +50,19 @@ def test_reload_resumes_the_saved_total(tmp_path):
     assert second.spent_cny() == first.spent_cny()
 
 
-def test_headroom_makes_over_budget_conservative(tmp_path):
-    meter = UsageCostMeter(_settings(tmp_path, total_limit=1.0))
-    assert not meter.over_budget()
-    meter.set_headroom(1.5)
-    assert meter.over_budget()
-    meter.set_headroom(0.0)
-    assert not meter.over_budget()
-
-
-def test_disabled_budget_never_overspends_the_guard(tmp_path):
-    meter = UsageCostMeter(_settings(tmp_path, enabled=False, total_limit=0.0))
+def test_a_disabled_cap_reports_no_limit_and_never_stops_the_loop(tmp_path):
+    """The shipped default: record spend, enforce nothing (HR-12 puts the hard limit
+    on the deployment, so the provider console owns it)."""
+    meter = UsageCostMeter(_settings(tmp_path, enabled=False, total_limit=10.0))
     meter.record(_usage())
+    assert meter.spent_cny() > 0
+    assert meter.limit_cny() == 0.0
+    assert meter.remaining_cny() == 0.0
     assert not meter.over_budget()
+
+
+def test_an_enabled_cap_is_enforced_again(tmp_path):
+    meter = UsageCostMeter(_settings(tmp_path, enabled=True, total_limit=0.001))
+    assert meter.limit_cny() == 0.001
+    meter.record(_usage())
+    assert meter.over_budget()

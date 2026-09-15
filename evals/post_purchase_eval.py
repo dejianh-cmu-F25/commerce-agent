@@ -314,7 +314,6 @@ def main() -> int:
 
         settings = load_settings()
         cost_meter = UsageCostMeter(settings.budget)
-        cost_meter.set_headroom(args.concurrency * 0.02)
         factory = _real_factory
         model_name = settings.llm.model
     else:

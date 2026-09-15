@@ -19,9 +19,15 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from app.adapters.acp_checkout import AcpCheckout
+from app.adapters.catalog_index import (
+    CatalogIndex,
+    LocalSearchCatalog,
+    load_snapshot,
+)
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
+from app.adapters.embedding_cache import CachedEmbeddingProvider
 from app.adapters.embedding_hash import HashEmbeddingProvider
 from app.adapters.embedding_openai import OpenAIEmbeddingProvider
 from app.adapters.memory_memory import InMemoryMemoryStore
@@ -30,6 +36,7 @@ from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.post_purchase_memory import InMemoryPostPurchase
 from app.adapters.retriever_dense import DenseRetriever
+from app.adapters.retriever_hybrid import HybridRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.reviews_sqlite import SqliteReviewStore
 from app.adapters.session_memory import InMemorySessionStore
@@ -48,7 +55,7 @@ from app.core.metrics import summarize
 from app.core.prompts import load_prompt
 from app.core.resilience import FallbackLLM, FallbackRetriever
 from app.core.session import derive_messages
-from app.core.settings import Settings, load_settings
+from app.core.settings import Settings, SettingsError, load_settings
 from app.core.types import Message
 from app.gates.policy import PolicyGate
 from app.knowledge.ingest import load_chunks
@@ -61,6 +68,7 @@ from app.ports.retriever import Retriever
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
+from app.ports.vector_store import VectorStore
 from app.returns.amazon_policy import load_amazon_policy
 from app.skills.loader import SkillLibrary, load_skills
 from app.tools.cart import register_cart_tools
@@ -135,16 +143,67 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
     )
 
 
-def build_catalog(settings: Settings):
+def build_catalog_index(settings: Settings) -> CatalogIndex | None:
+    """Build the local discovery index from the synced snapshot (feature 046 step A).
+
+    Returns ``None`` when no snapshot exists, so the caller can tell "not synced"
+    apart from "synced but empty".
+    """
+    products = load_snapshot(settings.catalog.index_path)
+    if not products:
+        return None
+    sparse = InMemoryRetriever()
+    if settings.catalog.provider == "tfidf":
+        return CatalogIndex(sparse, products)
+
+    if settings.vector_store.provider == "memory":
+        store: VectorStore = InMemoryVectorStore()
+    else:
+        # Its own collection, labelled by the embedding it holds: Chroma fixes a
+        # collection's dimension, so switching providers must NOT reuse the name
+        # (and must not collide with the knowledge collection either).
+        label = (
+            f"{settings.embedding.provider}-{settings.embedding.dimensions}"
+            if settings.embedding.provider in ("hash", "mock")
+            else f"{settings.embedding.provider}-{settings.embedding.model}"
+        )
+        store = ChromaVectorStore(
+            settings.vector_store.persist_directory,
+            f"{settings.catalog.collection_name}-{label}",
+        )
+    embedding = build_embedding(settings)
+    if settings.embedding.cache_path:
+        embedding = CachedEmbeddingProvider(embedding, Path(settings.embedding.cache_path))
+    hybrid = HybridRetriever(
+        sparse,
+        DenseRetriever(embedding, store),
+        rrf_k=settings.retrieval.rrf_k,
+        candidate_k=settings.retrieval.dense_top_k,
+    )
+    # Dense retrieval degrades to the keyless lexical retriever on an outage (RD-1).
+    if settings.resilience.fallback_enabled:
+        return CatalogIndex(FallbackRetriever(hybrid, InMemoryRetriever()), products)
+    return CatalogIndex(hybrid, products)
+
+
+def build_catalog(settings: Settings) -> StorefrontBackend:
     """Resolve the product catalog (PB-1). Shopify when configured, else the storefront.
 
-    The catalog is the source of truth for prices; discovery and the cart share it
-    so a product added to the cart resolves to the same id that search returned.
+    Discovery searches a **local index** of the catalog; prices and stock still come
+    from the shop, so the index cannot serve a stale fact. A configured shop with no
+    index fails loud rather than silently answering from nothing.
     """
     if settings.shopify.shop and settings.shopify.access_token:
-        return ShopifyCatalog(
+        live = ShopifyCatalog(
             settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
         )
+        index = build_catalog_index(settings)
+        if index is None:
+            raise SettingsError(
+                "catalog index is missing; run `uv run python scripts/sync_catalog.py` "
+                f"(expected {settings.catalog.index_path})"
+            )
+        return LocalSearchCatalog(live, index, overfetch=settings.catalog.overfetch)
     return build_storefront(settings)
 
 
