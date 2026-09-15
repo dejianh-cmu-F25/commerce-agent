@@ -33,7 +33,7 @@ RESULTS = ROOT / "evals" / "results-esci.json"
 GAINS = {"Exact": 1.0, "Substitute": 0.1, "Complement": 0.01, "Irrelevant": 0.0}
 K = 10
 DIMS = 256
-CONFIGS = ["tfidf", "dense-hash", "dense-openai", "hybrid-openai"]
+CONFIGS = ["tfidf", "bm25", "dense-openai", "hybrid-openai", "hybrid-bm25"]
 EMBEDDING_CACHE = ROOT / "data" / "embeddings.sqlite"
 BASE = "https://huggingface.co/datasets/tasksource/esci/resolve/main/data"
 SHARDS = [
@@ -128,7 +128,7 @@ def _embedding(kind: str):
     """One embedding provider per retriever kind (cached on disk for re-runs)."""
     from app.adapters.embedding_hash import HashEmbeddingProvider
 
-    if kind == "tfidf":
+    if kind in ("tfidf", "bm25"):
         return None
     if kind == "dense-hash":
         return HashEmbeddingProvider(DIMS)
@@ -148,17 +148,21 @@ def _embedding(kind: str):
 
 
 def _retriever(config: str, embedding):
+    from app.adapters.retriever_bm25 import Bm25Retriever
     from app.adapters.retriever_dense import DenseRetriever
     from app.adapters.retriever_hybrid import HybridRetriever
     from app.adapters.retriever_memory import InMemoryRetriever
     from app.adapters.vector_memory import InMemoryVectorStore
 
     kind, weights = parse_config(config)
+    if kind == "bm25":
+        return Bm25Retriever()
+    sparse = Bm25Retriever() if kind == "hybrid-bm25" else InMemoryRetriever()
     if kind == "tfidf":
-        return InMemoryRetriever()
+        return sparse
     dense = DenseRetriever(embedding, InMemoryVectorStore())
     if kind.startswith("hybrid"):
-        return HybridRetriever(InMemoryRetriever(), dense, weights=weights or (1.0, 1.0))
+        return HybridRetriever(sparse, dense, weights=weights or (1.0, 1.0))
     return dense
 
 

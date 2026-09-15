@@ -153,7 +153,12 @@ def build_catalog_index(settings: Settings) -> CatalogIndex | None:
     products = load_snapshot(settings.catalog.index_path)
     if not products:
         return None
-    sparse = InMemoryRetriever()
+    if settings.retrieval.sparse == "bm25":
+        from app.adapters.retriever_bm25 import Bm25Retriever
+
+        sparse: Retriever = Bm25Retriever()
+    else:
+        sparse = InMemoryRetriever()
     if settings.catalog.provider == "tfidf":
         return CatalogIndex(sparse, products)
 

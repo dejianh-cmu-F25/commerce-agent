@@ -46,11 +46,11 @@ def _document(product: dict) -> str:
 def _embedding(config: str):
     from app.adapters.embedding_hash import HashEmbeddingProvider
 
-    if config == "tfidf":
+    if config in ("tfidf", "bm25"):
         return None
     if config == "dense-hash":
         return HashEmbeddingProvider(DIMS)
-    if config in ("dense-openai", "hybrid-openai"):
+    if config in ("dense-openai", "hybrid-openai", "hybrid-bm25"):
         from app.adapters.embedding_cache import CachedEmbeddingProvider
         from app.adapters.embedding_openai import OpenAIEmbeddingProvider
         from app.core.settings import load_settings
@@ -66,6 +66,7 @@ def _embedding(config: str):
 
 
 def _local_retriever(config: str, products: list[dict]):
+    from app.adapters.retriever_bm25 import Bm25Retriever
     from app.adapters.retriever_dense import DenseRetriever
     from app.adapters.retriever_hybrid import HybridRetriever
     from app.adapters.retriever_memory import InMemoryRetriever
@@ -74,14 +75,15 @@ def _local_retriever(config: str, products: list[dict]):
     from evals.retriever_configs import parse_config
 
     kind, weights = parse_config(config)
-    if kind == "tfidf":
-        retriever = InMemoryRetriever()
+    sparse = Bm25Retriever() if kind in ("bm25", "hybrid-bm25") else InMemoryRetriever()
+    if kind in ("tfidf", "bm25"):
+        retriever = sparse
     else:
         embedding = _embedding(kind)
         assert embedding is not None
         dense = DenseRetriever(embedding, InMemoryVectorStore())
         if kind.startswith("hybrid"):
-            retriever = HybridRetriever(InMemoryRetriever(), dense, weights=weights or (1.0, 1.0))
+            retriever = HybridRetriever(sparse, dense, weights=weights or (1.0, 1.0))
         else:
             retriever = dense
     retriever.add([Chunk(id=p["id"], text=_document(p), source=p["id"]) for p in products])
@@ -142,7 +144,7 @@ def main() -> int:
 
     cases, products = _load()
     result: dict = {"k": K, "cases": len(cases), "configs": {}}
-    for config in ("tfidf", "dense-openai", "hybrid-openai"):
+    for config in ("tfidf", "bm25", "dense-openai", "hybrid-openai", "hybrid-bm25"):
         retriever = _local_retriever(config, products)
         result["configs"][config] = _evaluate(
             cases, lambda query, limit, r=retriever: [h.id for h in r.retrieve(query, limit)]

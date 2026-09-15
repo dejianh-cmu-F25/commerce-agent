@@ -1535,6 +1535,22 @@
       "rollback": "RERANK_ENABLED stays false by default; git revert the commit removes the adapter",
       "verdict": "deferred (measured, off by default)",
       "evidence": "reports/discovery-rerank.md, tests/unit/test_rerank_llm.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#99 A8 measure BM25 as the lexical leg (kept TF-IDF)",
+      "area": "retrieval",
+      "class": "measurable",
+      "what": "BM25 is the default lexical scorer everywhere, so it was measured as a drop-in replacement rather than assumed. Added app/adapters/retriever_bm25.py (Okapi BM25 with term-frequency saturation and length normalisation, same Retriever contract, idempotent by id), left retriever_memory.py untouched so the TF-IDF baseline stays reproducible, made the sparse leg configurable (retrieval.sparse: tfidf|bm25, used by build_catalog_index), and added bm25 / hybrid-bm25 as first-class configs in both benchmarks.",
+      "metric": "rule-set hit@10 / recall@10 / MRR (216 cases)",
+      "before": 0.991,
+      "after": 0.968,
+      "note": "BM25 is NOT automatically better: it loses hit@10 (0.991 -> 0.968) and recall@10 (0.817 -> 0.804) while WINNING MRR (0.820 -> 0.856). The recall loss is concentrated in the two rules with several valid answers (colour 1.000 -> 0.946, category_price 0.931 -> 0.862), i.e. saturation and length normalisation help ranking but cost coverage on this corpus. The corpus explains it: our documents are short and near-uniform (title + vendor + type + tags), the regime where length normalisation has least to correct. hybrid-bm25 is likewise behind hybrid-openai (0.972 vs 0.986). So the shipped sparse leg stays tfidf; the swap is one config line.",
+      "guardrails": "301 tests pass (5 new BM25 tests incl. saturation, length normalisation and the idempotence contract); keyless gate green",
+      "blast_radius": "app/adapters/retriever_bm25.py, app/core/settings.py, web/main.py, evals/{bench_discovery,esci_bench}.py",
+      "rollback": "retrieval.sparse defaults to tfidf; git revert the commit removes the adapter",
+      "verdict": "accepted (negative result: kept the incumbent)",
+      "evidence": "reports/discovery-bm25.md, tests/unit/test_bm25_retriever.py"
     }
   ]
 }

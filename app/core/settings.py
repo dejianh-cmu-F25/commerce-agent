@@ -59,6 +59,9 @@ class RetrievalSettings(BaseModel):
     sparse_top_k: int = 20
     fusion_top_k: int = 10
     rrf_k: int = 60
+    # The lexical leg of a hybrid: `tfidf` (shipped) or `bm25` (saturating, length
+    # normalised). Measured, not assumed - see reports/discovery-bm25.md.
+    sparse: Literal["tfidf", "bm25"] = "tfidf"
     # RRF weights (sparse, dense). Equal weights let the weaker retriever drag the
     # fused ranking down, so these are tuned on a held-out split of the rule set
     # (evals/tune_rrf.py) rather than guessed.
