@@ -26,11 +26,17 @@ class PolicyGate:
         )
         detail = "; ".join(decision.reasons) or decision.decision
         cited = f" [{' '.join(decision.cited_clauses)}]" if decision.cited_clauses else ""
-        if context.proposed and context.proposed != decision.decision:
-            return GateResult.block(
-                f"proposal {context.proposed!r} contradicts the policy "
-                f"({decision.decision!r}): {detail}{cited}"
-            )
+        clauses = tuple(decision.cited_clauses)
+        if context.proposed:
+            # Validating a *proposal*: it passes when it agrees with the engine.
+            # An "ineligible" verdict is a correct answer, not a refused action.
+            if context.proposed != decision.decision:
+                return GateResult.block(
+                    f"proposal {context.proposed!r} contradicts the policy "
+                    f"({decision.decision!r}): {detail}{cited}",
+                    clauses,
+                )
+            return GateResult.allow(clauses)
         if decision.decision == ELIGIBLE:
-            return GateResult.allow()
-        return GateResult.block(f"{decision.decision}: {detail}{cited}")
+            return GateResult.allow(clauses)
+        return GateResult.block(f"{decision.decision}: {detail}{cited}", clauses)

@@ -1359,6 +1359,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "evals/results-journey.json, evals/synth_cases.jsonl"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#87 046 fix policy gate semantics + authoritative citations",
+      "area": "returns",
+      "class": "measurable",
+      "what": "Three linked defects found while auditing the eval: (1) proposals carried cited_clauses=[] because the model is not asked for them, so the harness's citation check always failed; (2) PolicyGate blocked EVERY non-eligible decision, so a correct `ineligible` answer was returned as an error; (3) the eval did not wire the policy gate or pin the clock, so window math ran against the wall clock (207 days) instead of the fixtures. Fixes: GateResult carries cited_clauses; PolicyGate passes when a proposal matches the engine (an `ineligible` verdict is a correct answer, not a refused action); register_post_purchase_tools accepts `now`; propose_return_decision attaches the engine-authored clause ids; the eval wires PolicyGate(POLICY) with now=EVAL_NOW.",
+      "metric": "real-model post-purchase decision accuracy (16 labeled cases, citations required)",
+      "before": 0.062,
+      "after": 0.812,
+      "note": "Before the fix the real model scored 1/16 because a correct decision was recorded with no citations and the fixture window was measured against the wall clock; the three remaining failures (restocking-fee-01, warranty-vs-return-01, injection-01) are known policy/scope gaps, not harness bugs. The keyless `scripted` run stays 1/16 by design: it makes no tool calls.",
+      "guardrails": "invariant pass 16/17 (INV-7 foreign-order still fails), no-fail 1.000, 261 tests pass",
+      "blast_radius": "app/gates/{base,policy}.py, app/tools/post_purchase.py, evals/post_purchase_eval.py, evals/results-post-purchase.json",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "evals/results-post-purchase.json"
     }
   ]
 }

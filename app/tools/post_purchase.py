@@ -7,6 +7,8 @@ proposal against the order and the policy. Nothing here approves or refunds (P3)
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import json
 from typing import Any
 
@@ -114,12 +116,14 @@ def register_post_purchase_tools(
     backend: PostPurchaseBackend,
     *,
     policy_gate: PolicyGate | None = None,
+    now: datetime | None = None,
 ) -> None:
     """Register the read tools and the (side-effect-free) proposal tool.
 
     When ``policy_gate`` is provided, every proposal is validated against the
     policy SoT at runtime (P3); a proposal that contradicts the policy is rejected
-    with ``validated=false`` rather than silently recorded.
+    with ``validated=false`` rather than silently recorded. ``now`` pins the clock
+    for deterministic evaluations; production leaves it ``None`` (wall clock).
     """
 
     async def get_order_status(arguments: dict[str, Any], session: Session) -> ToolResult:
@@ -174,8 +178,13 @@ def register_post_purchase_tools(
                 tags=tags,
             )
             verdict = policy_gate.check(
-                GateContext(session=session, facts=facts, proposed=decision)
+                GateContext(session=session, facts=facts, proposed=decision, now=now)
             )
+            # The gate re-derives the decision from the policy SoT; its clause ids are
+            # authoritative, so the proposal cites the harness's clauses, not the
+            # model's recollection (model proposes, harness disposes).
+            if verdict.cited_clauses:
+                record["cited_clauses"] = list(verdict.cited_clauses)
             if not verdict.allowed:
                 return ToolResult(
                     content=json.dumps({**record, "validated": False, "policy": verdict.reason}),

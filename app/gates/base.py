@@ -19,14 +19,15 @@ from app.returns.amazon_policy import ReturnFacts
 class GateResult:
     allowed: bool
     reason: str = ""
+    cited_clauses: tuple[str, ...] = ()
 
     @classmethod
-    def allow(cls) -> GateResult:
-        return cls(True)
+    def allow(cls, cited_clauses: tuple[str, ...] = ()) -> GateResult:
+        return cls(True, "", cited_clauses)
 
     @classmethod
-    def block(cls, reason: str) -> GateResult:
-        return cls(False, reason)
+    def block(cls, reason: str, cited_clauses: tuple[str, ...] = ()) -> GateResult:
+        return cls(False, reason, cited_clauses)
 
 
 @dataclass
