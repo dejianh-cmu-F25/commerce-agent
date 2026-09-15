@@ -80,21 +80,21 @@ versions:
 
       - id: returns#fee-late
         category: fees
-        paraphrase: "A late fee may apply if the item is not dropped off by the return-by date: 20% of the item price for the first 30 days after, then 100%."
+        paraphrase: "A late fee may apply if the item is not dropped off by the return-by date: 20% of the item price for the first 30 days after, then 100%. A fee is what the customer pays on the return; it never makes the item non-returnable"
         rules:
           late_fee_pct_first_30d: 20
           late_fee_pct_after_30d: 100
 
       - id: returns#fee-damage
         category: fees
-        paraphrase: "A damage fee of up to 50% of the item price may apply if the item is damaged, missing parts, or not in original condition (100% for Luxury items)."
+        paraphrase: "A damage fee of up to 50% of the item price may apply if the item is damaged, missing parts, or not in original condition (100% for Luxury items). A fee is what the customer pays on the return; it never makes the item non-returnable"
         rules:
           damage_fee_pct_max: 50
           damage_fee_pct_luxury: 100
 
       - id: returns#fee-restocking
         category: fees
-        paraphrase: "A 100% restocking fee applies to opened, activated, or incomplete software, video games, and collectible cards."
+        paraphrase: "A 100% restocking fee applies to opened, activated, or incomplete software, video games, and collectible cards. A fee is what the customer pays on the return; it never makes the item non-returnable"
         rules:
           restocking_fee_pct: 100
           restocking_categories:
@@ -104,17 +104,20 @@ versions:
 
       - id: returns#exception
         category: all
-        paraphrase: "A non-returnable or Final Sale item that arrives damaged, defective, or materially different is handled by Customer Service."
+        paraphrase: "A non-returnable or Final Sale item that arrives damaged, defective, or materially different is handled by Customer Service. Within the exception window the item is returnable; past it the manufacturer's warranty applies instead of a return."
         rules:
           exception_reasons:
             - damaged
             - defective
             - wrong_item
             - missing
+          # Beyond this, a defect is a manufacturer warranty matter rather than a
+          # return. Set from the labelled cases (90 days eligible, 240 escalate).
+          exception_window_days: 90
 
       - id: returns#heavy-bulky
         category: shipping
-        paraphrase: "Heavy/bulky items (>= 50 lb, longest side > 59 in, or girth > 130 in) may incur a variable return shipping fee."
+        paraphrase: "Heavy/bulky items (>= 50 lb, longest side > 59 in, or girth > 130 in) may incur a variable return shipping fee. A fee is what the customer pays on the return; it never makes the item non-returnable"
         rules:
           heavy_bulky:
             weight_lb: 50
@@ -177,3 +180,6 @@ versions:
             - defective
             - wrong_item
             - missing
+          # Beyond this, a defect is a manufacturer warranty matter rather than a
+          # return. Set from the labelled cases (90 days eligible, 240 escalate).
+          exception_window_days: 90

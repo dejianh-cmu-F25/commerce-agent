@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=c5857eff9771 -->
+<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=5e31d7e3d4d0 -->
 
 # Evaluation report
 
@@ -16,9 +16,9 @@ Queries: 17 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 
 | Config | hit-rate@3 | recall@3 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
-| `tfidf` | 1.000 | 1.000 | 0.843 | 0.0 |
-| `dense-hash` | 0.941 | 0.941 | 0.843 | 0.2 |
-| `dense-chroma` | 0.941 | 0.941 | 0.843 | 0.3 |
+| `tfidf` | 1.000 | 1.000 | 0.873 | 0.0 |
+| `dense-hash` | 0.941 | 0.941 | 0.853 | 0.2 |
+| `dense-chroma` | 0.941 | 0.941 | 0.853 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -102,7 +102,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.0 | +1.5000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 17.8 | +2.3000 | 10000.0 | ≤ | `scale` | OK |
 
 ## Regressions (keyless)
 
@@ -126,14 +126,14 @@ Keyless stack (catalog 5 products, 14 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 8.4/13.3 | 15.0/23.9 | 49601 | 0 |
-| 4 | 7.8/11.4 | 14.7/15.9 | 55628 | 0 |
-| 16 | 8.3/11.6 | 14.7/17.0 | 56022 | 0 |
-| 64 | 8.3/12.1 | 14.0/18.9 | 56324 | 0 |
+| 1 | 9.6/14.0 | 15.2/21.2 | 48060 | 0 |
+| 4 | 9.0/12.4 | 14.9/18.9 | 53778 | 0 |
+| 16 | 8.5/12.2 | 14.7/17.8 | 54536 | 0 |
+| 64 | 8.6/11.8 | 14.8/17.5 | 54646 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4729.9/7665.6 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5654.2/8451.5 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12386.7/13201.4 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12588.3/16084.5 µs** (budget 50000 µs).
 
 Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
@@ -297,3 +297,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-16 | #107 negative results: stopwords and chunk_size | retrieval | `measurable` | Two candidate fixes were measured and rejected rather than adopted on intuition. (1) Stopword filtering in the shared lexical tokenizer, proposed to explain why a question-shaped query ('what is the return policy and refund process?') ranks a shipping chunk first: measured in memory, the policy bench is 17/17 either way, the flipped query is unchanged, and the rule set falls 0.991 -> 0.986. (2) ingestion.chunk_size, previously an untuned config value: scanned 400/600/800/1000/1500 against the policy bench and the retrieval set, all 1.000 with zero misses and the flipped query insensitive to the cap, confirming the flip is query wording rather than chunking. | rule-set hit@10 (stopwords) | 0.991 → 0.986 | no code changed for stopwords; config comment records the chunk_size scan | config/settings.yaml (comment), docs/architecture.md | n/a (no behaviour change) | accepted (negative result) | `config/settings.yaml, docs/architecture.md` |
 | 2026-09-16 | #108 selective journey runs (--changed) and the data-provenance doc | evaluation | `docs` | journey_eval.py gained --changed: it maps the branch's changed files to the intents they can affect and runs only those, printing what it decided. Unmapped paths and prompt changes fall back to the FULL set, because an unmapped change is exactly when a full run is warranted. Also added docs/data-provenance.md: every corpus, its origin, whether it is real or generated, its licence, how to rebuild it, and what a fresh clone can and cannot run (data/ is largely gitignored). | -- | The selective mode is conservative by construction and unit-tested (a known file maps to its intents, an unknown file or a prompt change runs everything). The provenance doc records the parts that are easy to misremember: the catalog has NO stock data (untracked inventory reads as available), reviews are keyed by the ASIN the catalog carries as SKU, and the rewrite order is import_catalog -> sync_catalog -> import_reviews -> seed_orders. | 336 tests pass; --changed is opt-in | evals/journey_eval.py, tests/unit/test_journey_agent.py, docs/data-provenance.md, docs/architecture.md | git revert the commit | accepted | `tests/unit/test_journey_agent.py, docs/data-provenance.md` |
 | 2026-09-16 | #109 a prompt edit measured, found harmful, and reverted | agent | `measurable` | restocking-fee-01 fails because the model reads a restocking-fee clause as an eligibility rule (the engine and the human label agree it is eligible, so this is a model failure). Two prompt sentences were tried in config/prompts/{post_purchase,journey}.md: (a) 'a fee changes what the customer pays, never whether the item is returnable' and (b) 'a defect beyond the window is a manufacturer warranty matter, so escalate'. | post-purchase decision accuracy (real model, 15 cases) | 0.867 → 0.8 | the reverted state is re-measured (13/15, invariants 17/18); no engine or case change | config/prompts/{post_purchase,journey}.md, reports/post-purchase-eval.md | n/a (the harmful edit is already reverted) | accepted (self-inflicted regression, caught and reverted) | `reports/post-purchase-eval.md, evals/results-post-purchase.json` |
+| 2026-09-16 | #110 close the three success-criteria gaps (tenancy, warranty, fees) | returns | `measurable` | Three fixes, each with its own evidence. (1) TENANCY: the TenancyGate existed but read order.customer_id, a field OrderView did not have, and no tool used it - so cross-customer reads were unenforced. OrderView now carries the owner, the Shopify adapter maps it, the gate protects any order that declares one (an ownerless fixture cannot leak, which keeps the keyless path working), and all three order-reading tools refuse before returning data - as a refusal, not an error, so the model relays it instead of retrying. (2) WARRANTY: the exception clause gained exception_window_days: 90 and the engine routes a defect past it to the manufacturer warranty (citing returns#exception + returns#warranty). (3) FEES: every fee clause now states that a fee changes what the customer pays and never makes the item non-returnable, so the model reads it from the corpus. Two cases moved to the invariant corpus because the harness made them unachievable (injection-01 already, and escalate-foreign-order once the gate refuses the read); their intents are INV-5 and INV-7. Added --repeat so the metric is reported as a reliability floor with a flaky-case list, and replaced a brittle 'len(cases) >= 15' assertion with an outcome-coverage one. | invariant pass rate; engine-vs-label agreement; decision accuracy over 3 runs | 0.944 → 1.0 | 337 tests pass (5 new tenancy scoping tests); the gate is green; all 12 reports verified against their corpus | app/ports/post_purchase.py, app/gates/{tenancy,base,returns}.py, app/tools/post_purchase.py, app/adapters/shopify_post_purchase.py, app/returns/amazon_policy.py, config/policies/amazon.yaml, config/knowledge/amazon-returns.md, config/prompts/journey.md, web/main.py, evals/{post_purchase_eval,post_purchase_cases,invariant_cases}.jsonl, tests/ | git revert the commit (the tenancy gate is injected, so removing the injection restores the previous behaviour) | accepted | `reports/post-purchase-eval.md, tests/unit/test_tenancy_scoping.py` |

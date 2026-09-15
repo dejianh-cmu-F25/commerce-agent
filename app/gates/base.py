@@ -12,6 +12,7 @@ from typing import Protocol
 
 from app.core.session import Session
 from app.core.types import Order
+from app.ports.post_purchase import OrderView
 from app.returns.amazon_policy import ReturnFacts
 
 
@@ -34,7 +35,9 @@ class GateResult:
 class GateContext:
     session: Session
     ids: list[str] = field(default_factory=list)
-    order: Order | None = None
+    # Either the storefront's Order or the post-purchase OrderView: gates read the
+    # fields they need (the tenancy gate reads the owner).
+    order: Order | OrderView | None = None
     product_id: str = ""
     window_days: int = 30
     now: datetime | None = None

@@ -1,8 +1,8 @@
-<!-- report-meta: generator=evals/eval_audit.py --write cases=1005 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/journey_eval.py,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/synth_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/post_purchase_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/invariant_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/discovery_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/attribute_cases.jsonl fingerprint=0cceab455a0f -->
+<!-- report-meta: generator=evals/eval_audit.py --write cases=1004 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/journey_eval.py,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/synth_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/post_purchase_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/invariant_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/discovery_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/attribute_cases.jsonl fingerprint=d570b5ea59bd -->
 
 # Evaluation-set audit
 
-- Corpora: **7** · cases: **1005**
+- Corpora: **7** · cases: **1004**
 - Checks: duplicate ids/messages, prompt pollution (8-gram), coverage, sliced results.
 
 ## Corpus sizes
@@ -14,7 +14,7 @@
 | `esci` | 500 | nDCG@10 against human ESCI relevance labels |
 | `invariant` | 18 | behavioural guardrails (INV-1..8) |
 | `journey` | 195 | end-to-end tool-use behaviour (the headline accuracy) |
-| `post_purchase` | 15 | return decisions vs the policy engine |
+| `post_purchase` | 14 | return decisions vs the policy engine |
 | `synth` | 33 | novel phrasings of the same intents (CheckList MFT) |
 
 ## Coverage matrix (intent × corpus)
@@ -26,7 +26,7 @@
 | `esci` |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `invariant` | 4 | 6 | 2 | 1 | 2 | 1 | 1 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `journey` |  |  |  |  |  |  |  |  |  |  |  | 20 |  | 3 |  | 55 |  |  |  |  |  | 16 |  | 6 | 10 | 14 | 45 |  | 12 |  |  |  |  |  |  | 14 |
-| `post_purchase` |  |  |  |  |  |  |  |  | 2 |  |  |  |  | 1 |  |  | 7 | 3 |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `post_purchase` |  |  |  |  |  |  |  |  | 2 |  |  |  |  | 1 |  |  | 7 | 2 |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `synth` |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 12 |  |  |  |  |  |  |  |  |  |  | 10 |  | 6 |  |  |  |  |  |  | 5 |
 
 ## Embedded corpora
@@ -68,22 +68,24 @@ None — no case shares an 8-word span with a prompt.
 
 ## Sliced results (last journey run, real model)
 
-- model `deepseek-flash` · cases **197** · tool accuracy **0.949** · no-fail **1.0**
-- strong-signal **165/173** · weak-signal **22/24** · Pass^4 **1.0**
+- model `deepseek-flash` · cases **197** · tool accuracy **0.97** · no-fail **1.0**
+- strong-signal **168/173** · weak-signal **23/24** · Pass^4 **1.0**
 
 | Intent | Passed |
 | --- | ---: |
 | `cart` | 20/20 |
-| `discovery` | 55/55 |
+| `clarify` | 2/3 |
+| `discovery` | 54/55 |
 | `injection` | 16/16 |
 | `multi` | 5/6 |
 | `negative` | 10/10 |
-| `off_topic` | 16/16 |
-| `policy` | 46/47 |
-| `return` | 4/12 |
-| `wismo` | 15/15 |
+| `off_topic` | 14/14 |
+| `policy` | 44/45 |
+| `return` | 10/12 |
+| `reviews` | 2/2 |
+| `wismo` | 14/14 |
 
-**Failures:** policy-09, lang-01, lang-03, multi-clarify, synth-05-00, synth-05-01, synth-05-02, synth-05-03, synth-05-04, synth-05-05
+**Failures:** discovery-03, policy-09, lang-03, multi-clarify, clarify-02, synth-05-05
 
 ## Notes
 

@@ -16,6 +16,7 @@ from app.core.session import Session
 from app.core.types import ToolSpec
 from app.gates.base import GateContext
 from app.gates.policy import PolicyGate
+from app.gates.tenancy import TenancyGate
 from app.ports.post_purchase import OrderView, PostPurchaseBackend
 from app.returns.amazon_policy import ReturnFacts
 from app.tools.registry import ToolRegistry, ToolResult
@@ -147,19 +148,48 @@ def register_post_purchase_tools(
     backend: PostPurchaseBackend,
     *,
     policy_gate: PolicyGate | None = None,
+    tenancy_gate: TenancyGate | None = None,
     now: datetime | None = None,
 ) -> None:
     """Register the read tools and the (side-effect-free) proposal tool.
 
     When ``policy_gate`` is provided, every proposal is validated against the
     policy SoT at runtime (P3); a proposal that contradicts the policy is rejected
-    with ``validated=false`` rather than silently recorded. ``now`` pins the clock
-    for deterministic evaluations; production leaves it ``None`` (wall clock).
+    with ``validated=false`` rather than silently recorded. When ``tenancy_gate`` is
+    provided, an order that declares a different owner is refused before it is read
+    (INV-7) - a refusal, not an error, so the model relays it instead of retrying.
+    ``now`` pins the clock for deterministic evaluations; production leaves it
+    ``None`` (wall clock).
     """
+
+    async def _readable_order(order_id: str, session: Session) -> tuple[Any, ToolResult | None]:
+        """The order, or the refusal to return instead (INV-7)."""
+        order = await backend.get_order(order_id)
+        if order is None or tenancy_gate is None:
+            return order, None
+        verdict = tenancy_gate.check(GateContext(session=session, ids=[order_id], order=order))
+        if verdict.allowed:
+            return order, None
+        return None, ToolResult(
+            content=json.dumps(
+                {
+                    "order_id": order_id,
+                    "accessible": False,
+                    "reason": verdict.reason,
+                    "guidance": (
+                        "Do not reveal or act on this order. Say you can only help with "
+                        "the customer's own orders and offer to look one of theirs up."
+                    ),
+                }
+            ),
+            component="order",
+        )
 
     async def get_order_status(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", ""))
-        order = await backend.get_order(order_id)
+        order, refused = await _readable_order(order_id, session)
+        if refused is not None:
+            return refused
         if order is None:
             return ToolResult(content=f"unknown order: {order_id}", status="error")
         session.remember_ids([order.id])
@@ -170,6 +200,9 @@ def register_post_purchase_tools(
 
     async def list_returnable_items(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", ""))
+        _order, refused = await _readable_order(order_id, session)
+        if refused is not None:
+            return refused
         items = await backend.returnable_items(order_id)
         payload = [
             {
@@ -190,6 +223,9 @@ def register_post_purchase_tools(
             )
         order_id = str(arguments.get("order_id", ""))
         fli_id = str(arguments.get("fulfillment_line_item_id", ""))
+        _order, refused = await _readable_order(order_id, session)
+        if refused is not None:
+            return refused
         # Resolve the item by its short ref when possible: asking the model to copy
         # an opaque gid is what made it loop.
         returnable = await backend.returnable_items(order_id)

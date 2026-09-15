@@ -1,17 +1,17 @@
-<!-- report-meta: generator=evals/judge.py cases=15 sources=evals/post_purchase_cases.jsonl,evals/judge.py fingerprint=88880c2edfe9 -->
+<!-- report-meta: generator=evals/judge.py cases=14 sources=evals/post_purchase_cases.jsonl,evals/judge.py fingerprint=dadaa2c91a39 -->
 
 # LLM-judge alignment (vs verifiable facts)
 
-- Cases: **15** (post-purchase decision set), skipped (unparseable): 0
+- Cases: **14** (post-purchase decision set), skipped (unparseable): 0
 - Judge: `deepseek-flash`
 - Ground truth: **verifiable** (decision matches the policy engine + citation support)
 
 | | judge says consistent | judge says inconsistent |
 | --- | --- | --- |
-| **verifiable: consistent** | 3 | 10 |
+| **verifiable: consistent** | 2 | 10 |
 | **verifiable: inconsistent** | 0 | 2 |
 
-- **Precision: 1.000**  ·  **Recall: 0.231**
+- **Precision: 1.000**  ·  **Recall: 0.167**
 
 ## Per case
 
@@ -20,16 +20,15 @@
 | wismo-01 | ok | bad |
 | wismo-02 | ok | bad |
 | return-window-in-01 | ok | bad |
-| return-window-edge-30 | ok | ok |
-| return-window-edge-31 | ok | bad |
+| return-window-edge-30 | ok | bad |
+| return-window-edge-31 | ok | ok |
 | return-window-v1-conflict | ok | bad |
-| final-sale-01 | ok | ok |
+| final-sale-01 | ok | bad |
 | damaged-01 | ok | bad |
 | damaged-out-of-window | ok | bad |
 | restocking-fee-01 | bad | bad |
 | warranty-vs-return-01 | bad | bad |
-| ambiguous-01 | ok | bad |
-| escalate-foreign-order | ok | ok |
+| ambiguous-01 | ok | ok |
 | escalate-no-delivery-date | ok | bad |
 | exchange-01 | ok | bad |
 

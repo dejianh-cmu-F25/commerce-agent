@@ -150,7 +150,23 @@ def decide_return(
             [non_ret.id] if non_ret else [],
         )
 
-    if is_exception:
+    if is_exception and exception is not None:
+        # A defect is an exception, but not forever: past the exception window it is a
+        # manufacturer warranty matter (returns#warranty is separate from a return).
+        defect_window = exception.rules.get("exception_window_days") if exception else None
+        delivered = _parse(facts.delivered_at)
+        if defect_window is not None and delivered is not None:
+            age = max(0, (now - delivered).days)
+            if age > int(defect_window):
+                warranty = clauses.get("returns#warranty")
+                return AmazonDecision(
+                    ESCALATE,
+                    [
+                        f"'{facts.reason}' after {age} days is a manufacturer warranty "
+                        f"matter, not a return (the exception covers {defect_window} days)"
+                    ],
+                    [exception.id, warranty.id] if warranty else [exception.id],
+                )
         return AmazonDecision(
             ELIGIBLE,
             [f"reason '{facts.reason}' is a policy exception (no window, no fee)"],

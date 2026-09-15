@@ -38,6 +38,9 @@ class OrderView:
     currency: str
     delivered_at: str | None = None
     line_items: list[LineItem] = field(default_factory=list)
+    # The owning customer. Empty means the order declares no owner (keyless
+    # fixtures); a declared owner is what the tenancy gate protects (INV-7).
+    customer_id: str = ""
 
 
 @dataclass(frozen=True)

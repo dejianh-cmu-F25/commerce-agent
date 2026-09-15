@@ -22,6 +22,7 @@ query GetOrder($id: ID!) {
     displayFulfillmentStatus
     totalPriceSet { shopMoney { amount currencyCode } }
     fulfillments(first: 1) { deliveredAt }
+    customer { id }
     lineItems(first: 50) {
       nodes {
         id
@@ -46,6 +47,7 @@ query GetOrderByName($q: String!) {
       displayFulfillmentStatus
       totalPriceSet { shopMoney { amount currencyCode } }
       fulfillments(first: 1) { deliveredAt }
+    customer { id }
     customAttributes { key value }
       lineItems(first: 50) {
         nodes {
@@ -113,6 +115,7 @@ def _to_order(node: dict[str, Any]) -> OrderView:
         total=total,
         currency=currency,
         delivered_at=_delivered_at(node),
+        customer_id=str((node.get("customer") or {}).get("id") or ""),
         line_items=[
             LineItem(
                 id=str(item.get("id", "")),

@@ -40,6 +40,10 @@ INVARIANT_CASES = ROOT / "evals" / "invariant_cases.jsonl"
 POLICY_PATH = "config/policies/amazon.yaml"
 RESULTS_PATH = ROOT / "evals" / "results-post-purchase.json"
 EVAL_NOW = datetime(2026, 3, 1, tzinfo=UTC)
+# The principal every fixture order belongs to, so the tenancy gate has an
+# owner to compare against (a case can declare a foreign owner instead).
+EVAL_CUSTOMER = "gid://shopify/Customer/eval"
+FOREIGN_CUSTOMER = "gid://shopify/Customer/other"
 PROMPT = load_prompt("post_purchase")
 POLICY = load_amazon_policy(POLICY_PATH)
 
@@ -110,6 +114,7 @@ def _backend_for(case: dict) -> tuple[InMemoryPostPurchase, str]:
     order = OrderView(
         id=order_id,
         name="#1001",
+        customer_id=FOREIGN_CUSTOMER if case.get("foreign_order") else EVAL_CUSTOMER,
         created_at=(EVAL_NOW - timedelta(days=(days or 0) + 5)).isoformat(),
         financial_status="PAID",
         fulfillment_status=case.get("fulfillment_status", "FULFILLED"),
@@ -149,7 +154,7 @@ async def _run_case(case: dict, llm, *, with_order: bool, cost_meter=None) -> Ou
     message = _pad(case)
     if with_order and order_id:
         message = f"{message}\n\n(order id: {order_id})"
-    session = Session(id=f"eval-{case['case_id']}")
+    session = Session(id=f"eval-{case['case_id']}", customer_id=EVAL_CUSTOMER)
     sink = ListSink()
     await agent.stream_turn(session, message, sink)
 
@@ -219,7 +224,13 @@ def _real_factory() -> Any:
     return DeepSeekClient(load_settings().llm)
 
 
-async def run(llm_factory, model_name: str, cost_meter=None, concurrency: int = 8) -> dict:
+async def run(
+    llm_factory,
+    model_name: str,
+    cost_meter=None,
+    concurrency: int = 8,
+    repeat: int = 1,
+) -> dict:
     from app.evaluation.concurrency import run_bounded
 
     decision_cases = _load_jsonl(DECISION_CASES)
@@ -240,15 +251,30 @@ async def run(llm_factory, model_name: str, cost_meter=None, concurrency: int = 
     invariant_results: list[CaseResult] = []
     outcomes: list[Outcome] = []
 
-    raw_decisions = await run_bounded(decision_cases, one_decision, concurrency=concurrency)
-    for result in raw_decisions:
-        if isinstance(result, tuple):
-            outcome, case_result = result
-        else:
-            outcome = Outcome(error=True, reason="error")
-            case_result = CaseResult("?", False, "", [f"error: {result}"])
-        outcomes.append(outcome)
-        decision_results.append(case_result)
+    # `repeat` exists because the model is not reproducible: the same case can pass on
+    # one run and fail on the next (measured 0.833 vs 0.667 on a slice). A single run
+    # is a sample, so the decision set is run N times and reported as a range.
+    per_case_pass: dict[str, int] = {str(case["case_id"]): 0 for case in decision_cases}
+    for _ in range(max(1, repeat)):
+        raw_decisions = await run_bounded(decision_cases, one_decision, concurrency=concurrency)
+        for case, result in zip(decision_cases, raw_decisions, strict=True):
+            if isinstance(result, tuple):
+                outcome, case_result = result
+            else:
+                outcome = Outcome(error=True, reason="error")
+                case_result = CaseResult("?", False, "", [f"error: {result}"])
+            outcomes.append(outcome)
+            if case_result.ok:
+                per_case_pass[str(case["case_id"])] += 1
+    decision_results = [
+        CaseResult(
+            case_id,
+            passed == max(1, repeat),  # passes in every run
+            f"{passed}/{max(1, repeat)} runs",
+            [] if passed == max(1, repeat) else [f"flaky: {passed}/{max(1, repeat)}"],
+        )
+        for case_id, passed in per_case_pass.items()
+    ]
 
     raw_invariants = await run_bounded(invariant_cases, one_invariant, concurrency=concurrency)
     for result in raw_invariants:
@@ -273,6 +299,10 @@ async def run(llm_factory, model_name: str, cost_meter=None, concurrency: int = 
     return {
         "model": model_name,
         "cost_cny": round(cost_meter.spent_cny(), 6) if cost_meter is not None else None,
+        "repeat": max(1, repeat),
+        "per_case_pass_rate": {
+            case_id: round(passed / max(1, repeat), 3) for case_id, passed in per_case_pass.items()
+        },
         "decision": {
             "total": len(decision_cases),
             "passed": decision_passed,
@@ -311,6 +341,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--real", action="store_true", help="run the real model (costs money)")
     parser.add_argument("--concurrency", type=int, default=8)
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="run the decision set N times and report which cases are flaky",
+    )
     args = parser.parse_args()
 
     cost_meter = None
@@ -325,12 +361,21 @@ def main() -> int:
         factory = _ScriptedLLM
         model_name = "scripted"
 
-    result = asyncio.run(run(factory, model_name, cost_meter, concurrency=args.concurrency))
+    result = asyncio.run(
+        run(factory, model_name, cost_meter, concurrency=args.concurrency, repeat=args.repeat)
+    )
     RESULTS_PATH.write_text(json.dumps(result, indent=2) + "\n")
 
     print(f"post-purchase eval (model={result['model']})")
     d = result["decision"]
-    print(f"  decision accuracy : {d['passed']}/{d['total']} ({d['accuracy']:.3f})")
+    print(
+        f"  decision accuracy : {d['passed']}/{d['total']} ({d['accuracy']:.3f}) "
+        f"over {result.get('repeat', 1)} run(s) - a case counts as passed only if it "
+        "passed every run"
+    )
+    flaky = {k: v for k, v in result.get("per_case_pass_rate", {}).items() if 0 < v < 1}
+    if flaky:
+        print(f"  flaky cases       : {flaky}")
     print(f"  verifier vs label : {d['verifier_agrees_with_label']}")
     if d["failures"]:
         print(f"  decision failures : {d['failures']}")

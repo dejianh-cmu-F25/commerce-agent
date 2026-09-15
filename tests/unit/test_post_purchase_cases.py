@@ -19,12 +19,18 @@ def _cases() -> list[dict]:
 
 def test_cases_are_well_formed() -> None:
     cases = _cases()
-    assert len(cases) >= 15
     ids = [case["case_id"] for case in cases]
     assert len(ids) == len(set(ids)), "duplicate case_id"
     for case in cases:
         assert REQUIRED <= case.keys(), f"{case.get('case_id')} missing fields"
         assert case["expected_decision"] in DECISIONS, case["expected_decision"]
+
+
+def test_every_outcome_the_corpus_claims_to_measure_is_present() -> None:
+    """Coverage, not a count: a corpus that lost a whole outcome category can still be
+    "well formed", and a bare size floor would not notice."""
+    outcomes = {case["expected_decision"] for case in _cases()}
+    assert {"eligible", "ineligible", "escalate"} <= outcomes, outcomes
 
 
 def test_policy_refs_resolve_to_real_clauses() -> None:

@@ -59,6 +59,7 @@ from app.core.session import derive_messages
 from app.core.settings import Settings, SettingsError, load_settings
 from app.core.types import Message
 from app.gates.policy import PolicyGate
+from app.gates.tenancy import TenancyGate
 from app.knowledge.ingest import load_chunks
 from app.ports.cost_meter import CostMeter
 from app.ports.llm import LLMClient
@@ -406,7 +407,10 @@ def build_agent(
     register_knowledge_tools(registry, build_retriever(settings))
     register_review_tools(registry, build_reviews(settings), catalog)
     register_post_purchase_tools(
-        registry, build_post_purchase(settings), policy_gate=PolicyGate(load_amazon_policy())
+        registry,
+        build_post_purchase(settings),
+        policy_gate=PolicyGate(load_amazon_policy()),
+        tenancy_gate=TenancyGate(),
     )
     if merchant is not None:
         register_merchant_tools(registry, merchant)

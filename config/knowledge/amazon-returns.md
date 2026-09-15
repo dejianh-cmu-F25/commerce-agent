@@ -31,31 +31,31 @@ Rules: `condition_required=original_unused`
 
 ## returns#fee-late
 
-A late fee may apply if the item is not dropped off by the return-by date: 20% of the item price for the first 30 days after, then 100%.
+A late fee may apply if the item is not dropped off by the return-by date: 20% of the item price for the first 30 days after, then 100%. A fee is what the customer pays on the return; it never makes the item non-returnable
 
 Rules: `late_fee_pct_first_30d=20`, `late_fee_pct_after_30d=100`
 
 ## returns#fee-damage
 
-A damage fee of up to 50% of the item price may apply if the item is damaged, missing parts, or not in original condition (100% for Luxury items).
+A damage fee of up to 50% of the item price may apply if the item is damaged, missing parts, or not in original condition (100% for Luxury items). A fee is what the customer pays on the return; it never makes the item non-returnable
 
 Rules: `damage_fee_pct_max=50`, `damage_fee_pct_luxury=100`
 
 ## returns#fee-restocking
 
-A 100% restocking fee applies to opened, activated, or incomplete software, video games, and collectible cards.
+A 100% restocking fee applies to opened, activated, or incomplete software, video games, and collectible cards. A fee is what the customer pays on the return; it never makes the item non-returnable
 
 Rules: `restocking_fee_pct=100`, `restocking_categories=['opened_software', 'video_games', 'collectible_cards']`
 
 ## returns#exception
 
-A non-returnable or Final Sale item that arrives damaged, defective, or materially different is handled by Customer Service.
+A non-returnable or Final Sale item that arrives damaged, defective, or materially different is handled by Customer Service. Within the exception window the item is returnable; past it the manufacturer's warranty applies instead of a return.
 
-Rules: `exception_reasons=['damaged', 'defective', 'wrong_item', 'missing']`
+Rules: `exception_reasons=['damaged', 'defective', 'wrong_item', 'missing']`, `exception_window_days=90`
 
 ## returns#heavy-bulky
 
-Heavy/bulky items (>= 50 lb, longest side > 59 in, or girth > 130 in) may incur a variable return shipping fee.
+Heavy/bulky items (>= 50 lb, longest side > 59 in, or girth > 130 in) may incur a variable return shipping fee. A fee is what the customer pays on the return; it never makes the item non-returnable
 
 Rules: `heavy_bulky={'weight_lb': 50, 'longest_side_in': 59, 'girth_in': 130}`
 
