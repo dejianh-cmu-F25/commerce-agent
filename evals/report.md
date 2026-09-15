@@ -100,8 +100,8 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.5 | +2.0000 | 10000.0 | ≤ | `scale` | OK |
-| `cost:spent_cny` | 6.5534 | +5.8972 | 10.0 | ≤ | `budget` | OK |
+| `latency:turn_p95_us` | 14.7 | -0.8000 | 10000.0 | ≤ | `scale` | OK |
+| `cost:spent_cny` | 9.4829 | +8.8267 | 10.0 | ≤ | `budget` | OK |
 
 ## Regressions (keyless)
 
@@ -125,16 +125,16 @@ Keyless stack (catalog 5 products, 26 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.8/21.5 | 15.3/20.3 | 48816 | 0 |
-| 4 | 12.5/16.9 | 14.9/17.4 | 55147 | 0 |
-| 16 | 11.8/16.8 | 14.8/17.5 | 55058 | 0 |
-| 64 | 12.4/17.1 | 15.4/17.6 | 50050 | 0 |
+| 1 | 12.0/17.1 | 14.5/18.6 | 51743 | 0 |
+| 4 | 12.6/17.0 | 14.5/15.6 | 57241 | 0 |
+| 16 | 11.7/16.6 | 14.4/14.7 | 57803 | 0 |
+| 64 | 11.6/15.5 | 14.5/17.8 | 56272 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4217.6/6178.9 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4125.8/6125.0 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12246.4/12796.7 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12181.7/12659.4 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -276,3 +276,6 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-15 | #86 046 eval-hardening C+E (synthetic phrasings + negative queries) | evaluation | `measurable` | C: evals/synth_cases.py asks an LLM for 33 novel phrasings (CheckList MFT) of discovery/policy/return/WISMO intents, cached to evals/synth_cases.jsonl. E: 10 negative (provably out-of-catalog) queries measuring the false-positive rate, plus 3 ambiguous return requests expected to clarify. Journey eval is now 199 cases. | journey tool accuracy (real model, 199 cases) | 0.96 → 0.949 | no_fail_rate = 1.000; injection/off-topic 32/32; keyless gate green; 261 tests pass | evals/{synth_cases.py,synth_cases.jsonl,journey_eval.py}, app/evaluation/invariants.py, evals/results-journey.json | git revert the commit | accepted | `evals/results-journey.json, evals/synth_cases.jsonl` |
 | 2026-09-15 | #87 046 fix policy gate semantics + authoritative citations | returns | `measurable` | Three linked defects found while auditing the eval: (1) proposals carried cited_clauses=[] because the model is not asked for them, so the harness's citation check always failed; (2) PolicyGate blocked EVERY non-eligible decision, so a correct `ineligible` answer was returned as an error; (3) the eval did not wire the policy gate or pin the clock, so window math ran against the wall clock (207 days) instead of the fixtures. Fixes: GateResult carries cited_clauses; PolicyGate passes when a proposal matches the engine (an `ineligible` verdict is a correct answer, not a refused action); register_post_purchase_tools accepts `now`; propose_return_decision attaches the engine-authored clause ids; the eval wires PolicyGate(POLICY) with now=EVAL_NOW. | real-model post-purchase decision accuracy (16 labeled cases, citations required) | 0.062 → 0.812 | invariant pass 16/17 (INV-7 foreign-order still fails), no-fail 1.000, 261 tests pass | app/gates/{base,policy}.py, app/tools/post_purchase.py, evals/post_purchase_eval.py, evals/results-post-purchase.json | git revert the commit | accepted | `evals/results-post-purchase.json` |
 | 2026-09-15 | #88 046 Batch D: LLM-judge alignment (negative result) | evaluation | `measurable` | evals/judge.py asks a model whether an answer is consistent with the order facts, a policy extract and the recorded proposal, then reports precision/recall against the verifiable labels (decision matches the policy engine + engine-authored citations). 16 labeled cases, real model. | judge precision / recall vs verifiable labels | 0.0 → 0.0 | no eval gate depends on the judge; evals/report.md keyless checks unchanged | evals/judge.py, reports/judge-alignment.md | git revert the commit | accepted (negative result documented) | `reports/judge-alignment.md` |
+| 2026-09-15 | #89 046 make the LLM evals concurrent (bounded fan-out + retry) | evaluation | `measurable` | The journey and post-purchase eval loops ran one case at a time, so wall time was the sum of every model call. Added app/evaluation/concurrency.py (semaphore + gather, ordered results, per-case exception isolation, monotonic progress callback), app/core/retry.py (exponential backoff + jitter on 429/5xx/timeouts, wired into DeepSeekClient before the first chunk so a retry cannot duplicate output), --concurrency (default 8) on both evals, per-case detail in results-journey.json, and evals/compare_runs.py to diff two runs. Cost meter hardened for concurrency: persistence throttled to one write per CNY 0.05 with flush(), a lock, and set_headroom() so the CNY 10 cap still holds when N turns are in flight (the loop checks the cap once per turn). | journey eval seconds per case (real model) | 6.45 → 2.32 | budget cap preserved via headroom; keyless gate unchanged; 271 tests pass; no eval result depends on completion order | app/evaluation/concurrency.py, app/core/retry.py, app/adapters/cost_meter.py, app/adapters/deepseek_client.py, app/ports/cost_meter.py, web/main.py, evals/{journey_eval,post_purchase_eval,compare_runs}.py | git revert the commit (evals fall back to sequential; results are unchanged in distribution) | accepted | `evals/compare_runs.py, tests/unit/test_run_bounded.py, tests/unit/test_cost_meter.py` |
+| 2026-09-15 | #90 046 record per-case eval duration and tool-call count | evaluation | `measurable` | results-journey.json now carries duration_ms per case plus a summary (total, p50, slowest) and the tool-call count, and --out writes results from keyless runs too so slices can be compared without touching the headline artifacts. | journey eval: sum(case durations) vs wall clock at concurrency 8 | 0.0 → 0.0 | no scoring change; keyless run unaffected | evals/journey_eval.py, evals/results-journey.json | git revert the commit | accepted | `evals/results-journey.json` |
+| 2026-09-15 | #91 046 fix the order-id bug behind the return-case tool churn | returns | `measurable` | Root cause of both the slow evals and the weak return slice: returnable_items passed the customer's order number ('1006') straight into Shopify's returnableFulfillments(orderId:) which requires a global id, so the query was rejected, the tool failed, and the agent retried with other id formats (gid://, O-1006, #1006) until it gave up. Fixes: returnable_items resolves the order first and uses its global id (regression tests assert the resolved id is sent and that an unknown number makes no second call); get_order_status now returns the order AND its returnable items with a short integer 'ref'; propose_return_decision accepts item_ref and rejects an id that is not a real returnable line item, echoing the valid refs so the model self-corrects in one step; the prompt and tool descriptions no longer ask the model for clause ids (the gate attaches them) and no longer require copying long ids; search_knowledge is scoped to customer policy questions only; the three non-English return cases now state a reason (without one, asking which reason is correct). | tool calls per return case, and p50 case duration | 11.0 → 2.3 | 273 tests pass; new regression tests pin the id resolution; the harness still rejects an unknown item id instead of silently recording the first item | app/adapters/shopify_post_purchase.py, app/tools/post_purchase.py, app/tools/knowledge.py, config/prompts/journey.md, evals/journey_eval.py | git revert the commit | accepted | `tests/unit/test_shopify_post_purchase.py, evals/results-journey.json` |

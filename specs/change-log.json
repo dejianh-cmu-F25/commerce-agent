@@ -1439,6 +1439,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "tests/unit/test_shopify_post_purchase.py, evals/results-journey.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#92 gate: treat the budget guardrail like latency (floor, not exact value)",
+      "area": "process",
+      "class": "docs",
+      "what": "scripts/check_results.py required the report's cost:spent_cny row to match the current running total exactly, so every paid eval run broke the gate. The budget row is now checked like the wall-clock latency row: the name, floor and direction must be present, not the exact value.",
+      "metric": "--",
+      "before": null,
+      "after": null,
+      "note": "The gate no longer fails spuriously after a paid run, which also removes the temptation to hand-edit the report to make the gate pass.",
+      "guardrails": "the floor (CNY 10) and direction are still asserted",
+      "blast_radius": "scripts/check_results.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "scripts/check_results.py"
     }
   ]
 }
