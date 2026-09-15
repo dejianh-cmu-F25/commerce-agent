@@ -128,9 +128,7 @@ def _build_agent(backend: InMemoryPostPurchase, llm, cost_meter=None) -> Agent:
     registry = ToolRegistry()
     # Mirror production (web/main.py): the policy gate is what attaches the
     # authoritative clause citations to a proposal.
-    register_post_purchase_tools(
-        registry, backend, policy_gate=PolicyGate(POLICY), now=EVAL_NOW
-    )
+    register_post_purchase_tools(registry, backend, policy_gate=PolicyGate(POLICY), now=EVAL_NOW)
     return Agent(
         llm=llm,
         tools=registry,
