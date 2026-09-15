@@ -100,8 +100,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 19.9 | +4.4000 | 10000.0 | ≤ | `scale` | OK |
-| `cost:spent_cny` | 9.4829 | +8.8267 | 10.0 | ≤ | `budget` | OK |
+| `latency:turn_p95_us` | 15.6 | +0.1000 | 10000.0 | ≤ | `scale` | OK |
 
 ## Regressions (keyless)
 
@@ -125,16 +124,16 @@ Keyless stack (catalog 5 products, 26 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 12.7/17.8 | 14.9/19.3 | 50505 | 0 |
-| 4 | 12.1/16.5 | 14.8/17.7 | 54767 | 0 |
-| 16 | 11.9/16.4 | 14.8/19.9 | 54443 | 0 |
-| 64 | 11.9/16.2 | 14.8/15.4 | 55650 | 0 |
+| 1 | 13.0/18.5 | 15.0/24.0 | 48891 | 0 |
+| 4 | 11.9/16.7 | 14.6/15.8 | 55790 | 0 |
+| 16 | 11.7/16.4 | 14.5/15.6 | 56485 | 0 |
+| 64 | 12.5/16.5 | 14.5/15.8 | 56656 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4265.1/6254.6 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **4155.3/6249.3 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12198.9/12815.5 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12178.7/12775.5 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.5 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 

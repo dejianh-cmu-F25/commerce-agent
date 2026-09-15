@@ -12,6 +12,7 @@ Real-model numbers are dated snapshots and are not checked.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -69,11 +70,12 @@ def _load(path: Path) -> dict:
         return {}
 
 
-def _check_report(artifacts: dict) -> list[str]:
+def _check_report(artifacts: dict, text: str | None = None) -> list[str]:
     failures: list[str] = []
-    if not REPORT.exists():
-        return ["evals/report.md is missing"]
-    text = REPORT.read_text()
+    if text is None:
+        if not REPORT.exists():
+            return ["evals/report.md is missing"]
+        text = REPORT.read_text()
 
     retrieval = artifacts.get("retrieval", {})
     if retrieval:
@@ -180,6 +182,14 @@ def _check_report(artifacts: dict) -> list[str]:
                 if expected_value not in section or expected_floor not in section:
                     failures.append(
                         f"guardrails: expected row for {metric['name']!r} in the report"
+                    )
+            declared = {metric["name"] for metric in guardrails["metrics"]}
+            for line in section.splitlines():
+                found = re.match(r"\|\s*`([^`]+)`\s*\|", line)
+                if found and found.group(1) not in declared:
+                    failures.append(
+                        f"guardrails: report has an undeclared row {found.group(1)!r} "
+                        "- a stale metric the gate would otherwise ignore"
                     )
 
     regressions = artifacts.get("regressions", {})
