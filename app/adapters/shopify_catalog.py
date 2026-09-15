@@ -72,7 +72,9 @@ class ShopifyCatalog:
             raise RuntimeError(f"Shopify GraphQL errors: {body['errors']}")
         return body["data"]
 
-    def search(self, query: str, limit: int) -> list[Product]:
+    def search(self, query: str, limit: int, *, evidence: bool = False) -> list[Product]:
+        # One index, so the query class does not change the answer.
+        del evidence
         if not query.strip() or limit <= 0:
             return []
         data = self._query(SEARCH, {"q": query, "n": limit})

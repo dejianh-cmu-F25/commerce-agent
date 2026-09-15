@@ -145,7 +145,7 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
     )
 
 
-def build_catalog_index(settings: Settings) -> CatalogIndex | None:
+def build_catalog_index(settings: Settings, *, enrich: bool | None = None) -> CatalogIndex | None:
     """Build the local discovery index from the synced snapshot (feature 046 step A).
 
     Returns ``None`` when no snapshot exists, so the caller can tell "not synced"
@@ -154,7 +154,7 @@ def build_catalog_index(settings: Settings) -> CatalogIndex | None:
     products = load_snapshot(settings.catalog.index_path)
     if not products:
         return None
-    reviews = build_reviews(settings) if settings.catalog.enrich else None
+    reviews = build_reviews(settings) if enrich else None
     if settings.retrieval.sparse == "bm25":
         from app.adapters.retriever_bm25 import Bm25Retriever
 
@@ -208,13 +208,22 @@ def build_catalog(settings: Settings) -> StorefrontBackend:
         live = ShopifyCatalog(
             settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
         )
-        index = build_catalog_index(settings)
+        # Both indexes, always: the query class chooses the document set, so no query
+        # pays the trade either way. Measured, enrichment costs 0.037 of lexical hit@10
+        # and buys 0.714 of attribute recall (reports/discovery-attribute.md).
+        index = build_catalog_index(settings, enrich=False)
+        enriched = build_catalog_index(settings, enrich=True)
         if index is None:
             raise SettingsError(
                 "catalog index is missing; run `uv run python scripts/sync_catalog.py` "
                 f"(expected {settings.catalog.index_path})"
             )
-        return LocalSearchCatalog(live, index, overfetch=settings.catalog.overfetch)
+        return LocalSearchCatalog(
+            live,
+            index,
+            enriched=enriched,
+            overfetch=settings.catalog.overfetch,
+        )
     return build_storefront(settings)
 
 

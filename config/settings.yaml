@@ -116,11 +116,10 @@ catalog:
   index_path: ./data/discovery/products.json
   collection_name: catalog
   overfetch: 4
-  # + features & review evidence. Measured trade: lexical rule set hit@10 0.991 ->
-  # 0.954, attribute queries (labelled by review text) 0.179 -> 0.893. Enriched wins
-  # once more than ~5% of queries are attribute-shaped, so it is on here; the library
-  # default stays off. See reports/discovery-attribute.md.
-  enrich: true
+  # Two indexes are built: the plain one (title/vendor/type/tags) and an enriched one
+  # (+ features & review evidence). search_products(evidence=true) routes a query to the
+  # enriched index; measured, that trades 0.037 of lexical hit@10 for 0.714 of attribute
+  # recall, so the query decides rather than one global switch.
 
 # Knowledge retrieval (P4). Keyless lexical retriever over config/knowledge/.
 knowledge:

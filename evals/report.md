@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=82fb72084444 -->
+<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=72e85f9836bd -->
 
 # Evaluation report
 
@@ -102,7 +102,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 19.1 | +3.6000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 18.4 | +2.9000 | 10000.0 | ≤ | `scale` | OK |
 
 ## Regressions (keyless)
 
@@ -126,16 +126,16 @@ Keyless stack (catalog 5 products, 14 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 9.1/12.3 | 14.8/18.1 | 51495 | 0 |
-| 4 | 8.7/11.9 | 14.7/17.5 | 56587 | 0 |
-| 16 | 8.6/11.8 | 13.5/19.1 | 55453 | 0 |
-| 64 | 8.3/11.5 | 13.3/17.0 | 59204 | 0 |
+| 1 | 9.1/13.5 | 15.3/20.3 | 49232 | 0 |
+| 4 | 9.2/13.2 | 15.2/18.2 | 52105 | 0 |
+| 16 | 9.2/12.7 | 15.1/18.4 | 51495 | 0 |
+| 64 | 8.5/11.9 | 15.2/18.4 | 52922 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5540.3/8013.0 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5498.1/7972.6 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12070.0/15226.8 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12096.6/15182.2 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -303,3 +303,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-16 | #113 the return-decision card never rendered (a component-name contract) | web | `measurable` | The tools emit component names ('return_decision', 'returnable_items', 'reviews') that the transcript mapper did not know, so those cards were silently dropped - including the one place a customer sees the return decision AND the harness's verdict on it. Added the three mappings (with the three shapes return_decision actually takes: accepted, refused by the policy gate, and an order the tenancy gate would not read), three cards, payload support for list_returnable_items (it emitted its component with no payload), mapper tests for each, and the contract in docs/ui-conventions.md. | tool components the transcript renders (count) | 6.0 → 9.0 | 16 frontend tests pass; an empty payload renders no card rather than an empty one | frontend/src/{App.tsx,lib/transport.ts,components/app/order-cards.tsx}, app/tools/post_purchase.py, docs/ui-conventions.md | git revert the commit | accepted | `frontend/src/lib/transport.test.ts` |
 | 2026-09-16 | #114 list_orders, and what cross-customer isolation actually requires | returns | `measurable` | Added the missing capability: the post-purchase port had no way to list a customer's orders (only get_by_id), so 'where are my orders?' was unanswerable. The port, both adapters and a list_orders tool now do it, scoped to the authenticated principal and refusing without one - a listing must never become 'show me the shop'. Two findings came out of wiring it, both recorded rather than smoothed over: (1) the Shopify app CANNOT read the Customer object (both customer{id} and an order's email are refused with 'requires approval'), so an earlier version of the tenancy change that added customer{ id } to the order queries made EVERY live order read fail while all keyless evals stayed green - reverted, and docs/tenancy-prerequisite.md now states that live tenancy enforcement is a deployment prerequisite (grant customer access, or supply a local owner mapping); (2) inv4-fabricate asserted no_tool_call, which stopped being the right test once the agent could legitimately read - it now asserts order_refs_are_grounded, so an invented order number is caught while a lookup is allowed. | post-purchase decision accuracy (mean per-case pass rate over 3 runs) | 0.929 → 0.976 | 341 tests pass (7 tenancy scoping tests incl. listing); a live order read is verified against the dev store after the revert; 12/12 reports verified | app/ports/post_purchase.py, app/adapters/{post_purchase_memory,shopify_post_purchase}.py, app/tools/post_purchase.py, app/evaluation/invariants.py, config/prompts/journey.md, evals/invariant_cases.jsonl, tests/, docs/tenancy-prerequisite.md, reports/ | git revert the commit (list_orders is additive; the tenant gate is unchanged) | accepted | `reports/post-purchase-eval.md, tests/unit/test_tenancy_scoping.py, docs/tenancy-prerequisite.md` |
 | 2026-09-16 | #115 T114 prompt-injection robustness on our surface (AgentDojo payloads) | safety | `measurable` | T114 asked for AgentDojo (Debenedetti et al., NeurIPS 2024 D&B, MIT). Running its benchmark would measure the model inside ITS tool suites (email, drive, calendar) - not our product - so this runs its verbatim ImportantInstructionsAttack template and goal strings against OUR agent instead, over two channels (the customer message, which the input guard sees, and a tool result - an item title - which nothing screens), with the input guard on and off as a control. Each goal is labelled by origin: agentdojo for its strings, ours where its goal names a capability this agent lacks. | injection payloads contained (no write tool, no prompt leak, still answered) | 0.0 → 1.0 | the payload corpus is cached to evals/injection_payloads.jsonl with origins recorded; the report declares its sources so scripts/check_reports.py verifies it | evals/agentdojo_injection.py, evals/injection_payloads.jsonl, reports/agentdojo.md | git revert the commit | accepted (with the structural-containment caveat recorded) | `reports/agentdojo.md, evals/results-agentdojo.json` |
+| 2026-09-16 | #116 phase 3: route each query to the index it fits | retrieval | `measurable` | Enrichment is a trade (lexical hit@10 down 0.037, attribute recall up 0.714), so a single index forces every query onto one side of it. Both indexes are now built and search_products(evidence=true|false) lets the query choose: the storefront port gained the flag (single-index providers accept and ignore it), LocalSearchCatalog holds plain + enriched and routes per call, and the tool exposes the choice to the model with a description of WHEN to use it (attribute claims from reviews, not names or categories). The obsolete global switch catalog.enrich was removed rather than left lying: the query decides now. | hit@10 over the rule set + attribute set (keyless ceiling) | 0.947 → 0.979 | 340 tests pass; single-index providers are explicit that the flag does not change their answer; 14 reports verified against their corpus | app/ports/storefront.py, app/adapters/{catalog_index,shopify_catalog,storefront_memory,storefront_sqlite}.py, app/tools/catalog.py, app/core/settings.py, config/settings.yaml, .env.example, web/main.py, evals/bench_routing.py | git revert the commit (the flag defaults to false, which is the plain index) | accepted (model-side routing flagged as not yet established) | `reports/discovery-routing.md` |

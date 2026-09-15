@@ -145,11 +145,6 @@ class CatalogSettings(BaseModel):
     provider: Literal["tfidf", "hybrid"] = "tfidf"
     index_path: str = "./data/discovery/products.json"
     collection_name: str = "catalog"
-    # Index features and review evidence with each product. Not a free win: measured
-    # on the rule set it costs hit@10 0.991 -> 0.954, and on attribute queries it
-    # buys 0.179 -> 0.893. Off by default so the shipped, measured lexical path stays
-    # as measured; see reports/discovery-attribute.md for the query-mix arithmetic.
-    enrich: bool = False
     # Widen the retrieval window before mapping ids to live products, so a product
     # that has left the shop does not silently shrink the result set.
     overfetch: int = 4
@@ -281,7 +276,6 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "RERANK_PROVIDER": ("rerank", "provider", str),
     "RERANK_TOP_K": ("rerank", "top_k", int),
     "CATALOG_INDEX_PATH": ("catalog", "index_path", str),
-    "CATALOG_ENRICH": ("catalog", "enrich", _to_bool),
     "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
     "KNOWLEDGE_PATH": ("knowledge", "path", str),
     "REVIEWS_PATH": ("reviews", "path", str),

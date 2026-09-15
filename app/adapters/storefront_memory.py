@@ -18,7 +18,9 @@ class InMemoryStorefront:
         self._seed_orders = seed_orders
         self._orders: dict[str, list[Order]] = {}
 
-    def search(self, query: str, limit: int) -> list[Product]:
+    def search(self, query: str, limit: int, *, evidence: bool = False) -> list[Product]:
+        # One index, so the query class does not change the answer.
+        del evidence
         return rank_products(self._products, query)[: clamp_limit(limit)]
 
     def get(self, product_id: str) -> Product | None:

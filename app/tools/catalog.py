@@ -48,6 +48,16 @@ SEARCH_PRODUCTS_SPEC = ToolSpec(
                 "type": "boolean",
                 "description": "Only return products that are in stock.",
             },
+            "evidence": {
+                "type": "boolean",
+                "description": (
+                    "Set true when the request is about an attribute customers "
+                    "described rather than the product's name or category - what "
+                    "reviewers say about fit, noise, battery, leaks, durability. The "
+                    "store then searches its review evidence; leave false for ordinary "
+                    "keyword requests, which that evidence would only dilute."
+                ),
+            },
         },
         "required": ["query"],
     },
@@ -89,7 +99,11 @@ def register_catalog_tools(
         in_stock_only = bool(arguments.get("in_stock_only", False))
         constrained = max_price is not None or bool(category) or in_stock_only
 
-        results = storefront.search(query, clamp_limit(limit * OVERFETCH) if constrained else limit)
+        results = storefront.search(
+            query,
+            clamp_limit(limit * OVERFETCH) if constrained else limit,
+            evidence=bool(arguments.get("evidence", False)),
+        )
         if max_price is not None:
             results = [p for p in results if p.price <= float(max_price)]
         if category:

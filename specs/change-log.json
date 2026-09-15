@@ -1807,6 +1807,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted (with the structural-containment caveat recorded)",
       "evidence": "reports/agentdojo.md, evals/results-agentdojo.json"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#116 phase 3: route each query to the index it fits",
+      "area": "retrieval",
+      "class": "measurable",
+      "what": "Enrichment is a trade (lexical hit@10 down 0.037, attribute recall up 0.714), so a single index forces every query onto one side of it. Both indexes are now built and search_products(evidence=true|false) lets the query choose: the storefront port gained the flag (single-index providers accept and ignore it), LocalSearchCatalog holds plain + enriched and routes per call, and the tool exposes the choice to the model with a description of WHEN to use it (attribute claims from reviews, not names or categories). The obsolete global switch catalog.enrich was removed rather than left lying: the query decides now.",
+      "metric": "hit@10 over the rule set + attribute set (keyless ceiling)",
+      "before": 0.947,
+      "after": 0.979,
+      "note": "Oracle routing scores 0.979 against 0.947 for always-enriched and 0.898 for always-plain - so routing captures both sides, and the measured gap is +0.032 over committing to enrichment. The MODEL's routing is measured too and the number is explicitly NOT a routing accuracy: the lexical half is clean (6/6 to the plain index) but 4/6 attribute cases produced no search at all, because evals/attribute_cases.jsonl holds search queries rather than customer requests - the agent asks for clarification, which is defensible and not what the bench means to score. The report says so at the top of that section; measuring the flag properly needs the attribute corpus rewritten as requests (a follow-up, not a reinterpretation).",
+      "guardrails": "340 tests pass; single-index providers are explicit that the flag does not change their answer; 14 reports verified against their corpus",
+      "blast_radius": "app/ports/storefront.py, app/adapters/{catalog_index,shopify_catalog,storefront_memory,storefront_sqlite}.py, app/tools/catalog.py, app/core/settings.py, config/settings.yaml, .env.example, web/main.py, evals/bench_routing.py",
+      "rollback": "git revert the commit (the flag defaults to false, which is the plain index)",
+      "verdict": "accepted (model-side routing flagged as not yet established)",
+      "evidence": "reports/discovery-routing.md"
     }
   ]
 }
