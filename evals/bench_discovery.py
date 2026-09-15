@@ -38,9 +38,20 @@ def _load() -> tuple[list[dict], list[dict]]:
     return cases, products
 
 
-def _document(product: dict) -> str:
-    tags = [t for t in product["tags"] if not t.startswith("imported:")]
-    return " ".join([product["title"], product["vendor"], product["type"], *tags]).strip()
+def _reviews():
+    """The real review store, or None when the dataset is absent (gitignored)."""
+    from app.adapters.reviews_sqlite import SqliteReviewStore
+    from app.core.settings import load_settings
+
+    settings = load_settings()
+    path = Path(settings.reviews.path)
+    return SqliteReviewStore(path) if path.exists() else None
+
+
+def _document(product: dict, reviews=None) -> str:
+    from app.adapters.catalog_index import catalog_document
+
+    return catalog_document(product, reviews=reviews)
 
 
 def _embedding(config: str):
@@ -65,7 +76,7 @@ def _embedding(config: str):
     raise ValueError(config)
 
 
-def _local_retriever(config: str, products: list[dict]):
+def _local_retriever(config: str, products: list[dict], reviews=None):
     from app.adapters.retriever_bm25 import Bm25Retriever
     from app.adapters.retriever_dense import DenseRetriever
     from app.adapters.retriever_hybrid import HybridRetriever
@@ -86,7 +97,7 @@ def _local_retriever(config: str, products: list[dict]):
             retriever = HybridRetriever(sparse, dense, weights=weights or (1.0, 1.0))
         else:
             retriever = dense
-    retriever.add([Chunk(id=p["id"], text=_document(p), source=p["id"]) for p in products])
+    retriever.add([Chunk(id=p["id"], text=_document(p, reviews), source=p["id"]) for p in products])
     return retriever
 
 
@@ -140,12 +151,22 @@ def main() -> int:
     parser.add_argument(
         "--shopify-sample", type=int, default=0, help="cases for the live retriever"
     )
+    parser.add_argument(
+        "--document",
+        choices=("plain", "enriched"),
+        default="plain",
+        help="enriched adds the feature list and cleaned review evidence (step D)",
+    )
     args = parser.parse_args()
 
     cases, products = _load()
-    result: dict = {"k": K, "cases": len(cases), "configs": {}}
+    reviews = _reviews() if args.document == "enriched" else None
+    if args.document == "enriched" and reviews is None:
+        print("FAIL: enriched documents need data/reviews/reviews.sqlite")
+        return 1
+    result: dict = {"k": K, "cases": len(cases), "document": args.document, "configs": {}}
     for config in ("tfidf", "bm25", "dense-openai", "hybrid-openai", "hybrid-bm25"):
-        retriever = _local_retriever(config, products)
+        retriever = _local_retriever(config, products, reviews)
         result["configs"][config] = _evaluate(
             cases, lambda query, limit, r=retriever: [h.id for h in r.retrieve(query, limit)]
         )
@@ -158,7 +179,7 @@ def main() -> int:
         print(f"  shopify-keyword done ({len(sample)} sampled)", flush=True)
 
     RESULTS.write_text(json.dumps(result, indent=2) + "\n")
-    print(f"discovery benchmark (k={K}, {result['cases']} cases)")
+    print(f"discovery benchmark (k={K}, {result['cases']} cases, {args.document} docs)")
     for config, metrics in result["configs"].items():
         print(
             f"  {config:<16} hit@{K}={metrics['hit_rate']:.3f} "

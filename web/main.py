@@ -153,6 +153,7 @@ def build_catalog_index(settings: Settings) -> CatalogIndex | None:
     products = load_snapshot(settings.catalog.index_path)
     if not products:
         return None
+    reviews = build_reviews(settings) if settings.catalog.enrich else None
     if settings.retrieval.sparse == "bm25":
         from app.adapters.retriever_bm25 import Bm25Retriever
 
@@ -160,7 +161,7 @@ def build_catalog_index(settings: Settings) -> CatalogIndex | None:
     else:
         sparse = InMemoryRetriever()
     if settings.catalog.provider == "tfidf":
-        return CatalogIndex(sparse, products)
+        return CatalogIndex(sparse, products, reviews=reviews)
 
     if settings.vector_store.provider == "memory":
         store: VectorStore = InMemoryVectorStore()
@@ -189,8 +190,10 @@ def build_catalog_index(settings: Settings) -> CatalogIndex | None:
     )
     # Dense retrieval degrades to the keyless lexical retriever on an outage (RD-1).
     if settings.resilience.fallback_enabled:
-        return CatalogIndex(FallbackRetriever(hybrid, InMemoryRetriever()), products)
-    return CatalogIndex(hybrid, products)
+        return CatalogIndex(
+            FallbackRetriever(hybrid, InMemoryRetriever()), products, reviews=reviews
+        )
+    return CatalogIndex(hybrid, products, reviews=reviews)
 
 
 def build_catalog(settings: Settings) -> StorefrontBackend:

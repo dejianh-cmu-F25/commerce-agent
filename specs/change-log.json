@@ -1583,6 +1583,22 @@
       "rollback": "git revert the commit (the previous loader is self-contained)",
       "verdict": "accepted",
       "evidence": "tests/unit/test_ingest.py, evals/report.md"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#102 C/D/E clean review text and measure review-enriched documents",
+      "area": "retrieval",
+      "class": "measurable",
+      "what": "Three connected pieces. C: app/reviews/clean.py strips inline video/image markers, HTML entities, markup, URLs and repeated punctuation, decodes entities, and rejects bodies that are too short or are a bare rating; it is applied on read in the review store so the model never sees markup, and the count is reported rather than assumed (6,548 rows -> 5,617 usable = 86%, 42 with markers, 1.6% of characters removed) - with the title kept, because the claim often lives there ('Very tight'). D: product documents can now carry the imported feature list and cleaned review snippets (catalog.enrich), and the snapshot gained the SKU that joins a product to its reviews. E: evals/attribute_cases.py builds attribute queries whose LABELS come from the review text itself - 'Amazon Fashion runs small' is labelled by the product whose review says it runs small - so the class enrichment exists for is measurable without human judgement.",
+      "metric": "hit@10 on attribute queries (28, review-labelled), and on the lexical rule set (216)",
+      "before": 0.179,
+      "after": 0.893,
+      "note": "The two sets disagree, which is the point. Attribute queries: tfidf 0.179 -> 0.893, bm25 0.071 -> 0.786, hybrid-openai 0.143 -> 0.714 - plain documents simply cannot answer them, because the phrase is in no title. The lexical rule set goes the other way: tfidf 0.991 -> 0.954 (dense-openai 0.907 -> 0.829), because longer documents dilute a keyword query. Blending the two, the crossover is near a 5% attribute share, so the shipped config enables enrichment while the library default stays off. Caveats: the attribute set is small (28) and the query mix is an assumption; the justified next step is routing between two indexes, not a blanket default.",
+      "guardrails": "317 tests pass (8 new cleaning tests); the rule set stays measurable in both modes (--document plain|enriched); keyless gate green",
+      "blast_radius": "app/reviews/clean.py, app/adapters/reviews_sqlite.py, app/adapters/catalog_index.py, app/core/settings.py, config/settings.yaml, scripts/sync_catalog.py, web/main.py, evals/{attribute_cases,bench_attribute,bench_discovery}.py",
+      "rollback": "catalog.enrich: false restores the plain, measured lexical path",
+      "verdict": "accepted",
+      "evidence": "reports/discovery-attribute.md, evals/attribute_cases.jsonl"
     }
   ]
 }

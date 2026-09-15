@@ -25,18 +25,52 @@ from typing import Any
 from app.core.types import Chunk, Order, Product
 from app.ports.retriever import Retriever
 from app.ports.storefront import StorefrontBackend
+from app.reviews.clean import clean_review, is_usable_body
+
+SNIPPET_CHARS = 200
 
 
-def catalog_document(product: dict[str, Any]) -> str:
-    """The searchable text of one product: title, vendor, type and public tags.
+def _review_snippets(product: dict[str, Any], reviews: Any, limit: int) -> list[str]:
+    """Cleaned review text for a product, most helpful first.
 
-    ``imported:*`` tags are provenance, not content. Kept in one place so the live
-    index and ``evals/*_bench.py`` cannot drift apart.
+    Reviews are keyed by the source ASIN, which the snapshot carries as ``sku``.
+    """
+    sku = str(product.get("sku") or "")
+    if not sku:
+        return []
+    snippets: list[str] = []
+    for review in reviews.get_reviews(sku, limit):
+        text = clean_review(review.text, review.title)
+        if is_usable_body(text):
+            snippets.append(text[:SNIPPET_CHARS])
+    return snippets
+
+
+def catalog_document(
+    product: dict[str, Any], *, reviews: Any | None = None, review_limit: int = 3
+) -> str:
+    """The searchable text of one product.
+
+    Plain: title, vendor, type and public tags (``imported:*`` tags are provenance,
+    not content). Enriched: the same plus the imported feature list and cleaned review
+    evidence, which is the only place attribute claims ("runs small", "leaks") exist -
+    no title states them.
+
+    Kept in one place so the live index and ``evals/*_bench.py`` cannot drift apart.
     """
     tags = [tag for tag in product.get("tags") or [] if not tag.startswith("imported:")]
-    return " ".join(
-        [product.get("title") or "", product.get("vendor") or "", product.get("type") or "", *tags]
-    ).strip()
+    parts = [
+        product.get("title") or "",
+        product.get("vendor") or "",
+        product.get("type") or "",
+        *tags,
+    ]
+    if reviews is not None:
+        description = " ".join((product.get("description") or "").split())
+        if description:
+            parts.append(description)
+        parts.extend(_review_snippets(product, reviews, review_limit))
+    return " ".join(part for part in parts if part).strip()
 
 
 def load_snapshot(path: str | Path) -> list[dict[str, Any]]:
@@ -54,12 +88,22 @@ def load_snapshot(path: str | Path) -> list[dict[str, Any]]:
 class CatalogIndex:
     """A local index over the catalog snapshot. Returns ids, never facts."""
 
-    def __init__(self, retriever: Retriever, products: list[dict[str, Any]]) -> None:
+    def __init__(
+        self,
+        retriever: Retriever,
+        products: list[dict[str, Any]],
+        *,
+        reviews: Any | None = None,
+    ) -> None:
         self._retriever = retriever
         self._products = {str(p["id"]): p for p in products}
         self._retriever.add(
             [
-                Chunk(id=str(p["id"]), text=catalog_document(p), source=str(p["id"]))
+                Chunk(
+                    id=str(p["id"]),
+                    text=catalog_document(p, reviews=reviews),
+                    source=str(p["id"]),
+                )
                 for p in products
             ]
         )

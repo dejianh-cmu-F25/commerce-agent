@@ -49,7 +49,7 @@ query ListProducts($n: Int!, $after: String) {
       productType
       tags
       descriptionHtml
-      variants(first: 1) { nodes { price } }
+      variants(first: 1) { nodes { price sku } }
     }
   }
 }
@@ -74,8 +74,11 @@ def _plain(description_html: str) -> str:
 def _record(node: dict[str, Any]) -> dict[str, Any]:
     variants = (node.get("variants") or {}).get("nodes") or []
     price = float((variants[0] or {}).get("price", 0) or 0) if variants else 0.0
+    sku = str(((variants[0] if variants else {}) or {}).get("sku") or "")
     return {
         "id": node["id"],
+        # The source ASIN: the key the review store uses (step C/D).
+        "sku": sku,
         "title": node.get("title") or "",
         "vendor": node.get("vendor") or "",
         # Shopify stores the Amazon category taxonomy with underscores

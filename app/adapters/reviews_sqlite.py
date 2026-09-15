@@ -11,6 +11,7 @@ import sqlite3
 from pathlib import Path
 
 from app.ports.reviews import Review
+from app.reviews.clean import clean_review_text
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS reviews (
@@ -72,8 +73,10 @@ class SqliteReviewStore:
             Review(
                 product_id=row[0],
                 rating=row[1],
-                title=row[2],
-                text=row[3],
+                # Cleaned on read: the store keeps the raw dataset, every consumer sees
+                # markup-free text (C).
+                title=clean_review_text(row[2]),
+                text=clean_review_text(row[3]),
                 helpful_votes=row[4],
                 verified=bool(row[5]),
                 timestamp_ms=row[6],
