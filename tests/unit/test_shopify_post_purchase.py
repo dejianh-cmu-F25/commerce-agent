@@ -171,3 +171,52 @@ async def test_in_memory_backend_serves_the_contract() -> None:
     assert (await backend.get_order(order.id)) == order
     assert len(await backend.returnable_items(order.id)) == 1
     assert await backend.get_order("missing") is None
+
+
+async def test_returnable_items_resolves_a_human_order_number() -> None:
+    """The returnable query needs a global id; a human number must be resolved first.
+
+    Passing "1006" straight through made Shopify reject the query
+    ("Variable $id of type ID! was provided invalid value"), the tool fail, and the
+    agent loop over id formats - the root cause of the return-case tool churn.
+    """
+    seen: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content)
+        seen.append(body)
+        if "returnableFulfillments" in body["query"]:
+            return httpx.Response(200, json=RETURNABLE_RESPONSE)
+        # the by-name lookup returns orders.nodes, not order
+        return httpx.Response(
+            200, json={"data": {"orders": {"nodes": [ORDER_RESPONSE["data"]["order"]]}}}
+        )
+
+    backend = ShopifyPostPurchase(_admin(handler))
+    items = await backend.returnable_items("1006")
+
+    assert [item.fulfillment_line_item_id for item in items] == [
+        "gid://shopify/FulfillmentLineItem/21"
+    ]
+    assert len(seen) == 2, "expected an order lookup followed by the returnable query"
+    assert seen[0]["variables"]["q"] == "name:#1006"
+    assert seen[1]["variables"]["id"] == "gid://shopify/Order/1", (
+        "the returnable query must receive the resolved global id, not the human number"
+    )
+
+
+async def test_returnable_items_for_an_unknown_number_makes_no_second_call() -> None:
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        body = json.loads(request.content)
+        calls.append(body["query"])
+        return httpx.Response(200, json={"data": {"orders": {"nodes": []}}})
+
+    backend = ShopifyPostPurchase(_admin(handler))
+    assert await backend.returnable_items("nope") == []
+    assert len(calls) == 1

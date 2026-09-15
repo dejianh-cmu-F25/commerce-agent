@@ -139,9 +139,19 @@ class Case:
 
 # Non-English *intents* (not off-topic): the agent should still act.
 NON_ENGLISH: list[tuple[str, str, tuple[str, ...]]] = [
-    ("return", "¿Puedo devolver un artículo de mi pedido #1006?", ("propose_return_decision",)),
-    ("return", "Je veux retourner un article de la commande #1007.", ("propose_return_decision",)),
-    ("return", "我想退货，订单 #1008。", ("propose_return_decision",)),
+    # Each states a reason: without one the agent correctly asks which reason,
+    # and asking is not a failure (the ambiguous cases cover that separately).
+    (
+        "return",
+        "¿Puedo devolver un artículo de mi pedido #1006? No me quedó bien.",
+        ("propose_return_decision",),
+    ),
+    (
+        "return",
+        "Je veux retourner un article de la commande #1007, il ne me va pas.",
+        ("propose_return_decision",),
+    ),
+    ("return", "我想退货，订单 #1008，尺码不合适。", ("propose_return_decision",)),
     ("wismo", "¿Dónde está mi pedido #1006?", ("get_order_status",)),
     ("wismo", "Où est ma commande #1007 ?", ("get_order_status",)),
     ("wismo", "我的订单 #1008 到哪了？", ("get_order_status",)),

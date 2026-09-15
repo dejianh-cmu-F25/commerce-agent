@@ -1423,6 +1423,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "evals/results-journey.json"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#91 046 fix the order-id bug behind the return-case tool churn",
+      "area": "returns",
+      "class": "measurable",
+      "what": "Root cause of both the slow evals and the weak return slice: returnable_items passed the customer's order number ('1006') straight into Shopify's returnableFulfillments(orderId:) which requires a global id, so the query was rejected, the tool failed, and the agent retried with other id formats (gid://, O-1006, #1006) until it gave up. Fixes: returnable_items resolves the order first and uses its global id (regression tests assert the resolved id is sent and that an unknown number makes no second call); get_order_status now returns the order AND its returnable items with a short integer 'ref'; propose_return_decision accepts item_ref and rejects an id that is not a real returnable line item, echoing the valid refs so the model self-corrects in one step; the prompt and tool descriptions no longer ask the model for clause ids (the gate attaches them) and no longer require copying long ids; search_knowledge is scoped to customer policy questions only; the three non-English return cases now state a reason (without one, asking which reason is correct).",
+      "metric": "tool calls per return case, and p50 case duration",
+      "before": 11.0,
+      "after": 2.3,
+      "note": "Tool calls per return case fell from 9-13 to 2-3 and the return slice went 4/12 -> 10/12; p50 case duration 23.4s -> 16.2s. The durable evidence is the tool-call count (structural, deterministic: 273 unit tests, and the agent now needs get_order_status -> propose_return_decision only). The accuracy number is NOT reliable at this sample size: two identical concurrency-8 runs of this 12-case slice scored 0.833 and 0.667, and two of the remaining failures pass on a re-run, so treat 10/12 as the working figure with a wide interval.",
+      "guardrails": "273 tests pass; new regression tests pin the id resolution; the harness still rejects an unknown item id instead of silently recording the first item",
+      "blast_radius": "app/adapters/shopify_post_purchase.py, app/tools/post_purchase.py, app/tools/knowledge.py, config/prompts/journey.md, evals/journey_eval.py",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_shopify_post_purchase.py, evals/results-journey.json"
     }
   ]
 }

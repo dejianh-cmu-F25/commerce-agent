@@ -8,6 +8,7 @@ proposal against the order and the policy. Nothing here approves or refunds (P3)
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
@@ -22,8 +23,9 @@ from app.tools.registry import ToolRegistry, ToolResult
 GET_ORDER_SPEC = ToolSpec(
     name="get_order_status",
     description=(
-        "Get one order's status, dates, and line items by its id. Call this before "
-        "answering anything about an order."
+        "Get one order's status, dates, line items and the items that can be "
+        "returned, by its id. Call this once before answering anything about an "
+        "order or proposing a return."
     ),
     parameters={
         "type": "object",
@@ -35,8 +37,8 @@ GET_ORDER_SPEC = ToolSpec(
 RETURNABLE_SPEC = ToolSpec(
     name="list_returnable_items",
     description=(
-        "List the items on an order that can be returned, with their fulfillment "
-        "line item ids. Call this before proposing a return."
+        "List the items on an order that can be returned. get_order_status already "
+        "includes these, so only call this if you need them separately."
     ),
     parameters={
         "type": "object",
@@ -49,14 +51,24 @@ PROPOSE_SPEC = ToolSpec(
     name="propose_return_decision",
     description=(
         "Propose a return decision for one item: eligible, ineligible, or escalate. "
-        "Cite the policy clause ids that support it. This records a proposal only; "
-        "it never approves or refunds."
+        "Do not supply clause ids — the harness attaches the clauses it used. This "
+        "records a proposal only; it never approves or refunds."
     ),
     parameters={
         "type": "object",
         "properties": {
             "order_id": {"type": "string"},
-            "fulfillment_line_item_id": {"type": "string"},
+            "item_ref": {
+                "type": "integer",
+                "description": (
+                    "The item's ref from get_order_status (1 for the first item). "
+                    "Prefer this over copying a long fulfillment_line_item_id."
+                ),
+            },
+            "fulfillment_line_item_id": {
+                "type": "string",
+                "description": "The full item id, if you already have it.",
+            },
             "decision": {"type": "string", "enum": ["eligible", "ineligible", "escalate"]},
             "reason": {
                 "type": "string",
@@ -70,9 +82,13 @@ PROPOSE_SPEC = ToolSpec(
                     "missing",
                 ],
             },
-            "cited_clauses": {"type": "array", "items": {"type": "string"}},
+            "cited_clauses": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Optional; the harness fills this in. Do not guess it.",
+            },
         },
-        "required": ["order_id", "fulfillment_line_item_id", "decision"],
+        "required": ["order_id", "decision"],
     },
 )
 
@@ -87,7 +103,13 @@ def _category_from_tags(tags: tuple[str, ...]) -> str:
     return "all"
 
 
-def _order_dict(order: OrderView) -> dict[str, Any]:
+def _order_dict(order: OrderView, returnable: Sequence[Any] = ()) -> dict[str, Any]:
+    """One order payload that already answers "what can be returned".
+
+    Folding the returnable items in removes a second round trip and the id
+    confusion it caused: the model used to re-call list_returnable_items with the
+    internal id it had just read instead of the customer-facing one.
+    """
     return {
         "id": order.id,
         "name": order.name,
@@ -106,6 +128,16 @@ def _order_dict(order: OrderView) -> dict[str, Any]:
                 "tags": list(item.tags),
             }
             for item in order.line_items
+        ],
+        "returnable_items": [
+            {
+                "ref": index,
+                "title": item.title,
+                "sku": item.sku,
+                "quantity": item.quantity,
+                "fulfillment_line_item_id": item.fulfillment_line_item_id,
+            }
+            for index, item in enumerate(returnable, 1)
         ],
     }
 
@@ -131,7 +163,10 @@ def register_post_purchase_tools(
         if order is None:
             return ToolResult(content=f"unknown order: {order_id}", status="error")
         session.remember_ids([order.id])
-        return ToolResult(content=json.dumps(_order_dict(order)), component="order")
+        # order.id is the resolved global id: never pass the customer-facing number
+        # to a backend that expects a global id.
+        returnable = await backend.returnable_items(order.id)
+        return ToolResult(content=json.dumps(_order_dict(order, returnable)), component="order")
 
     async def list_returnable_items(arguments: dict[str, Any], session: Session) -> ToolResult:
         order_id = str(arguments.get("order_id", ""))
@@ -155,6 +190,38 @@ def register_post_purchase_tools(
             )
         order_id = str(arguments.get("order_id", ""))
         fli_id = str(arguments.get("fulfillment_line_item_id", ""))
+        # Resolve the item by its short ref when possible: asking the model to copy
+        # an opaque gid is what made it loop.
+        returnable = await backend.returnable_items(order_id)
+        ref = arguments.get("item_ref")
+        if ref is not None:
+            try:
+                index = int(ref)
+            except (TypeError, ValueError):
+                index = 0
+            if not 1 <= index <= len(returnable):
+                return ToolResult(
+                    content=json.dumps(
+                        {
+                            "error": "item_ref out of range",
+                            "valid_refs": list(range(1, len(returnable) + 1)),
+                        }
+                    ),
+                    status="error",
+                )
+            fli_id = returnable[index - 1].fulfillment_line_item_id
+        valid_ids = [item.fulfillment_line_item_id for item in returnable]
+        if returnable and fli_id not in valid_ids:
+            return ToolResult(
+                content=json.dumps(
+                    {
+                        "error": "unknown item; pass item_ref instead",
+                        "valid_refs": list(range(1, len(returnable) + 1)),
+                        "items": [item.title for item in returnable],
+                    }
+                ),
+                status="error",
+            )
         record = {
             "order_id": order_id,
             "fulfillment_line_item_id": fli_id,

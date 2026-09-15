@@ -16,9 +16,10 @@ from app.tools.registry import ToolRegistry, ToolResult
 SEARCH_KNOWLEDGE_SPEC = ToolSpec(
     name="search_knowledge",
     description=(
-        "Search the store's policy documents (shipping, returns, warranty) and answer "
-        "from the results. Always cite the source document. Use this for any policy "
-        "question instead of guessing."
+        "Search the store's published policy documents (shipping, returns) when the "
+        "CUSTOMER asks a policy question. Always cite the source document. Do not use "
+        "this to resolve an internal decision such as a return eligibility call - the "
+        "harness supplies the clauses for those."
     ),
     parameters={
         "type": "object",

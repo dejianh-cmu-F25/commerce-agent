@@ -154,6 +154,15 @@ class ShopifyPostPurchase:
         return _to_order(node) if node else None
 
     async def returnable_items(self, order_id: str) -> list[ReturnableItem]:
+        # returnableFulfillments(orderId:) requires a global id, but callers hold a
+        # human order number like "1006". Passing that straight through made Shopify
+        # reject the query, the tool fail, and the agent retry with other id formats
+        # (the source of the tool-call loops). Resolve to the real id first.
+        if order_id and not order_id.startswith("gid://"):
+            order = await self.get_order(order_id)
+            if order is None:
+                return []
+            order_id = order.id
         data = await self._client.query(_RETURNABLE_QUERY, {"id": order_id, "first": 10})
         edges = (data.get("returnableFulfillments") or {}).get("edges") or []
         items: list[ReturnableItem] = []
