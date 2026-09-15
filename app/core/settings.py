@@ -134,6 +134,16 @@ class StorefrontSettings(BaseModel):
     seed_orders: bool = True
 
 
+class CartSettings(BaseModel):
+    """Where cart lines live (feature 046, T108).
+
+    ``session`` is the keyless default and needs nothing; ``shopify_storefront`` writes
+    a real cart through the Storefront API and needs ``SHOPIFY_STOREFRONT_TOKEN``.
+    """
+
+    provider: Literal["session", "shopify_storefront"] = "session"
+
+
 class CatalogSettings(BaseModel):
     """Local discovery retrieval (feature 046 step A).
 
@@ -154,6 +164,9 @@ class ShopifySettings(BaseModel):
     # Real post-purchase system of record (feature 045). Empty = keyless fixture.
     shop: str = ""  # e.g. my-store.myshopify.com
     access_token: str = ""
+    # Storefront API token (a different credential from the Admin token): needed only by
+    # cart.provider=shopify_storefront, which is not live-verified without it.
+    storefront_token: str = ""
     api_version: str = "2025-07"
 
 
@@ -219,6 +232,7 @@ class Settings(BaseModel):
     web: WebSettings = Field(default_factory=WebSettings)
     storefront: StorefrontSettings = Field(default_factory=StorefrontSettings)
     catalog: CatalogSettings = Field(default_factory=CatalogSettings)
+    cart: CartSettings = Field(default_factory=CartSettings)
     session: SessionSettings = Field(default_factory=SessionSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
     reviews: ReviewsSettings = Field(default_factory=ReviewsSettings)
@@ -267,6 +281,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "RESILIENCE_FALLBACK_ENABLED": ("resilience", "fallback_enabled", _to_bool),
     "SHOPIFY_SHOP": ("shopify", "shop", str),
     "SHOPIFY_ACCESS_TOKEN": ("shopify", "access_token", str),
+    "SHOPIFY_STOREFRONT_TOKEN": ("shopify", "storefront_token", str),
+    "CART_PROVIDER": ("cart", "provider", str),
     "SHOPIFY_API_VERSION": ("shopify", "api_version", str),
     "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),

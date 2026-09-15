@@ -11,7 +11,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from app.core.session import CartLine, Session
+from app.adapters.cart_session import SessionCart
+from app.core.session import Session
 from app.core.types import ToolSpec
 from app.gates.base import GateContext
 from app.gates.pipeline import GatePipeline
@@ -82,7 +83,20 @@ def _clamp_quantity(value: Any) -> int:
     return max(1, quantity)
 
 
-def register_cart_tools(registry: ToolRegistry, storefront: StorefrontBackend) -> None:
+def register_cart_tools(
+    registry: ToolRegistry,
+    storefront: StorefrontBackend,
+    cart: Any | None = None,
+) -> None:
+    """Register the cart tools.
+
+    ``cart`` is the storage behind them (``app/ports/cart.py``): the session-backed
+    provider by default, a Storefront-backed one when configured. Either way the lines
+    are mirrored onto the session, which is what the transcript and the persistence
+    layer read.
+    """
+    cart_backend = cart if cart is not None else SessionCart()
+
     async def _add_to_cart(arguments: dict[str, Any], session: Session) -> ToolResult:
         product_id = str(arguments.get("product_id", "")).strip()
         if not _PROVENANCE.run(GateContext(session=session, ids=[product_id])).allowed:
@@ -101,18 +115,13 @@ def register_cart_tools(registry: ToolRegistry, storefront: StorefrontBackend) -
             )
 
         quantity = _clamp_quantity(arguments.get("quantity", 1))
-        line = next((item for item in session.cart if item.product_id == product_id), None)
-        if line is None:
-            session.cart.append(
-                CartLine(
-                    product_id=product.id,
-                    title=product.title,
-                    quantity=quantity,
-                    unit_price=product.price,
-                )
+        try:
+            cart_backend.add(session, product, quantity)
+        except Exception as exc:  # a cart failure is the customer's answer, not a crash
+            return ToolResult(
+                content=json.dumps({"error": "could not add to the cart", "detail": str(exc)}),
+                status="error",
             )
-        else:
-            line.quantity += quantity
 
         payload = cart_payload(session)
         return ToolResult(content=json.dumps(payload), component="cart", payload=payload)

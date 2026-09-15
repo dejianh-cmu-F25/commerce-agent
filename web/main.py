@@ -390,6 +390,26 @@ def build_post_purchase(settings: Settings) -> PostPurchaseBackend:
     return InMemoryPostPurchase(orders, returnable)
 
 
+def build_cart(settings: Settings):
+    """Resolve the cart backend (PB-1). Session-backed unless a Storefront cart is asked for.
+
+    The Storefront provider needs its own token; without one it fails loud rather than
+    silently falling back, because a deployment that asked for a real cart should not
+    get a session one.
+    """
+    if settings.cart.provider == "shopify_storefront":
+        from app.adapters.cart_shopify import ShopifyStorefrontCart
+
+        return ShopifyStorefrontCart(
+            settings.shopify.shop,
+            settings.shopify.storefront_token,
+            settings.shopify.api_version,
+        )
+    from app.adapters.cart_session import SessionCart
+
+    return SessionCart()
+
+
 def build_reranker(settings: Settings, cost_meter: CostMeter | None = None):
     """Second-stage reranker (A6). Off by default: it costs a call per search."""
     if not settings.rerank.enabled or settings.rerank.provider != "llm":
@@ -411,7 +431,7 @@ def build_agent(
     meter = cost_meter if cost_meter is not None else UsageCostMeter(settings.budget)
     catalog = build_catalog(settings)
     register_catalog_tools(registry, catalog, reranker=build_reranker(settings, meter))
-    register_cart_tools(registry, catalog)
+    register_cart_tools(registry, catalog, build_cart(settings))
     register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
     register_review_tools(registry, build_reviews(settings), catalog)

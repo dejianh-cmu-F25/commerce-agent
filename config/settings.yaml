@@ -111,6 +111,11 @@ session:
 # hybrid only catches up to the lexical retriever (val hit@10 0.991 vs tfidf 0.991,
 # full set 0.986 vs 0.991) while costing an embedding call per query, so the live
 # path ships lexical. See reports/discovery-rrf-weights.md.
+cart:
+  # session = lines on the session (keyless default). shopify_storefront writes a real
+  # cart through the Storefront API and needs SHOPIFY_STOREFRONT_TOKEN.
+  provider: session
+
 catalog:
   provider: tfidf           # tfidf (keyless, shipped) | hybrid (lexical + embedding, RRF)
   index_path: ./data/discovery/products.json

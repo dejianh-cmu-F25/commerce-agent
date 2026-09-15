@@ -122,6 +122,13 @@ on `Finish` never leaves an async generator to be collected mid-flight.
 
 - **storefront**: `search_products` (catalog), `cart_*` (cart), `search_knowledge`
   (policy retrieval from the SoT-derived corpus).
+- **cart backend** (`app/ports/cart.py`, resolved by `web/main.py:build_cart`): `session`
+  (keyless default — lines live on the session) or `shopify_storefront`
+  (`app/adapters/cart_shopify.py`, a real Storefront cart; needs
+  `SHOPIFY_STOREFRONT_TOKEN`, a credential this project's store does not have, so that
+  path is implemented and MockTransport-tested but **not live-verified**). Either
+  provider mirrors its lines onto the session, so the transcript and session
+  persistence are unchanged.
 - **checkout**: `create/update/complete_checkout` over the simulated ACP adapter
   (`complete_checkout` is HITL-gated).
 - **customer-accounts**: `get_order_status`, `list_returnable_items`,

@@ -160,3 +160,25 @@ A returnable item requires the order to be **fulfilled**. If
 - **Test:** the store's products and orders are generated demo data.
 - Do **not** claim the catalog is real. Claim the **integration and domain logic**
   are real — that is honest and still strong.
+
+---
+
+## Optional — a real Storefront cart (`CART_PROVIDER=shopify_storefront`)
+
+The default cart is session-backed and needs nothing. To hold the cart in Shopify
+instead, the agent uses the **Storefront API**, which is a different surface with a
+**different credential** from the Admin token:
+
+1. Store admin → **Settings → Apps and sales channels → Develop apps** (or the Headless
+   channel) → create an app with a **Storefront API** access token.
+2. Grant cart scopes: `unauthenticated_write_checkouts`, `unauthenticated_read_checkouts`,
+   `unauthenticated_read_product_listings`.
+3. Set `SHOPIFY_STOREFRONT_TOKEN=<token>` and `CART_PROVIDER=shopify_storefront`.
+
+Without the token, startup fails with a clear error rather than silently falling back to
+the session cart — a deployment that asks for a real cart should not get a fake one.
+
+> **Verification status.** This project's store has no Storefront token, so the live path
+> is **unverified**. The request shapes and the response mapping are covered against an
+> `httpx.MockTransport` (`tests/unit/test_cart_shopify.py`); the live call has never run.
+> Treat the cart as session-backed until a token exists and this note is updated.
