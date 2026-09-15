@@ -76,7 +76,11 @@ def _items(results: list[Any]) -> list[dict[str, Any]]:
     ]
 
 
-def register_catalog_tools(registry: ToolRegistry, storefront: StorefrontBackend) -> None:
+def register_catalog_tools(
+    registry: ToolRegistry,
+    storefront: StorefrontBackend,
+    reranker: Any | None = None,
+) -> None:
     async def _search_products(arguments: dict[str, Any], session: Session) -> ToolResult:
         query = str(arguments.get("query", "")).strip()
         limit = clamp_limit(int(arguments.get("limit", 5)))
@@ -93,7 +97,12 @@ def register_catalog_tools(registry: ToolRegistry, storefront: StorefrontBackend
         if in_stock_only:
             # Stock comes from the live product, never the index (step A2).
             results = [p for p in results if p.in_stock]
-        results = results[:limit]
+        if reranker is not None and len(results) > 1:
+            # Second stage: reorder the eligible candidates by relevance (A6). The
+            # reranker falls back to this order if it fails, so search never breaks.
+            results = await reranker.rerank(query, results, limit)
+        else:
+            results = results[:limit]
         session.remember_ids([p.id for p in results])
 
         payload: dict[str, Any] = {"query": query, "results": _items(results)}

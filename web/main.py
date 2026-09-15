@@ -35,6 +35,7 @@ from app.adapters.memory_sqlite import SqliteMemoryStore
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
 from app.adapters.post_purchase_memory import InMemoryPostPurchase
+from app.adapters.rerank_llm import LlmListwiseReranker
 from app.adapters.retriever_dense import DenseRetriever
 from app.adapters.retriever_hybrid import HybridRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
@@ -367,6 +368,15 @@ def build_post_purchase(settings: Settings) -> PostPurchaseBackend:
     return InMemoryPostPurchase(orders, returnable)
 
 
+def build_reranker(settings: Settings, cost_meter: CostMeter | None = None):
+    """Second-stage reranker (A6). Off by default: it costs a call per search."""
+    if not settings.rerank.enabled or settings.rerank.provider != "llm":
+        return None
+    return LlmListwiseReranker(
+        build_llm(settings), top_k=settings.rerank.top_k, cost_meter=cost_meter
+    )
+
+
 def build_agent(
     settings: Settings,
     tracer: Tracer | None = None,
@@ -376,8 +386,9 @@ def build_agent(
     cost_meter: CostMeter | None = None,
 ) -> Agent:
     registry = ToolRegistry()
+    meter = cost_meter if cost_meter is not None else UsageCostMeter(settings.budget)
     catalog = build_catalog(settings)
-    register_catalog_tools(registry, catalog)
+    register_catalog_tools(registry, catalog, reranker=build_reranker(settings, meter))
     register_cart_tools(registry, catalog)
     register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
@@ -403,7 +414,7 @@ def build_agent(
         tools=registry,
         settings=settings.agent,
         system_prompt=system_prompt,
-        cost_meter=cost_meter if cost_meter is not None else UsageCostMeter(settings.budget),
+        cost_meter=meter,
         tracer=tracer,
         memory=memory,
         safety=settings.safety,

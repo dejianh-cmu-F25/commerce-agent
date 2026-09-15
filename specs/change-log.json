@@ -1519,6 +1519,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "tests/unit/test_catalog_constraints.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#98 A6 LLM listwise reranker, measured on an ESCI probe",
+      "area": "retrieval",
+      "class": "measurable",
+      "what": "Added the second stage every production search stack has: app/adapters/rerank_llm.py re-ranks the retrieved candidates in ONE listwise call (candidates in, ranked order out). It is wired into search_products behind injection (register_catalog_tools(..., reranker=...)), configured by the previously dead rerank settings plus RERANK_ENABLED/PROVIDER/TOP_K, and off by default so the keyless gate stays offline. Three robustness properties, each with a test: unparseable output, a provider failure, and a hung call all keep the retrieval order - and it records its own usage into the cost meter, since it runs outside the agent loop where nothing else would meter it.",
+      "metric": "ESCI nDCG@10, reranked vs retrieval only (20-query probe)",
+      "before": 0.8086,
+      "after": 0.8444,
+      "note": "The probe suggests a real quality gain (nDCG@10 +0.0358, MRR +0.0250, hit@10 flat, 0/20 unreachable so the window was not binding) at ~15.1 s and ~CNY 0.0325 per search. The latency disqualifies it as an inline live step: it is a deferral, not a rejection - offline ranking or an async 'refine results' path could use it. n=20 is also too small to trust the delta, which is why the probe came first; the full 500-query set would take ~2 hours at this pace. Two bugs found while measuring: the report divided the meter's CUMULATIVE total by the case count (overstating cost 16x), now fixed to use the per-run delta; and the first probe hung indefinitely on a stalled provider call, now bounded by a 20 s timeout that falls back to the retrieval order.",
+      "guardrails": "reranker off by default; a failure of any kind cannot change the results; 296 tests pass; keyless gate green",
+      "blast_radius": "app/adapters/rerank_llm.py, app/tools/catalog.py, app/core/settings.py, web/main.py, .env.example, evals/esci_rerank.py",
+      "rollback": "RERANK_ENABLED stays false by default; git revert the commit removes the adapter",
+      "verdict": "deferred (measured, off by default)",
+      "evidence": "reports/discovery-rerank.md, tests/unit/test_rerank_llm.py"
     }
   ]
 }
