@@ -239,6 +239,7 @@ class Outcome:
     error: bool
     final_text: str = ""
     search_results: list[dict] = field(default_factory=list)
+    tool_output: tuple[str, ...] = ()
 
 
 @dataclass
@@ -402,7 +403,10 @@ async def _run_case(case: Case, agent: Any, session_id: str) -> Outcome:
         (e.text for e in reversed(session.events) if isinstance(e, AssistantMessage)), ""
     )
     search_results: list[dict] = []
+    tool_output: list[str] = []
     for event in session.events:
+        if isinstance(event, ToolResultEvent):
+            tool_output.append(event.content)
         if isinstance(event, ToolResultEvent) and event.name == "search_products":
             try:
                 search_results.append(json.loads(event.content))
@@ -416,6 +420,7 @@ async def _run_case(case: Case, agent: Any, session_id: str) -> Outcome:
         sink.error,
         final_text,
         search_results,
+        tuple(tool_output),
     )
 
 
@@ -435,6 +440,15 @@ def _score(case: Case, outcome: Outcome) -> Score:
                 False,
                 f"{len(over)} result(s) over the stated budget {case.max_price}",
             )
+    if case.intent == "reviews":
+        # "customers say ..." must quote the review the tool returned (F). Reuses the
+        # shared assertion so the journey and the invariant cases cannot drift.
+        from app.evaluation.invariants import ASSERTIONS, RunOutcome
+
+        verdict = ASSERTIONS["quotes_are_grounded"](
+            RunOutcome(final_text=outcome.final_text, tool_output=outcome.tool_output)
+        )
+        return Score(case.case_id, verdict, "" if verdict else "unquoted evidence")
     if case.intent == "clarify":
         # Ambiguous request (e.g. a return with no reason): ask, do not act.
         acted = "propose_return_decision" in outcome.tool_calls

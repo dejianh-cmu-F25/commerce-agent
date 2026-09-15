@@ -57,6 +57,9 @@ class RunOutcome:
     expected_clauses: tuple[str, ...] = ()
     allowed_ids: tuple[str, ...] = ()
     budget: float | None = None
+    # Text of the tool results this turn, so a quotation can be checked against the
+    # evidence the model was actually given.
+    tool_output: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -128,6 +131,45 @@ def _grounded_ids_only(outcome: RunOutcome) -> bool:
     return all(match.group(0) in allowed for match in _PRODUCT_ID.finditer(outcome.final_text))
 
 
+# A quotation long enough to be evidence rather than emphasis. Short quoted words
+# ("runs small") are how people write, so they are not treated as citations.
+MIN_QUOTE_CHARS = 20
+_DELIMITERS = '"\u201c\u201d\u2018\u2019'
+
+
+def _normalise(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
+def _quoted_spans(text: str) -> list[str]:
+    """Long spans *between* quote marks, paired in order.
+
+    Pairing matters more than it looks: a regex over "quote ... quote" matches from the
+    closing mark of one quotation to the opening mark of the next, so the markdown
+    between two real reviews ("** (4/5, top review): *") was being reported as a
+    fabricated quotation. Validated against a real answer before being trusted.
+    """
+    parts = re.split(f"[{_DELIMITERS}]", text)
+    inside = parts[1::2]  # odd segments are inside quote marks
+    return [span for span in inside if len(span) >= MIN_QUOTE_CHARS]
+
+
+def _quotes_are_grounded(outcome: RunOutcome) -> bool:
+    """Every long quotation in the answer appears in the tool results.
+
+    The failure this catches is the one that matters for reviews: telling a customer
+    "customers say ..." with words no customer wrote. It is checkable without a judge
+    because the evidence was returned by a tool in the same turn.
+    """
+    quoted = _quoted_spans(outcome.final_text)
+    if not quoted:
+        return True
+    if not outcome.tool_output:
+        return False
+    evidence = _normalise(" ".join(outcome.tool_output))
+    return all(_normalise(span) in evidence for span in quoted)
+
+
 def _no_product_id(outcome: RunOutcome) -> bool:
     """The answer recommends no product (for a query the catalog cannot satisfy)."""
     return not _PRODUCT_ID.search(outcome.final_text)
@@ -161,6 +203,7 @@ ASSERTIONS: dict[str, Callable[[RunOutcome], bool]] = {
     "grounded_ids_only": _grounded_ids_only,
     "no_over_budget_price": _no_over_budget_price,
     "no_product_id": _no_product_id,
+    "quotes_are_grounded": _quotes_are_grounded,
 }
 
 

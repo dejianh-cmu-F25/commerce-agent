@@ -15,6 +15,7 @@ DISCRIMINATING = (
     "proposal_cites_expected",
     "grounded_ids_only",
     "no_over_budget_price",
+    "quotes_are_grounded",
 )
 
 
@@ -38,6 +39,9 @@ def test_every_discriminating_assertion_can_fail() -> None:
         ),
         RunOutcome(  # no_over_budget_price
             final_text="The best option is $249.99.", budget=200.0
+        ),
+        RunOutcome(  # quotes_are_grounded
+            final_text='Customers say "the battery dies after two hours of use".'
         ),
     ]
     for name in DISCRIMINATING:
@@ -76,3 +80,53 @@ def test_grounding_is_skipped_without_allowlist() -> None:
 def test_budget_heuristic_allows_boundary() -> None:
     assert ASSERTIONS["no_over_budget_price"](RunOutcome(final_text="under $200.00", budget=200.0))
     assert not ASSERTIONS["no_over_budget_price"](RunOutcome(final_text="$200.01", budget=200.0))
+
+
+def test_a_quotation_must_come_from_the_tool_results() -> None:
+    """The review failure mode: "customers say ..." with words no customer wrote."""
+    evidence = RunOutcome(
+        final_text='Customers say "The insole made them super tight almost too small."',
+        tool_output=("The insole made them super tight almost too small.",),
+    )
+    assert ASSERTIONS["quotes_are_grounded"](evidence)
+
+    invented = RunOutcome(
+        final_text='Customers say "The zipper broke on the second day of a short trip."',
+        tool_output=("The insole made them super tight almost too small.",),
+    )
+    assert not ASSERTIONS["quotes_are_grounded"](invented)
+
+
+def test_a_quotation_with_no_tool_output_is_not_grounded() -> None:
+    assert not ASSERTIONS["quotes_are_grounded"](
+        RunOutcome(final_text='Customers say "the battery dies after two hours of use".')
+    )
+
+
+def test_short_quoted_words_are_emphasis_not_evidence() -> None:
+    """People write "runs small" in quotes; that is not a citation."""
+    assert ASSERTIONS["quotes_are_grounded"](
+        RunOutcome(final_text='The shoes "run small", so size up.', tool_output=())
+    )
+
+
+def test_markdown_between_two_quotations_is_not_a_quotation() -> None:
+    """Regression, found by validating the assertion against a real answer.
+
+    A pattern that looks for "text between quote marks" matched from the closing mark
+    of one review to the opening mark of the next, so the markdown in between
+    ("** (4/5, top review): *") was reported as fabricated evidence.
+    """
+    answer = (
+        'Customers say "It is a Madden game, so it is going to be fun." '
+        "** (4.0/5, most helpful): *"
+        '"GREAT PRICE GREAT! BEST PRODUCT EVER WOULD BUY AGAIN."*'
+    )
+    outcome = RunOutcome(
+        final_text=answer,
+        tool_output=(
+            "It is a Madden game, so it is going to be fun.",
+            "GREAT PRICE GREAT! BEST PRODUCT EVER WOULD BUY AGAIN.",
+        ),
+    )
+    assert ASSERTIONS["quotes_are_grounded"](outcome)

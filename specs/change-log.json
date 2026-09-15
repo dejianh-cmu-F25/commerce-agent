@@ -1599,6 +1599,22 @@
       "rollback": "catalog.enrich: false restores the plain, measured lexical path",
       "verdict": "accepted",
       "evidence": "reports/discovery-attribute.md, evals/attribute_cases.jsonl"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#103 F require review quotations to come from the tool evidence",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "The answer level of the reviews path had no check: a model could write 'customers say ...' with words no customer wrote. Added quotes_are_grounded to the shared assertions (a quotation of 20+ characters must appear in the text a tool returned this turn), carried tool output on the journey outcome, applied the assertion to the review cases, and told the prompt to quote what a review actually says rather than summarising what customers supposedly think. Short quoted words are deliberately not treated as citations - people write \"runs small\" in quotes - so the check does not fire on ordinary emphasis.",
+      "metric": "journey review slice: quotations verifiably grounded",
+      "before": 0.5,
+      "after": 0.5,
+      "note": "The check earns its place by failing: on the review slice the model quoted a review span that was not in the tool output, and the assertion caught it (reviews-02, 'unquoted evidence') - a real fabrication, not a bug in the check. Validating the assertion against the real answer was also necessary: the first implementation paired quote marks wrongly and reported the markdown *between* two genuine reviews as fabricated evidence (a false positive that would have made the gate untrustworthy). It now pairs marks in order, and a regression test pins that case. This is the same lesson as the judge experiment (#88): a check you have not validated is worse than no check.",
+      "guardrails": "320 tests pass; the assertion is in the shared registry so the journey and invariant corpora cannot drift; a test asserts short emphasis-quotes are ignored",
+      "blast_radius": "app/evaluation/invariants.py, evals/journey_eval.py, config/prompts/journey.md, tests/unit/test_invariant_discriminating.py",
+      "rollback": "git revert the commit (the assertion is additive)",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_invariant_discriminating.py, evals/results-journey.json"
     }
   ]
 }
