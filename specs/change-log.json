@@ -1455,6 +1455,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "scripts/check_results.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#94 discovery: re-baseline the rule set after the case-set change",
+      "area": "evaluation",
+      "class": "docs",
+      "what": "Two things, recorded together because the second is the consequence of the first. (1) evals/discovery_cases.py now de-duplicates by query (a colour/type pair sampled twice would silently weight hit@10); the file went 254 -> 216 cases, which was not noted in the change log at the time. (2) That change invalidated every rule-set figure in reports/discovery-baseline.md and reports/discovery-rag.md, so the baseline was re-run on the current 216 cases for tfidf / dense-openai / hybrid-openai / the live Shopify keyword search, and the report now says explicitly which numbers are superseded.",
+      "metric": "rule-set hit@10 (tfidf)",
+      "before": 0.992,
+      "after": 0.991,
+      "note": "Not an improvement: a re-measure on a changed corpus. The old 0.992 came from 254 cases with duplicates and is not comparable to the new 0.991 on 216. The report also corrects a statistic I got wrong: recall@10 averages per-case ratios, so its ceiling here is mean(min(n,10)/n) = 0.902, not the ratio-of-sums 0.604 - tfidf at 0.817 is at 91% of achievable recall. ESCI (500 queries, untouched) is unaffected. Refreshed numbers: tfidf hit@10 0.991 / recall 0.817 / 0.6 ms; hybrid-openai 0.986 / 0.803 / 258 ms; dense-openai 0.907 / 0.718 / 258 ms; live shopify-keyword 0.920 / 1361.5 ms (50-case title-only sample).",
+      "guardrails": "no behaviour change; no paid model calls (embedding cache hits)",
+      "blast_radius": "reports/discovery-baseline.md, evals/results-discovery.json",
+      "rollback": "git revert the commit (the code and the case file are unchanged)",
+      "verdict": "accepted",
+      "evidence": "reports/discovery-baseline.md, evals/results-discovery.json"
     }
   ]
 }
