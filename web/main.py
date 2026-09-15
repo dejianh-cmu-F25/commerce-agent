@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from app.adapters.acp_checkout import AcpCheckout
+from app.adapters.cart_factory import build_cart
 from app.adapters.catalog_index import (
     CatalogIndex,
     LocalSearchCatalog,
@@ -388,26 +389,6 @@ def build_post_purchase(settings: Settings) -> PostPurchaseBackend:
         for order_id, order in orders.items()
     }
     return InMemoryPostPurchase(orders, returnable)
-
-
-def build_cart(settings: Settings):
-    """Resolve the cart backend (PB-1). Session-backed unless a Storefront cart is asked for.
-
-    The Storefront provider needs its own token; without one it fails loud rather than
-    silently falling back, because a deployment that asked for a real cart should not
-    get a session one.
-    """
-    if settings.cart.provider == "shopify_storefront":
-        from app.adapters.cart_shopify import ShopifyStorefrontCart
-
-        return ShopifyStorefrontCart(
-            settings.shopify.shop,
-            settings.shopify.storefront_token,
-            settings.shopify.api_version,
-        )
-    from app.adapters.cart_session import SessionCart
-
-    return SessionCart()
 
 
 def build_reranker(settings: Settings, cost_meter: CostMeter | None = None):

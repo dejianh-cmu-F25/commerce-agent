@@ -20,11 +20,13 @@ from uuid import uuid4
 
 from mcp.server.mcpserver import MCPServer
 
+from app.adapters.cart_factory import build_cart
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.post_purchase_memory import InMemoryPostPurchase
 from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.core.session import Session
+from app.core.settings import Settings, load_settings
 from app.knowledge.ingest import load_chunks
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
@@ -94,11 +96,12 @@ def _retriever() -> InMemoryRetriever:
     return retriever
 
 
-def build_storefront_server() -> MCPServer:
+def build_storefront_server(settings: Settings | None = None) -> MCPServer:
+    settings = settings or load_settings()
     registry = ToolRegistry()
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
-    register_cart_tools(registry, storefront)
+    register_cart_tools(registry, storefront, build_cart(settings))
     register_knowledge_tools(registry, _retriever())
     return build_server(
         "storefront", registry, instructions="Catalog search, cart, and store policy."
@@ -111,10 +114,11 @@ def build_customer_accounts_server() -> MCPServer:
     return build_server("customer-accounts", registry, instructions="Orders and returns.")
 
 
-def build_checkout_server() -> MCPServer:
+def build_checkout_server(settings: Settings | None = None) -> MCPServer:
+    settings = settings or load_settings()
     registry = ToolRegistry()
     storefront = InMemoryStorefront(SEED_PRODUCTS)
-    register_cart_tools(registry, storefront)
+    register_cart_tools(registry, storefront, build_cart(settings))
     return build_server("checkout", registry, instructions="Checkout (simulated; no charge).")
 
 

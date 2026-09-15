@@ -1836,6 +1836,18 @@
       "guardrails": "348 tests pass (6 new Storefront-adapter tests, 2 provider-selection tests); ruff + pyright clean; the shipped default is unchanged behaviour (the whole suite passes with the session provider); 14 reports unaffected (no report declares cart sources)",
       "verdict": "accepted (live Storefront path explicitly unverified)",
       "evidence": "tests/unit/test_cart_shopify.py, docs/shopify-setup.md, docs/architecture.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#118 cart provider is resolved on every surface; task list tells the truth",
+      "area": "cart",
+      "class": "no-behavior",
+      "what": "Two honesty defects from #117, found by auditing rather than by a test. (1) build_cart lived in web/main.py and was called only there, so CART_PROVIDER was a half-truth: with cart.provider=shopify_storefront the web app used a real Storefront cart while app/mcp/server.py:build_storefront_server and build_checkout_server kept the session cart. The factory moved to app/adapters/cart_factory.py and both MCP builders now take settings and resolve the same provider. (2) specs/046-closed-loop/tasks.md still listed T100-T117 as 'Planned (tracked; not part of this change)' though they are done, with six stale deliverable paths (the three MCP servers are one module, evals/injection.py is agentdojo_injection.py, etc.). The table now records the paths that exist on disk, and T113 is marked Open with the reason instead of being quietly checked off.",
+      "guardrails": "350 tests pass (2 new: the MCP builders must fail loud on shopify_storefront without a token, and must still build with the default); ruff + pyright clean; no behaviour change for the shipped config (provider=session everywhere); 14 reports unaffected",
+      "blast_radius": "app/adapters/cart_factory.py (new), app/mcp/server.py (builders take settings, cart resolved through the factory), web/main.py (local factory replaced by the import - the name build_cart stays importable), specs/046-closed-loop/tasks.md, tests/integration/test_app_wiring.py",
+      "rollback": "git revert the commit (the session provider is the default on every surface)",
+      "verdict": "accepted",
+      "evidence": "tests/integration/test_app_wiring.py, specs/046-closed-loop/tasks.md"
     }
   ]
 }
