@@ -174,7 +174,18 @@ def generate(products: list[dict], per_rule: int, seed: int) -> list[dict]:
                 "expected_ids": expected[:20],
             }
         )
-    return cases
+
+    # De-duplicate by query: a repeated query (e.g. the same colour/type pair
+    # sampled twice) would silently weight hit@10. Keep the first occurrence.
+    unique: list[dict] = []
+    seen: set[str] = set()
+    for case in cases:
+        key = " ".join(str(case["query"]).casefold().split())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(case)
+    return unique
 
 
 def main() -> int:

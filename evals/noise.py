@@ -59,6 +59,15 @@ def variants(text: str, seed: int = 0) -> list[tuple[str, str]]:
     ]
 
 
+def real_variants(text: str, seed: int = 0) -> list[tuple[str, str]]:
+    """Variants that actually change the text.
+
+    ``lowercase`` is a no-op for already-lowercase input, and a no-op variant is a
+    duplicate case that double-counts and measures nothing (see the eval audit).
+    """
+    return [(kind, noisy) for kind, noisy in variants(text, seed) if noisy != text]
+
+
 def _sanity() -> None:  # pragma: no cover - manual probe
     for kind, text in variants("I want to return an item, please."):
         print(kind, "->", text)

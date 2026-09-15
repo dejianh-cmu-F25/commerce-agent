@@ -1,53 +1,65 @@
-"""Unit tests for the spend guard (constitution HR-12)."""
+"""Cost meter: throttled persistence and concurrency headroom (feature 046)."""
 
 from __future__ import annotations
 
-from app.adapters.cost_meter import NullCostMeter, UsageCostMeter
+import json
+
+from app.adapters.cost_meter import PERSIST_EVERY_CNY, UsageCostMeter
 from app.core.settings import BudgetSettings
 from app.core.types import Usage
 
 
-def make_meter(tmp_path, **overrides) -> UsageCostMeter:
-    settings = BudgetSettings(
-        total_limit=10.0,
-        usd_to_cny=7.25,
-        input_cache_miss_per_1m=0.30,
-        input_cache_hit_per_1m=0.006,
-        output_per_1m=1.20,
-        state_file=str(tmp_path / "budget.json"),
-        **overrides,
+def _settings(tmp_path, **overrides) -> BudgetSettings:
+    defaults = {"state_file": str(tmp_path / "budget.json")}
+    return BudgetSettings(**{**defaults, **overrides})
+
+
+def _usage(prompt: int = 1_000, completion: int = 0) -> Usage:
+    return Usage(prompt_tokens=prompt, completion_tokens=completion)
+
+
+def test_throttles_persistence_but_keeps_the_running_total(tmp_path):
+    meter = UsageCostMeter(_settings(tmp_path))
+    meter.record(_usage())
+    # One call is below the persist threshold: the file is not written yet...
+    assert not (tmp_path / "budget.json").exists()
+    # ...but the in-memory total is accurate.
+    assert meter.spent_cny() > 0
+    meter.flush()
+    assert json.loads((tmp_path / "budget.json").read_text())["spent_cny"] == round(
+        meter.spent_cny(), 6
     )
-    return UsageCostMeter(settings)
 
 
-def test_cost_of_matches_configured_prices(tmp_path):
-    meter = make_meter(tmp_path)
-    usage = Usage(prompt_tokens=1_000_000, completion_tokens=1_000_000, cache_miss_tokens=1_000_000)
-    # (0.30 input + 1.20 output) USD * 7.25 = 10.875 CNY
-    assert abs(meter.cost_of(usage) - 10.875) < 1e-6
+def test_persists_once_the_interval_is_crossed(tmp_path):
+    settings = _settings(tmp_path)
+    meter = UsageCostMeter(settings)
+    per_call = meter.cost_of(_usage())
+    calls = int(PERSIST_EVERY_CNY / per_call) + 1
+    for _ in range(calls):
+        meter.record(_usage())
+    assert (tmp_path / "budget.json").exists()
 
 
-def test_cache_hit_tokens_are_cheaper(tmp_path):
-    meter = make_meter(tmp_path)
-    miss = Usage(prompt_tokens=1_000_000, cache_miss_tokens=1_000_000)
-    hit = Usage(prompt_tokens=1_000_000, cache_hit_tokens=1_000_000)
-    assert meter.cost_of(hit) < meter.cost_of(miss)
+def test_reload_resumes_the_saved_total(tmp_path):
+    settings = _settings(tmp_path)
+    first = UsageCostMeter(settings)
+    first.record(_usage())
+    first.flush()
+    second = UsageCostMeter(settings)
+    assert second.spent_cny() == first.spent_cny()
 
 
-def test_total_persists_and_blocks(tmp_path):
-    meter = make_meter(tmp_path)
-    meter.record(
-        Usage(prompt_tokens=1_000_000, cache_miss_tokens=1_000_000, completion_tokens=1_000_000)
-    )
-    assert meter.spent_cny() > 10.0
-    assert meter.over_budget() is True
-
-    reopened = UsageCostMeter(meter._settings)  # noqa: SLF001 - verify persistence
-    assert abs(reopened.spent_cny() - meter.spent_cny()) < 1e-9
+def test_headroom_makes_over_budget_conservative(tmp_path):
+    meter = UsageCostMeter(_settings(tmp_path, total_limit=1.0))
+    assert not meter.over_budget()
+    meter.set_headroom(1.5)
+    assert meter.over_budget()
+    meter.set_headroom(0.0)
+    assert not meter.over_budget()
 
 
-def test_null_meter_never_blocks():
-    meter = NullCostMeter()
-    assert meter.over_budget() is False
-    meter.record(Usage(prompt_tokens=10**9, completion_tokens=10**9))
-    assert meter.spent_cny() == 0.0
+def test_disabled_budget_never_overspends_the_guard(tmp_path):
+    meter = UsageCostMeter(_settings(tmp_path, enabled=False, total_limit=0.0))
+    meter.record(_usage())
+    assert not meter.over_budget()

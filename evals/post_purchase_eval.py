@@ -214,26 +214,46 @@ def _real_factory() -> Any:
     return DeepSeekClient(load_settings().llm)
 
 
-async def run(llm_factory, model_name: str, cost_meter=None) -> dict:
+async def run(llm_factory, model_name: str, cost_meter=None, concurrency: int = 8) -> dict:
+    from app.evaluation.concurrency import run_bounded
+
     decision_cases = _load_jsonl(DECISION_CASES)
     invariant_cases = _load_jsonl(INVARIANT_CASES)
+
+    async def one_decision(case: dict, _index: int) -> tuple[Outcome, CaseResult]:
+        outcome = await _run_case(case, llm_factory(), with_order=True, cost_meter=cost_meter)
+        return outcome, _score_decision(case, outcome)
+
+    async def one_invariant(case: dict, _index: int) -> tuple[Outcome, CaseResult]:
+        outcome = await _run_case(case, llm_factory(), with_order=False, cost_meter=cost_meter)
+        verdict = evaluate(
+            case["assert"], outcome.as_run_outcome(case), invariant=case["invariant"]
+        )
+        return outcome, CaseResult(case["case_id"], verdict.ok, "", verdict.failed)
 
     decision_results: list[CaseResult] = []
     invariant_results: list[CaseResult] = []
     outcomes: list[Outcome] = []
 
-    for case in decision_cases:
-        outcome = await _run_case(case, llm_factory(), with_order=True, cost_meter=cost_meter)
+    raw_decisions = await run_bounded(decision_cases, one_decision, concurrency=concurrency)
+    for result in raw_decisions:
+        if isinstance(result, tuple):
+            outcome, case_result = result
+        else:
+            outcome = Outcome(error=True, reason="error")
+            case_result = CaseResult("?", False, "", [f"error: {result}"])
         outcomes.append(outcome)
-        decision_results.append(_score_decision(case, outcome))
+        decision_results.append(case_result)
 
-    for case in invariant_cases:
-        outcome = await _run_case(case, llm_factory(), with_order=False, cost_meter=cost_meter)
+    raw_invariants = await run_bounded(invariant_cases, one_invariant, concurrency=concurrency)
+    for result in raw_invariants:
+        if isinstance(result, tuple):
+            outcome, case_result = result
+        else:
+            outcome = Outcome(error=True, reason="error")
+            case_result = CaseResult("?", False, "", [f"error: {result}"])
         outcomes.append(outcome)
-        verdict = evaluate(
-            case["assert"], outcome.as_run_outcome(case), invariant=case["invariant"]
-        )
-        invariant_results.append(CaseResult(case["case_id"], verdict.ok, "", verdict.failed))
+        invariant_results.append(case_result)
 
     decision_passed = sum(1 for r in decision_results if r.ok)
     invariant_passed = sum(1 for r in invariant_results if r.ok)
@@ -285,6 +305,7 @@ class _ScriptedLLM:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--real", action="store_true", help="run the real model (costs money)")
+    parser.add_argument("--concurrency", type=int, default=8)
     args = parser.parse_args()
 
     cost_meter = None
@@ -293,13 +314,14 @@ def main() -> int:
 
         settings = load_settings()
         cost_meter = UsageCostMeter(settings.budget)
+        cost_meter.set_headroom(args.concurrency * 0.02)
         factory = _real_factory
         model_name = settings.llm.model
     else:
         factory = _ScriptedLLM
         model_name = "scripted"
 
-    result = asyncio.run(run(factory, model_name, cost_meter))
+    result = asyncio.run(run(factory, model_name, cost_meter, concurrency=args.concurrency))
     RESULTS_PATH.write_text(json.dumps(result, indent=2) + "\n")
 
     print(f"post-purchase eval (model={result['model']})")

@@ -52,6 +52,7 @@ from app.core.settings import Settings, load_settings
 from app.core.types import Message
 from app.gates.policy import PolicyGate
 from app.knowledge.ingest import load_chunks
+from app.ports.cost_meter import CostMeter
 from app.ports.llm import LLMClient
 from app.ports.memory import MemoryStore
 from app.ports.merchant import MerchantBackend
@@ -312,6 +313,7 @@ def build_agent(
     merchant: MerchantBackend | None = None,
     memory: MemoryStore | None = None,
     llm: LLMClient | None = None,
+    cost_meter: CostMeter | None = None,
 ) -> Agent:
     registry = ToolRegistry()
     catalog = build_catalog(settings)
@@ -341,7 +343,7 @@ def build_agent(
         tools=registry,
         settings=settings.agent,
         system_prompt=system_prompt,
-        cost_meter=UsageCostMeter(settings.budget),
+        cost_meter=cost_meter if cost_meter is not None else UsageCostMeter(settings.budget),
         tracer=tracer,
         memory=memory,
         safety=settings.safety,

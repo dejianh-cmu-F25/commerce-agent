@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator, Sequence
 
 from openai import AsyncOpenAI
 
+from app.core.retry import retry_async
 from app.core.settings import LLMSettings
 from app.core.types import (
     Finish,
@@ -95,7 +96,9 @@ class DeepSeekClient:
         finish_reason = "stop"
         usage = None
 
-        response = await self._client.chat.completions.create(**kwargs)
+        # Rate limits and transient connection errors surface here, before any
+        # chunk is yielded, so retrying the request cannot duplicate output.
+        response = await retry_async(lambda: self._client.chat.completions.create(**kwargs))
         async for chunk in response:
             if getattr(chunk, "usage", None) is not None:
                 usage = chunk.usage

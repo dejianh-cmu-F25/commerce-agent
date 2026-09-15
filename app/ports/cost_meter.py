@@ -23,3 +23,11 @@ class CostMeter(Protocol):
     def record(self, usage: Usage) -> None:
         """Add the cost of one model call to the running total."""
         ...
+
+    def set_headroom(self, cny: float) -> None:
+        """Reserve budget for turns already in flight (concurrent callers)."""
+        ...
+
+    def flush(self) -> None:
+        """Persist the running total now."""
+        ...

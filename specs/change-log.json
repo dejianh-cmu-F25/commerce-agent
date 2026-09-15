@@ -1391,6 +1391,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted (negative result documented)",
       "evidence": "reports/judge-alignment.md"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#89 046 make the LLM evals concurrent (bounded fan-out + retry)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "The journey and post-purchase eval loops ran one case at a time, so wall time was the sum of every model call. Added app/evaluation/concurrency.py (semaphore + gather, ordered results, per-case exception isolation, monotonic progress callback), app/core/retry.py (exponential backoff + jitter on 429/5xx/timeouts, wired into DeepSeekClient before the first chunk so a retry cannot duplicate output), --concurrency (default 8) on both evals, per-case detail in results-journey.json, and evals/compare_runs.py to diff two runs. Cost meter hardened for concurrency: persistence throttled to one write per CNY 0.05 with flush(), a lock, and set_headroom() so the CNY 10 cap still holds when N turns are in flight (the loop checks the cap once per turn).",
+      "metric": "journey eval seconds per case (real model)",
+      "before": 6.45,
+      "after": 2.32,
+      "note": "2.8x faster, and sublinear: c=4 is 3.55 s/case and c=8 is 2.32 s/case, so doubling concurrency past 4 buys ~1.5x - the provider and the per-case tool calls (Shopify, Chroma) are the ceiling, not the loop. Correctness evidence: (1) deterministic keyless harness, c=1 vs c=8, all 195 cases identical in outcome and tool calls; (2) 9 unit tests covering result ordering, exception isolation, the concurrency ceiling, monotonic progress and retry semantics. Method note: a real-model c=4 vs c=8 A/B AGREEMENT TEST IS INVALID - two identical c=8 runs of the 12-case return slice scored 0.833 and 0.667, so run-to-run variance dwarfs any concurrency effect. Recording this because earlier headline numbers (0.949 tool accuracy, the failure list) carry that same variance.",
+      "guardrails": "budget cap preserved via headroom; keyless gate unchanged; 271 tests pass; no eval result depends on completion order",
+      "blast_radius": "app/evaluation/concurrency.py, app/core/retry.py, app/adapters/cost_meter.py, app/adapters/deepseek_client.py, app/ports/cost_meter.py, web/main.py, evals/{journey_eval,post_purchase_eval,compare_runs}.py",
+      "rollback": "git revert the commit (evals fall back to sequential; results are unchanged in distribution)",
+      "verdict": "accepted",
+      "evidence": "evals/compare_runs.py, tests/unit/test_run_bounded.py, tests/unit/test_cost_meter.py"
     }
   ]
 }
