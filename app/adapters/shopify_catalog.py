@@ -23,7 +23,7 @@ query($q: String!, $n: Int!) {
       id
       title
       tags
-      variants(first: 1) { nodes { price inventoryQuantity inventoryItem { tracked } } }
+      variants(first: 1) { nodes { sku price inventoryQuantity inventoryItem { tracked } } }
     }
   }
 }
@@ -35,7 +35,7 @@ query($id: ID!) {
     id
     title
     tags
-    variants(first: 1) { nodes { price inventoryQuantity inventoryItem { tracked } } }
+    variants(first: 1) { nodes { sku price inventoryQuantity inventoryItem { tracked } } }
   }
 }
 """
@@ -107,4 +107,5 @@ def _product(node: dict) -> Product:
         price=price,
         stock=stock,
         tags=[str(tag) for tag in node.get("tags", [])],
+        sku=str(first.get("sku") or ""),
     )

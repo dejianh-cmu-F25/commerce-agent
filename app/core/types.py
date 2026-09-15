@@ -49,6 +49,9 @@ class Product:
     price: float
     stock: int
     tags: list[str] = field(default_factory=list)
+    # The first variant's SKU. Imported products store the source ASIN here, which is
+    # the key the review store uses - the join between a product and its reviews.
+    sku: str = ""
 
     @property
     def in_stock(self) -> bool:

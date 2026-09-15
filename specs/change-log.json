@@ -1551,6 +1551,22 @@
       "rollback": "retrieval.sparse defaults to tfidf; git revert the commit removes the adapter",
       "verdict": "accepted (negative result: kept the incumbent)",
       "evidence": "reports/discovery-bm25.md, tests/unit/test_bm25_retriever.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#100 B fix the product-to-review join (reviews were unreachable)",
+      "area": "reviews",
+      "class": "measurable",
+      "what": "Reviews are keyed by ASIN (the Amazon source), while search_products returns a Shopify gid - so every get_reviews call the agent could make returned nothing. Both ends were missing: ShopifyCatalog did not even SELECT the variant sku, and Product had no field for it. Fixed by carrying the SKU on Product (the join key), selecting it in both catalog queries, and resolving id -> review key inside the tool (review_key), so the model keeps passing the id it was given instead of copying a second opaque one - the same lesson as the return flow. An unresolvable id passes through unchanged, so ASIN-keyed callers and keyless fixtures are unaffected.",
+      "metric": "journey eval: review cases (new corpus slice)",
+      "before": 0.0,
+      "after": 0.0,
+      "note": "Coverage, not a score: the review path had ZERO journey cases, which is exactly how the join stayed broken unnoticed - and the unit tests passed all along because they keyed the store by the same ids they queried. Verified end to end against the real catalog: 'a yoga mat' -> sku B0BMG71CRC -> 1 review; 'a stainless steel water bottle' -> sku B0C1HWG31F -> 5 reviews. Two journey cases now require get_reviews (2/2 pass, search_products -> get_reviews).",
+      "guardrails": "301 tests pass (3 new: gid resolution, unresolvable id fallback, product without a SKU); keyless gate green",
+      "blast_radius": "app/core/types.py, app/adapters/shopify_catalog.py, app/tools/reviews.py, web/main.py, evals/journey_eval.py",
+      "rollback": "git revert the commit (catalog/reviews wiring only)",
+      "verdict": "accepted",
+      "evidence": "tests/unit/test_reviews.py, evals/results-journey.json"
     }
   ]
 }

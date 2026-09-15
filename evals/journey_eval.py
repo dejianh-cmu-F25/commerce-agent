@@ -322,6 +322,17 @@ def build_cases(titles: list[str]) -> list[Case]:
         1,
     ):
         cases.append(Case(f"clarify-{index:02d}", "clarify", message))
+    # what customers say: the model must look the reviews up, not invent them.
+    # This path had zero coverage, which is how the ASIN/SKU join stayed broken.
+    for index, title in enumerate(titles[:2], 1):
+        cases.append(
+            Case(
+                f"reviews-{index:02d}",
+                "reviews",
+                f"what do customers say about {title}?",
+                ("get_reviews",),
+            )
+        )
     # LLM-synthesised diverse phrasings (Batch C, CheckList MFT)
     cases.extend(_synth_cases())
     return cases

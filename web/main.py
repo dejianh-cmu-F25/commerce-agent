@@ -397,7 +397,7 @@ def build_agent(
     register_cart_tools(registry, catalog)
     register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
-    register_review_tools(registry, build_reviews(settings))
+    register_review_tools(registry, build_reviews(settings), catalog)
     register_post_purchase_tools(
         registry, build_post_purchase(settings), policy_gate=PolicyGate(load_amazon_policy())
     )

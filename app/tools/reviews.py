@@ -31,13 +31,34 @@ GET_REVIEWS_SPEC = ToolSpec(
 )
 
 
-def register_review_tools(registry: ToolRegistry, reviews: ReviewBackend) -> None:
+def review_key(product_id: str, catalog: Any | None) -> str:
+    """The key the review store uses for a product.
+
+    Reviews come from Amazon Reviews'23 and are keyed by ASIN; the catalog carries
+    that ASIN as the product's SKU. Resolving it here means the model can pass the id
+    it was given by search_products - asking it to copy a second, opaque id is how the
+    return flow ended up looping (feature 046). An unresolvable id is passed through
+    unchanged, so fixtures and ASIN-keyed stores keep working.
+    """
+    if catalog is None or not product_id:
+        return product_id
+    try:
+        product = catalog.get(product_id)
+    except Exception:
+        return product_id
+    sku = str(getattr(product, "sku", "") or "")
+    return sku or product_id
+
+
+def register_review_tools(
+    registry: ToolRegistry, reviews: ReviewBackend, catalog: Any | None = None
+) -> None:
     async def _get_reviews(arguments: dict[str, Any], _session: Session) -> ToolResult:
         product_id = str(arguments.get("product_id", "")).strip()
         if not product_id:
             return ToolResult(content="product_id is required", status="error")
         limit = int(arguments.get("limit", 5))
-        found = reviews.get_reviews(product_id, limit)
+        found = reviews.get_reviews(review_key(product_id, catalog), limit)
         if not found:
             return ToolResult(content=json.dumps({"product_id": product_id, "reviews": []}))
         payload = [
