@@ -49,8 +49,6 @@ rerank:
 
 evaluation:
   enabled: false
-  provider: custom
-  metrics: [hit_rate, mrr, faithfulness]
 
 observability:
   log_level: INFO
@@ -58,14 +56,10 @@ observability:
   trace_file: ./logs/traces.jsonl
   trace_max_attr_len: 500   # redact (truncate) span inputs/outputs (OB-5)
 
+# Knowledge chunking: one chunk per markdown section (deep-linkable clause id), split
+# further only past `chunk_size`, with the heading kept on every part.
 ingestion:
   chunk_size: 1000
-  chunk_overlap: 200
-  splitter: recursive       # recursive | semantic | fixed
-  chunk_refiner:
-    use_llm: false
-  metadata_enricher:
-    use_llm: false
 
 # Cross-session customer memory (feature 013). Facts are grounded in the
 # customer's own text (P4) and recalled into later sessions through the log

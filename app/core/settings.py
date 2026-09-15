@@ -77,9 +77,7 @@ class RerankSettings(BaseModel):
 
 class EvaluationSettings(BaseModel):
     enabled: bool = False
-    provider: Literal["custom", "ragas"] = "custom"
-    metrics: list[str] = Field(default_factory=lambda: ["hit_rate", "mrr", "faithfulness"])
-    # Real-model evaluation (feature 023): opt-in, budget-capped.
+    # Real-model evaluation (feature 023): opt-in.
     seeds: int = Field(default=3, ge=1, le=20)
     pass_k: int = Field(default=3, ge=1, le=20)
     judge: bool = True
@@ -94,20 +92,17 @@ class ObservabilitySettings(BaseModel):
     trace_max_attr_len: int = 500
 
 
-class ChunkRefinerSettings(BaseModel):
-    use_llm: bool = False
-
-
-class MetadataEnricherSettings(BaseModel):
-    use_llm: bool = False
-
-
 class IngestionSettings(BaseModel):
+    """Knowledge chunking (P4). One chunk per markdown section, split further only
+    when a section exceeds `chunk_size`; every part keeps its heading, so a clause
+    cannot lose the id that names it.
+
+    This replaces a set of knobs (`splitter: recursive|semantic|fixed`,
+    `chunk_overlap`, `chunk_refiner`, `metadata_enricher`) that were declared in
+    config but implemented nowhere - the honest fix for config that lies.
+    """
+
     chunk_size: int = 1000
-    chunk_overlap: int = 200
-    splitter: Literal["recursive", "semantic", "fixed"] = "recursive"
-    chunk_refiner: ChunkRefinerSettings = Field(default_factory=ChunkRefinerSettings)
-    metadata_enricher: MetadataEnricherSettings = Field(default_factory=MetadataEnricherSettings)
 
 
 class MemorySettings(BaseModel):

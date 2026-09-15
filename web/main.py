@@ -291,7 +291,11 @@ def build_vector_store(settings: Settings):
 
 def build_retriever(settings: Settings) -> Retriever:
     """Load knowledge documents into the configured retriever (PB-1)."""
-    chunks = load_chunks(settings.knowledge.path, settings.knowledge.min_chars)
+    chunks = load_chunks(
+        settings.knowledge.path,
+        settings.knowledge.min_chars,
+        settings.ingestion.chunk_size,
+    )
     retriever: Retriever
     if settings.knowledge.provider == "dense":
         primary = DenseRetriever(build_embedding(settings), build_vector_store(settings))
