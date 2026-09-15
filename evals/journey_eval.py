@@ -23,6 +23,7 @@ import asyncio
 import json
 import re
 import sys
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -421,9 +422,10 @@ async def run(
 
     progress = ROOT / "data" / "journey_eval_progress.json"
 
-    async def pass1(case: Case, index: int) -> tuple[Score, Outcome]:
+    async def pass1(case: Case, index: int) -> tuple[Score, Outcome, float]:
+        started = time.perf_counter()
         outcome = await _run_case(case, agent, f"je-{index}-{case.case_id}")
-        return _score(case, outcome), outcome
+        return _score(case, outcome), outcome, round((time.perf_counter() - started) * 1000)
 
     done_ok = 0
 
@@ -441,16 +443,19 @@ async def run(
     meter.flush()
     scored: list[Score] = []
     outcomes: list[Outcome] = []
+    durations: list[float] = []
     for index, result in enumerate(raw):
         case = cases[index]
         if isinstance(result, tuple):
-            score, outcome = result
+            score, outcome, duration = result
         else:
             # A case blew up outside the agent: record it, never lose the batch.
             score = Score(case.case_id, False, f"error: {result}")
             outcome = Outcome(case.case_id, case.intent, (), "error", True)
+            duration = 0.0
         scored.append(score)
         outcomes.append(outcome)
+        durations.append(duration)
 
     no_fail = sum(1 for o in outcomes if not o.error and o.reason != "error")
     by_intent: dict[str, list[bool]] = {}
@@ -498,11 +503,20 @@ async def run(
                 "ok": score.ok,
                 "tools": list(outcome.tool_calls),
                 "detail": score.detail,
+                "duration_ms": duration,
+                "tool_calls": len(outcome.tool_calls),
             }
-            for case, score, outcome in zip(cases, scored, outcomes, strict=True)
+            for case, score, outcome, duration in zip(
+                cases, scored, outcomes, durations, strict=True
+            )
         ],
         "model": settings.llm.model,
         "concurrency": concurrency,
+        "duration_ms": {
+            "total": round(sum(durations)),
+            "slowest_case": round(max(durations)) if durations else 0,
+            "p50": round(sorted(durations)[len(durations) // 2]) if durations else 0,
+        },
         "at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
     if real or out is not None:

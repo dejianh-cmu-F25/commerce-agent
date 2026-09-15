@@ -1407,6 +1407,22 @@
       "rollback": "git revert the commit (evals fall back to sequential; results are unchanged in distribution)",
       "verdict": "accepted",
       "evidence": "evals/compare_runs.py, tests/unit/test_run_bounded.py, tests/unit/test_cost_meter.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#90 046 record per-case eval duration and tool-call count",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "results-journey.json now carries duration_ms per case plus a summary (total, p50, slowest) and the tool-call count, and --out writes results from keyless runs too so slices can be compared without touching the headline artifacts.",
+      "metric": "journey eval: sum(case durations) vs wall clock at concurrency 8",
+      "before": 0.0,
+      "after": 0.0,
+      "note": "Measurement, not an optimisation. On the 12-case return slice at c=8: wall 39.9s vs sum 293s, i.e. 93% of the ideal 7.4x speedup - concurrency itself is near-linear here. The binding constraint is case duration: p50 23.4s, slowest 43.9s, 9-13 tool calls per case because the model repeatedly re-queries search_knowledge. That is where the remaining wall time is.",
+      "guardrails": "no scoring change; keyless run unaffected",
+      "blast_radius": "evals/journey_eval.py, evals/results-journey.json",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "evals/results-journey.json"
     }
   ]
 }
