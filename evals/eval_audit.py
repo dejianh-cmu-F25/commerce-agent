@@ -29,6 +29,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from app.evaluation.report_meta import with_marker
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "reports" / "eval-audit.md"
 PROMPT_DIR = ROOT / "config" / "prompts"
@@ -87,6 +89,10 @@ def _load_corpora() -> dict[str, list[Case]]:
         "post_purchase": [
             Case(row["case_id"], "post_purchase", row.get("message", ""), row["expected_decision"])
             for row in _jsonl(ROOT / "evals" / "post_purchase_cases.jsonl")
+        ],
+        "attribute": [
+            Case(row["case_id"], "attribute", row["query"], row.get("attribute", ""))
+            for row in _jsonl(ROOT / "evals" / "attribute_cases.jsonl")
         ],
         "invariant": [
             Case(row["case_id"], "invariant", row.get("message", ""), row["invariant"])
@@ -207,6 +213,7 @@ def render(result: Audit) -> str:
         "post_purchase": "return decisions vs the policy engine",
         "invariant": "behavioural guardrails (INV-1..8)",
         "discovery_rule": "retrieval hit@10 on product metadata",
+        "attribute": "attribute queries labelled by review text (what enrichment buys)",
         "esci": "nDCG@10 against human ESCI relevance labels",
     }
     for name, cases in sorted(result.corpora.items()):
@@ -293,7 +300,24 @@ def main() -> int:
     print(text)
     if args.write:
         REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(text)
+        REPORT.write_text(
+            with_marker(
+                text,
+                "evals/eval_audit.py --write",
+                sum(len(c) for c in result.corpora.values()),
+                [
+                    ROOT / "evals" / name
+                    for name in (
+                        "journey_eval.py",
+                        "synth_cases.jsonl",
+                        "post_purchase_cases.jsonl",
+                        "invariant_cases.jsonl",
+                        "discovery_cases.jsonl",
+                        "attribute_cases.jsonl",
+                    )
+                ],
+            )
+        )
         print(f"\nwrote {REPORT}")
     return 0
 

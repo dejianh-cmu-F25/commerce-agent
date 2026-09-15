@@ -24,6 +24,8 @@ import json
 import sys
 from pathlib import Path
 
+from app.evaluation.report_meta import with_marker
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "reports" / "judge-alignment.md"
 
@@ -160,7 +162,14 @@ async def main() -> int:
 """
     )
     REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(report)
+    REPORT.write_text(
+        with_marker(
+            report,
+            "evals/judge.py",
+            len(cases),
+            ["evals/post_purchase_cases.jsonl", "evals/judge.py"],
+        )
+    )
     print(
         f"judge alignment: precision={precision:.3f} recall={recall:.3f} "
         f"(tp={tp} fp={fp} tn={tn} fn={fn} skipped={skipped})"

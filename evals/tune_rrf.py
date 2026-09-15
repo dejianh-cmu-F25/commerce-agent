@@ -25,6 +25,8 @@ import argparse
 import hashlib
 from pathlib import Path
 
+from app.evaluation.report_meta import with_marker
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "reports" / "discovery-rrf-weights.md"
 
@@ -211,7 +213,14 @@ def main() -> int:
     print(text)
     if args.write:
         REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(text)
+        REPORT.write_text(
+            with_marker(
+                text,
+                "evals/tune_rrf.py --write",
+                len(cases),
+                ["evals/discovery_cases.jsonl", "evals/tune_rrf.py"],
+            )
+        )
         print(f"wrote {REPORT}")
     return 0
 

@@ -1,3 +1,5 @@
+<!-- report-meta: generator=evals/bench_discovery.py (hand-written summary) cases=216 sources=evals/discovery_cases.jsonl,data/esci/cases.json,evals/bench_discovery.py fingerprint=ecdd5e503510 -->
+
 # Discovery baseline (feature 046, Phase 1) — re-baselined
 
 Measured **before** any RAG work, so a later change has a real before → after.

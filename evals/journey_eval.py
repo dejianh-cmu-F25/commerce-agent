@@ -31,6 +31,7 @@ from typing import Any
 
 from app.core.session import ToolResultEvent
 from app.core.settings import load_settings
+from app.evaluation.report_meta import with_marker
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "evals" / "results-journey.json"
@@ -250,6 +251,57 @@ class Score:
 
 
 DELIVERED_ORDERS = [f"#{n}" for n in range(1006, 1009)]  # fulfilled + delivery event
+
+
+# Which intents a changed file can affect. `--changed` uses this so a small edit runs
+# a slice instead of the whole set; anything not listed means "run everything",
+# because an unmapped change is exactly when a full run is warranted.
+CHANGED_MAP: tuple[tuple[str, str], ...] = (
+    ("config/prompts/", ""),  # a prompt change affects every intent
+    ("app/tools/catalog.py", "discovery,cart,negative"),
+    ("app/adapters/catalog_index.py", "discovery,cart,negative"),
+    ("app/adapters/shopify_catalog.py", "discovery,cart,negative"),
+    ("app/adapters/catalog_local.py", "discovery,cart,negative"),
+    ("app/tools/post_purchase.py", "return,wismo,policy,clarify"),
+    ("app/adapters/shopify_post_purchase.py", "return,wismo,escalate"),
+    ("app/returns/", "return,policy"),
+    ("config/policies/", "return,policy"),
+    ("config/knowledge/", "policy"),
+    ("app/tools/knowledge.py", "policy"),
+    ("app/tools/reviews.py", "reviews"),
+    ("app/reviews/", "reviews"),
+    ("app/gates/", "return,injection"),
+    ("app/tools/checkout.py", "cart,multi"),
+)
+
+
+def intents_for_changes(paths: list[str]) -> str:
+    """The ``--only`` value for a set of changed paths; ``""`` means everything."""
+    if not paths:
+        return ""
+    wanted: set[str] = set()
+    for path in paths:
+        for prefix, intents in CHANGED_MAP:
+            if path.startswith(prefix):
+                if not intents:
+                    return ""  # affects everything
+                wanted.update(name.strip() for name in intents.split(",") if name.strip())
+                break
+        else:
+            return ""  # an unmapped path: run the whole set rather than guess
+    return ",".join(sorted(wanted))
+
+
+def changed_paths(base: str = "main") -> list[str]:
+    """Files changed on this branch, as git reports them."""
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"{base}...HEAD"], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
 def build_cases(titles: list[str]) -> list[Case]:
@@ -639,7 +691,14 @@ def _write_report(result: dict, k: int) -> None:
     if result["failures"]:
         lines += ["", "## Failures", "", ", ".join(result["failures"])]
     REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text("\n".join(lines) + "\n")
+    REPORT.write_text(
+        with_marker(
+            "\n".join(lines) + "\n",
+            "evals/journey_eval.py --real",
+            result["cases"],
+            ["evals/journey_eval.py", "evals/synth_cases.jsonl"],
+        )
+    )
 
 
 def main() -> int:
@@ -655,6 +714,11 @@ def main() -> int:
     )
     parser.add_argument("--only", default="", help="comma-separated intents to run")
     parser.add_argument("--out", type=Path, default=None, help="write results here")
+    parser.add_argument(
+        "--changed",
+        action="store_true",
+        help="run only the intents the branch's changes can affect (git diff vs main)",
+    )
     args = parser.parse_args()
 
     if args.real:
@@ -667,6 +731,14 @@ def main() -> int:
 
         llm = MockLLMClient([text_turn("ok")] * 4000)
 
+    only = args.only
+    if args.changed:
+        paths = changed_paths()
+        only = intents_for_changes(paths)
+        print(
+            f"--changed: {len(paths)} file(s) -> "
+            f"{only or 'EVERY intent (an unmapped or prompt change)'}"
+        )
     result = asyncio.run(
         run(
             llm,
@@ -674,7 +746,7 @@ def main() -> int:
             k=args.k,
             sample=args.sample,
             concurrency=args.concurrency,
-            only=args.only,
+            only=only,
             out=args.out,
         )
     )

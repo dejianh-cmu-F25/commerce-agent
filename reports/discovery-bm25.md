@@ -1,3 +1,5 @@
+<!-- report-meta: generator=evals/bench_discovery.py --document plain (hand-written summary) cases=216 sources=evals/discovery_cases.jsonl,evals/bench_discovery.py,app/adapters/retriever_bm25.py fingerprint=f526d1a5e494 -->
+
 # Discovery: BM25 as the lexical leg (feature 046, step A8)
 
 BM25 is the default lexical scorer in most search stacks, so the honest question is

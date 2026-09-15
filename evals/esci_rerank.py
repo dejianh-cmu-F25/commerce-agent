@@ -29,6 +29,8 @@ import json
 import time
 from pathlib import Path
 
+from app.evaluation.report_meta import with_marker
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "reports" / "discovery-rerank.md"
 RESULTS = ROOT / "evals" / "results-esci-rerank.json"
@@ -200,7 +202,14 @@ async def main() -> int:
     print(text)
     if args.write:
         REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(text)
+        REPORT.write_text(
+            with_marker(
+                text,
+                "evals/esci_rerank.py --write",
+                result["cases"],
+                ["data/esci/cases.json", "evals/esci_rerank.py"],
+            )
+        )
         print(f"wrote {REPORT}")
     return 0
 

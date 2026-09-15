@@ -81,6 +81,7 @@ def _build_agent(settings: Settings, llm: DeepSeekClient, tracer: JsonlTracer) -
         tools=registry,
         settings=settings.agent,
         system_prompt=system_prompt,
+        safety=settings.safety,
         cost_meter=UsageCostMeter(settings.budget),
         tracer=tracer,
         memory=InMemoryMemoryStore(),

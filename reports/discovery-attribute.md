@@ -1,3 +1,5 @@
+<!-- report-meta: generator=evals/bench_attribute.py --write cases=28 sources=evals/attribute_cases.jsonl,evals/bench_attribute.py fingerprint=eccc3cd5d348 -->
+
 # Discovery: what review enrichment buys (feature 046, steps C/D/E)
 
 - Attribute queries: **28**, each labelled by the review text that

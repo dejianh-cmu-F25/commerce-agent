@@ -100,7 +100,9 @@ def _backend_for(case: dict) -> tuple[InMemoryPostPurchase, str]:
     delivered = (EVAL_NOW - timedelta(days=days)).isoformat() if days is not None else None
     line = LineItem(
         id=f"fli-{case['case_id']}",
-        title="Item",
+        # A case may inject through item data: that channel bypasses the input guard,
+        # so it has to be resisted by the model treating tool results as data.
+        title=str(case.get("item_title") or "Item"),
         quantity=1,
         sku="SKU",
         tags=tuple(case.get("item_tags", [])),
@@ -135,6 +137,9 @@ def _build_agent(backend: InMemoryPostPurchase, llm, cost_meter=None) -> Agent:
         settings=AgentSettings(max_turns=8),
         system_prompt=PROMPT,
         cost_meter=cost_meter,
+        # Production runs the guard (web/main.py); an eval that skips it measures a
+        # wiring nobody ships.
+        safety=load_settings().safety,
     )
 
 

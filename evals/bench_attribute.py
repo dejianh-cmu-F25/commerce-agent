@@ -22,6 +22,8 @@ import json
 import time
 from pathlib import Path
 
+from app.evaluation.report_meta import with_marker
+
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ROOT / "evals" / "attribute_cases.jsonl"
 REPORT = ROOT / "reports" / "discovery-attribute.md"
@@ -109,7 +111,14 @@ def main() -> int:
     RESULTS.write_text(json.dumps(result, indent=2) + "\n")
     if args.write:
         REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(text)
+        REPORT.write_text(
+            with_marker(
+                text,
+                "evals/bench_attribute.py --write",
+                len(cases),
+                [CASES, "evals/bench_attribute.py"],
+            )
+        )
         print(f"wrote {REPORT}")
     return 0
 

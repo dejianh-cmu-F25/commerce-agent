@@ -1,3 +1,5 @@
+<!-- report-meta: generator=evals/esci_bench.py + evals/bench_discovery.py (hand-written summary) cases=216 sources=evals/discovery_cases.jsonl,data/esci/cases.json,evals/bench_discovery.py,evals/esci_bench.py fingerprint=cf05603311d6 -->
+
 # Discovery: RAG ablation (feature 046, Phase 2)
 
 Measured on the two Phase-1 benchmarks (`reports/discovery-baseline.md`):

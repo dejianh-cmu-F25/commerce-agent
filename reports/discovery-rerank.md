@@ -1,3 +1,5 @@
+<!-- report-meta: generator=evals/esci_rerank.py --write (20-case probe, hand-written summary) cases=20 sources=data/esci/cases.json,evals/esci_rerank.py fingerprint=5e3c8e9772f8 -->
+
 # Discovery: second-stage reranking (feature 046, step A6)
 
 **This is a 20-query probe, not the full set.** It was run first (as agreed) to see

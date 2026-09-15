@@ -1,3 +1,5 @@
+<!-- report-meta: generator=evals/tune_rrf.py --write cases=216 sources=evals/discovery_cases.jsonl,evals/tune_rrf.py fingerprint=29f614eee3be -->
+
 # Discovery: RRF weights (feature 046, step A5)
 
 - Rule set: **216** cases, split **101 train / 115 val** by a stable hash of the case id.

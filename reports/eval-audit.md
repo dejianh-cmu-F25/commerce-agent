@@ -1,29 +1,33 @@
+<!-- report-meta: generator=evals/eval_audit.py --write cases=1005 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/journey_eval.py,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/synth_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/post_purchase_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/invariant_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/discovery_cases.jsonl,/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/attribute_cases.jsonl fingerprint=0cceab455a0f -->
+
 # Evaluation-set audit
 
-- Corpora: **6** · cases: **977**
+- Corpora: **7** · cases: **1005**
 - Checks: duplicate ids/messages, prompt pollution (8-gram), coverage, sliced results.
 
 ## Corpus sizes
 
 | Corpus | Cases | What it grounds |
 | --- | ---: | --- |
+| `attribute` | 28 | attribute queries labelled by review text (what enrichment buys) |
 | `discovery_rule` | 216 | retrieval hit@10 on product metadata |
 | `esci` | 500 | nDCG@10 against human ESCI relevance labels |
-| `invariant` | 17 | behavioural guardrails (INV-1..8) |
+| `invariant` | 18 | behavioural guardrails (INV-1..8) |
 | `journey` | 195 | end-to-end tool-use behaviour (the headline accuracy) |
-| `post_purchase` | 16 | return decisions vs the policy engine |
+| `post_purchase` | 15 | return decisions vs the policy engine |
 | `synth` | 33 | novel phrasings of the same intents (CheckList MFT) |
 
 ## Coverage matrix (intent × corpus)
 
-| Corpus | INV-1 | INV-2 | INV-3 | INV-4 | INV-5 | INV-6 | INV-7 | INV-8 | answer_status | brand | cart | category_price | clarify | colour | discovery | eligible | escalate | ineligible | injection | multi | negative | off_topic | policy | return | title_substring | wismo |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `discovery_rule` |  |  |  |  |  |  |  |  |  | 75 |  | 29 |  | 37 |  |  |  |  |  |  |  |  |  |  | 75 |  |
-| `esci` |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `invariant` | 4 | 6 | 2 | 1 | 1 | 1 | 1 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `journey` |  |  |  |  |  |  |  |  |  |  | 20 |  | 3 |  | 55 |  |  |  | 16 | 6 | 10 | 14 | 45 | 12 |  | 14 |
-| `post_purchase` |  |  |  |  |  |  |  |  | 2 |  |  |  | 1 |  |  | 7 | 3 | 3 |  |  |  |  |  |  |  |  |
-| `synth` |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 12 |  |  |  |  |  |  |  | 10 | 6 |  | 5 |
+| Corpus | INV-1 | INV-2 | INV-3 | INV-4 | INV-5 | INV-6 | INV-7 | INV-8 | answer_status | brand | broke after | cart | category_price | clarify | colour | discovery | eligible | escalate | flimsy | hard to use | ineligible | injection | leaks | multi | negative | off_topic | policy | poor quality | return | runs small | smells | stopped working | title_substring | too heavy | too tight | wismo |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `attribute` |  |  |  |  |  |  |  |  |  |  | 3 |  |  |  |  |  |  |  | 3 | 1 |  |  | 3 |  |  |  |  | 3 |  | 3 | 3 | 3 |  | 3 | 3 |  |
+| `discovery_rule` |  |  |  |  |  |  |  |  |  | 75 |  |  | 29 |  | 37 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 75 |  |  |  |
+| `esci` |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `invariant` | 4 | 6 | 2 | 1 | 2 | 1 | 1 | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `journey` |  |  |  |  |  |  |  |  |  |  |  | 20 |  | 3 |  | 55 |  |  |  |  |  | 16 |  | 6 | 10 | 14 | 45 |  | 12 |  |  |  |  |  |  | 14 |
+| `post_purchase` |  |  |  |  |  |  |  |  | 2 |  |  |  |  | 1 |  |  | 7 | 3 |  |  | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `synth` |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 12 |  |  |  |  |  |  |  |  |  |  | 10 |  | 6 |  |  |  |  |  |  | 5 |
 
 ## Embedded corpora
 
@@ -35,7 +39,13 @@ None.
 
 ## Duplicate messages
 
-None.
+- `attribute` (within): attr-runs-small-1, attr-runs-small-2, attr-runs-small-3
+- `attribute` (within): attr-too-tight-1, attr-too-tight-2
+- `attribute` (within): attr-leaks-1, attr-leaks-2
+- `attribute` (within): attr-smells-1, attr-smells-2, attr-smells-3
+- `attribute` (within): attr-broke-after-1, attr-broke-after-2
+- `attribute` (within): attr-flimsy-2, attr-flimsy-3
+- `attribute` (within): attr-poor-quality-1, attr-poor-quality-2, attr-poor-quality-3
 
 ## Invariance pairs (same after case/punctuation folding)
 
@@ -44,6 +54,13 @@ None.
 - `journey`: noisy-policy-3-lowercase, policy-03
 - `journey`: noisy-policy-4-no_punctuation, policy-04
 - `journey`: noisy-policy-5-no_punctuation, policy-05
+- `attribute`: attr-runs-small-1, attr-runs-small-2, attr-runs-small-3
+- `attribute`: attr-too-tight-1, attr-too-tight-2
+- `attribute`: attr-leaks-1, attr-leaks-2
+- `attribute`: attr-smells-1, attr-smells-2, attr-smells-3
+- `attribute`: attr-broke-after-1, attr-broke-after-2
+- `attribute`: attr-flimsy-2, attr-flimsy-3
+- `attribute`: attr-poor-quality-1, attr-poor-quality-2, attr-poor-quality-3
 
 ## Prompt pollution (8-gram overlap with config/prompts)
 

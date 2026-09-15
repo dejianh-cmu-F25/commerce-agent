@@ -93,6 +93,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects persistent `chroma` (default) or in-process `memory` |
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
+| Run or change the gold scenarios | `evals/runner.py` + `evals/scenarios.py` are the source of truth: 13 keyless scenarios driving the **shipped** closed-loop tools (`get_order_status`, `list_returnable_items`, `propose_return_decision`) over `evals/order_fixtures.py`; `evals/run.py` runs them in the gate. The 016 spec is archived, so the code and this row are the documentation |
 | Change chunking | Edit `app/knowledge/ingest.py` (one chunk per section, heading kept) and `ingestion.chunk_size` |
 | Add a write guardrail | Add a gate in `app/gates/` and run it through the tool's `GatePipeline` (see `ProvenanceGate`, `ReturnEligibilityGate`) |
 | Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |

@@ -82,8 +82,14 @@ uv run python evals/acp_conformance.py
 step "Python: pass^k harness self-test (keyless)"
 uv run python evals/passk.py
 
+step "Python: render the keyless report from the fresh artifacts"
+uv run python evals/report.py --write
+
 step "Python: results recorded in specs"
 uv run python scripts/check_results.py
+
+step "Python: reports match their corpus"
+uv run python scripts/check_reports.py
 
 step "Python: change evidence (EV-1)"
 uv run python scripts/check_change_evidence.py

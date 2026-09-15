@@ -1,3 +1,5 @@
+<!-- report-meta: generator=external tau-bench run (no local corpus) cases=20 sources= fingerprint=da39a3ee5e6b -->
+
 # τ-bench (retail): external benchmark
 
 - Domain: **retail** (tool + policy + simulated user)
