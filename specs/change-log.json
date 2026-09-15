@@ -1327,6 +1327,22 @@
       "rollback": "git revert the commit",
       "verdict": "accepted",
       "evidence": "tests/unit/test_invariant_discriminating.py"
+    },
+    {
+      "date": "2026-09-15",
+      "change": "#85 046 eval-hardening B (multi-turn + noise + non-English)",
+      "area": "evaluation",
+      "class": "measurable",
+      "what": "Extended the journey eval from 121 to 151 cases: 6 multi-turn dialogues, 13 noisy variants (lowercase / punctuation / typo / swap / disfluency via evals/noise.py), and 9 non-English intents (ES/FR/ZH returns, WISMO, discovery). The report now splits strong vs weak signal.",
+      "metric": "journey tool accuracy (real model)",
+      "before": 0.983,
+      "after": 0.96,
+      "note": "The harder set lowers accuracy 0.983 -> 0.960 and exposes real failures the old set hid: all 3 non-English return intents (lang-01/02/03) failed to propose a return; multi-clarify failed; plus the pre-existing discovery-23 and policy-09. Weak-signal slice 21/24 (0.875) vs strong 124/127 (0.976).",
+      "guardrails": "no_fail_rate = 1.000; injection/off-topic 32/32; keyless gate green; 261 tests pass",
+      "blast_radius": "evals/{journey_eval.py,noise.py}, reports/journey-eval.md, evals/results-journey.json",
+      "rollback": "git revert the commit",
+      "verdict": "accepted",
+      "evidence": "reports/journey-eval.md, evals/results-journey.json"
     }
   ]
 }
