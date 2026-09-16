@@ -150,6 +150,10 @@ class CatalogSettings(BaseModel):
     The live catalog is searched from a local index (``scripts/sync_catalog.py``).
     ``tfidf`` is keyless (P8); ``hybrid`` fuses it with a real embedding, which
     needs ``embedding.provider`` to be a real provider.
+
+    ``query_understanding`` (feature 047) selects the need-rewriting step:
+    ``none`` (retrieve the query as-is), ``rules`` (keyless constraint extraction),
+    or ``llm`` (HyDE-style rewrite + constraints).
     """
 
     provider: Literal["tfidf", "hybrid"] = "tfidf"
@@ -158,6 +162,7 @@ class CatalogSettings(BaseModel):
     # Widen the retrieval window before mapping ids to live products, so a product
     # that has left the shop does not silently shrink the result set.
     overfetch: int = 4
+    query_understanding: Literal["none", "rules", "llm"] = "none"
 
 
 class ShopifySettings(BaseModel):
@@ -303,6 +308,7 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
     "CATALOG_PROVIDER": ("catalog", "provider", str),
+    "CATALOG_QUERY_UNDERSTANDING": ("catalog", "query_understanding", str),
     "RERANK_ENABLED": ("rerank", "enabled", _to_bool),
     "RERANK_PROVIDER": ("rerank", "provider", str),
     "RERANK_TOP_K": ("rerank", "top_k", int),

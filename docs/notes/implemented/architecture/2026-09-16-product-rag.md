@@ -76,3 +76,23 @@ query-time **metadata filter** narrows the candidates before scoring.
 - Cost: the keyless passage index is ~60× the document index (16,035 chunks vs 3,000
   products) and ~12 ms/query; the dense passage index is ~1.5 s/query with a real
   embedding. That trade is stated in the report, not hidden.
+
+## Query understanding (P2) - a measured negative
+
+The hypothesis was that rewriting a need into retrieval terms (HyDE-style) would
+recover recall the passage embedding missed, and that a rule could extract hard
+constraints. Both were built and measured, and **neither helped**:
+
+- `chunks-dense-openai` **0.792**; `+rules` **0.792**; `+llm` **0.792** (hit@10).
+- The rule extractor was narrowed to a **price ceiling only**: an earlier version also
+  guessed a category from a trailing "in X", which read "healthy in summer" as
+  `category=Summer` and **lowered** hit@10 to 0.708. A regression test pins the fix.
+  A rule that reads intent is a rule that will be wrong.
+- The LLM rewrite returned a different query but retrieved the same passages - on this
+  corpus the need queries are already descriptive and the passage embedding already
+  matches the evidence text, so there is no headroom for a rewrite to add.
+
+Kept anyway, off by default: the port is a clean seam and the LLM adapter has a
+deterministic fallback (RD-1), so a deployment whose queries *are* short and whose
+corpus is formal (the Elastic "HyDE" case) can turn it on and re-measure. But the
+default is `none`, because a model call with no measured lift is a cost, not a feature.

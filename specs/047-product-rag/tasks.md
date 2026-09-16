@@ -27,14 +27,24 @@
 - [x] T104 Measured: passage + real embedding **0.792** hit@10; filter `source=review`
   **0.917** (vs keyword 0.292).
 
+## Delivered (P2) — query understanding (measured neutral)
+
+- [x] T201 Port `app/ports/query_understanding.py` (`QueryPlan` + `QueryUnderstanding`).
+- [x] T202 Keyless `app/adapters/query_rules.py` (price-ceiling extraction only; a
+  category guess false-positived on "in summer" and was removed, with a regression test).
+- [x] T203 Opt-in `app/adapters/query_llm.py` (HyDE-style rewrite + price extraction),
+  prompt in `config/prompts/query_rewrite.md` (PB-4), metered, timeout-bounded, and a
+  deterministic fallback on failure (RD-1).
+- [x] T204 Config `catalog.query_understanding: none|rules|llm` + `CATALOG_QUERY_UNDERSTANDING`
+  (>`.env.example` parity) + `config/settings.yaml`.
+- [x] T205 Measured: neither rewrite nor rules beat the passage embedding alone
+  (**0.792 → 0.792**); `none` stays the default. Negative result reported in
+  `reports/discovery-need.md`.
+
 ## Planned (not part of this change)
 
-- **P2 query understanding** — port `app/ports/query_understanding.py` (need →
-  terms/constraints); keyless `app/adapters/query_rules.py` + opt-in
-  `app/adapters/query_llm.py` (HyDE-style); config `catalog.query_understanding:
-  none|rules|llm` (fail loud on unknown); ablation off/on; cross-lingual slice
-  (zh → en) reported honestly; NLU-generated filters (Google's "filter with natural
-  language understanding").
+- **Cross-lingual slice (zh → en)** — documented gap; a multilingual embedding or a
+  translate step, measured separately.
 - **P3 grounded recommendation + judge** — the recommendation cites the passage it
   used (the chunk is already returned); a judge scores the "grounded recommendation
   rate" (pattern from `evals/judge.py`); guardrail: no ungrounded recommendation.

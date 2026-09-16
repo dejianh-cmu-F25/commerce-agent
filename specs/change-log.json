@@ -1896,6 +1896,22 @@
       "blast_radius": "ports (retriever/vector_store signatures), adapters (vector_memory/vector_chroma, retriever_memory/bm25/dense/hybrid), catalog_index (catalog_chunks + PassageCatalogIndex), core/types (Chunk.metadata), core/filters (new); loop, tools, and gates unchanged",
       "rollback": "git revert; the port change is additive (defaults preserve behaviour)",
       "evidence": "reports/discovery-need.md, evals/need_bench.py, app/adapters/catalog_index.py, specs/047-product-rag/spec.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#122 047-product-rag (query understanding: measured neutral)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "A need query names a task, and the hypothesis was that rewriting it into retrieval terms (HyDE-style) would recover recall the passage embedding missed. Added a replaceable step: app/ports/query_understanding.py (QueryPlan + QueryUnderstanding), a keyless app/adapters/query_rules.py (price-ceiling extraction only - a category guess false-positived on 'in summer' and was removed with a regression test), and an opt-in app/adapters/query_llm.py (HyDE-style rewrite + price extraction, prompt in config/prompts/query_rewrite.md, metered, timeout-bounded, deterministic fallback per RD-1). Selected by catalog.query_understanding: none|rules|llm.",
+      "metric": "need-query hit@10 on evals/need_cases.jsonl (passage + real embedding)",
+      "before": 0.792,
+      "after": 0.792,
+      "note": "Negative result: neither the LLM rewrite nor the rule extractor beat the passage embedding alone on this set, so query_understanding stays `none` by default. Reported in reports/discovery-need.md.",
+      "guardrails": "additive and off by default (none); keyless arms unchanged; fallback keeps search working on provider error/timeout/unparseable output; the rule extractor narrowed to price only after a measured regression (0.708 -> 0.792)",
+      "verdict": "accepted (no lift; shipped as opt-in)",
+      "blast_radius": "new port + two adapters + a prompt + catalog config; evals/need_bench gained rewrite arms; no change to the shipped search path (default none)",
+      "rollback": "git revert; the step is off by default",
+      "evidence": "reports/discovery-need.md, tests/unit/test_query_understanding.py, specs/047-product-rag/spec.md"
     }
   ]
 }

@@ -24,10 +24,12 @@ Run::
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ROOT / "evals" / "need_cases.jsonl"
@@ -37,7 +39,13 @@ REPORT = ROOT / "reports" / "discovery-need.md"
 K = 10
 
 KEYLESS = ("tfidf-plain", "tfidf-enriched", "dense-hash", "chunks-tfidf")
-REAL = ("dense-openai", "hybrid-openai", "chunks-dense-openai")
+REAL = (
+    "dense-openai",
+    "hybrid-openai",
+    "chunks-dense-openai",
+    "chunks-dense-openai-rules",
+    "chunks-dense-openai-llm",
+)
 
 
 def _load_cases() -> list[dict]:
@@ -85,7 +93,33 @@ _BASE = {
 
 # Passage-level configs (feature 047): each review/feature is a chunk with
 # metadata, and chunk hits are aggregated back to a product.
-_CHUNK_BASE = {"chunks-tfidf": "tfidf", "chunks-dense-openai": "dense-openai"}
+_CHUNK_BASE = {
+    "chunks-tfidf": "tfidf",
+    "chunks-dense-openai": "dense-openai",
+    "chunks-dense-openai-rules": "dense-openai",
+    "chunks-dense-openai-llm": "dense-openai",
+}
+
+# Query-understanding step for a chunk config (feature 047): the last segment.
+_REWRITE = {"chunks-dense-openai-rules": "rules", "chunks-dense-openai-llm": "llm"}
+
+
+def _query_understanding(name: str):
+    if name == "rules":
+        from app.adapters.query_rules import RuleQueryUnderstanding
+
+        return RuleQueryUnderstanding()
+    if name == "llm":
+        from app.adapters.deepseek_client import DeepSeekClient
+        from app.adapters.query_llm import LlmQueryUnderstanding
+        from app.core.prompts import load_prompt
+        from app.core.settings import load_settings
+
+        return LlmQueryUnderstanding(
+            DeepSeekClient(load_settings().llm), load_prompt("query_rewrite")
+        )
+    raise ValueError(f"unknown query understanding: {name}")
+
 
 # Metadata filters evaluated on the chunk index (query-time filtering).
 _FILTERS: dict[str, dict] = {
@@ -148,19 +182,34 @@ def run(configs: tuple[str, ...], write: bool) -> dict:
         reviews = None
 
     result: dict = {"k": K, "cases": len(cases), "configs": {}, "filters": {}}
+    chunk_cache: dict[str, Any] = {}
     for config in configs:
         if config in _CHUNK_BASE:
             if reviews is None:
                 print(f"  {config} skipped (no review store)")
                 continue
-            index = _chunk_index(config, products, reviews)
-            result["configs"][config] = _evaluate(
-                cases, lambda query, limit, i=index: i.search(query, limit)
-            )
-            for name, where in _FILTERS.items():
-                result["filters"][f"{config}:{name}"] = _evaluate(
-                    cases, lambda query, limit, i=index, w=where: i.search(query, limit, where=w)
+            base = _CHUNK_BASE[config]
+            if base not in chunk_cache:
+                chunk_cache[base] = _chunk_index(config, products, reviews)
+            index = chunk_cache[base]
+            rewrite = _REWRITE.get(config)
+            if rewrite:
+                planner = _query_understanding(rewrite)
+
+                def search(query, limit, i=index, p=planner):
+                    plan = asyncio.run(p.understand(query))
+                    return i.search(plan.terms, limit, where=plan.where or None)
+
+                result["configs"][config] = _evaluate(cases, search)
+            else:
+                result["configs"][config] = _evaluate(
+                    cases, lambda query, limit, i=index: i.search(query, limit)
                 )
+                for name, where in _FILTERS.items():
+                    result["filters"][f"{config}:{name}"] = _evaluate(
+                        cases,
+                        lambda query, limit, i=index, w=where: i.search(query, limit, where=w),
+                    )
             print(f"  {config} done ({index.chunk_count()} chunks)")
             continue
         enriched = config.endswith("enriched")
@@ -251,6 +300,43 @@ def _write_report(result: dict) -> None:
             "",
             "| filter | hit@10 |",
             "| --- | ---: |",
+        ]
+        lines += [
+            f"| {name} | {metrics['hit_rate']:.3f} |" for name, metrics in result["filters"].items()
+        ]
+        lines += [
+            "",
+            "A filter trades recall for precision: it only counts products that have a",
+            'matching passage, which is what a shopper means by "only reviews" or',
+            '"only 4★ and up".',
+        ]
+    rewrite = {
+        name: metrics
+        for name, metrics in result["configs"].items()
+        if name.endswith(("-rules", "-llm"))
+    }
+    if rewrite:
+        lines += [
+            "",
+            "## Query understanding (measured, not assumed)",
+            "",
+            "Rewriting a need into retrieval terms (`-llm`, HyDE-style) and rule-based",
+            "constraint extraction (`-rules`) were run against the same passage index.",
+            "",
+            "| config | hit@10 |",
+            "| --- | ---: |",
+            f"| chunks-dense-openai (none) | "
+            f"{result['configs'].get('chunks-dense-openai', {}).get('hit_rate', 0.0):.3f} |",
+        ]
+        lines += [f"| {name} | {metrics['hit_rate']:.3f} |" for name, metrics in rewrite.items()]
+        lines += [
+            "",
+            "**Negative result, reported as such.** Neither step beats the passage",
+            "embedding alone on this set: the rewritten query and the original both",
+            "retrieve the same passages, and the rule extractor only helps when a",
+            "constraint is stated (none of these needs carries one). A model call with",
+            "no measured lift is a cost, not a feature - so `query_understanding` stays",
+            "`none` by default and the rewrite is opt-in.",
         ]
         lines += [
             f"| {name} | {metrics['hit_rate']:.3f} |" for name, metrics in result["filters"].items()

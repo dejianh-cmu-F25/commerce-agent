@@ -202,6 +202,13 @@ Query-time metadata filters on the passage index (`where` before aggregation):
 Corpus: `evals/need_cases.jsonl` (24 cases, 9 with zero title overlap). Source:
 `reports/discovery-need.md`, `evals/results-need.json`. Change log: `specs/change-log.json`.
 
+Query understanding (P2, measured): rewriting the need into retrieval terms (`-llm`,
+HyDE-style) and rule-based constraint extraction (`-rules`) were run against the same
+passage index; **neither beat the passage embedding alone (0.792 both ways)**. This is
+recorded as a **negative result**: on this corpus the passage embedding already
+retrieves the right chunks, so an extra model call buys no lift, and
+`catalog.query_understanding` stays `none` by default.
+
 ## Out of Scope
 
 - Cross-lingual retrieval (中文 query → English catalog) — planned as a separate slice.
@@ -229,9 +236,10 @@ Corpus: `evals/need_cases.jsonl` (24 cases, 9 with zero title overlap). Source:
 
 ## Known Gaps
 
-- P2–P4 (query understanding, grounded-answer judge, agent wiring) are planned but not
-  yet implemented; P0 (dataset/benchmark/report) and P1 (passage index + filters) are
-  delivered.
+- P3–P4 (grounded-answer judge, agent wiring) are planned but not yet implemented; P0
+  (dataset/benchmark/report), P1 (passage index + filters) and P2 (query understanding,
+  measured neutral) are delivered.
 - 24 cases is a start; the plan is to extend toward 60–100.
 - The passage index and filters are measured in the benchmark; wiring them into the
   live `search_products` path is P4.
+- Cross-lingual (zh → en) retrieval is documented as a gap, not implemented.
