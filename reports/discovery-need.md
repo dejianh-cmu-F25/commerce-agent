@@ -9,15 +9,15 @@ is the gap measured here.
 
 | Config | hit@10 | recall@10 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
-| tfidf-plain | 0.206 | 0.206 | 0.078 | 0.9 |
-| tfidf-enriched | 0.294 | 0.294 | 0.221 | 2.0 |
-| dense-hash | 0.059 | 0.059 | 0.034 | 43.8 |
-| chunks-tfidf | 0.294 | 0.294 | 0.163 | 8.0 |
-| dense-openai | 0.500 | 0.500 | 0.293 | 314.2 |
-| hybrid-openai | 0.500 | 0.500 | 0.237 | 259.6 |
-| chunks-dense-openai | 0.735 | 0.735 | 0.487 | 1386.0 |
-| chunks-dense-openai-rules | 0.735 | 0.735 | 0.487 | 1389.0 |
-| chunks-dense-openai-llm | 0.735 | 0.735 | 0.487 | 1387.5 |
+| tfidf-plain | 0.206 | 0.206 | 0.078 | 1.0 |
+| tfidf-enriched | 0.294 | 0.294 | 0.221 | 2.3 |
+| dense-hash | 0.059 | 0.059 | 0.034 | 45.1 |
+| chunks-tfidf | 0.294 | 0.294 | 0.163 | 8.7 |
+| dense-openai | 0.500 | 0.500 | 0.293 | 265.3 |
+| hybrid-openai | 0.500 | 0.500 | 0.237 | 265.7 |
+| chunks-dense-openai | 0.735 | 0.735 | 0.487 | 1456.0 |
+| chunks-dense-openai-rules | 0.735 | 0.735 | 0.487 | 1398.7 |
+| chunks-dense-openai-llm | 0.706 | 0.706 | 0.477 | 3588.9 |
 
 Reading: a title-only keyword index scores **0.206** hit@10; retrieving
 over the product text (features + reviews) already scores **0.294** - the
@@ -71,7 +71,7 @@ constraint extraction (`-rules`) were run against the same passage index.
 | --- | ---: |
 | chunks-dense-openai (none) | 0.735 |
 | chunks-dense-openai-rules | 0.735 |
-| chunks-dense-openai-llm | 0.735 |
+| chunks-dense-openai-llm | 0.706 |
 
 **Negative result, reported as such.** Neither step beats the passage
 embedding alone on this set: the rewritten query and the original both
@@ -101,6 +101,19 @@ measured without a model (feature 047, P3):
 | --- | ---: |
 | chunks-tfidf | 0.294 |
 | chunks-dense-openai | 0.676 |
+
+## Grounded answer (LLM judge, mechanically checked)
+
+The model recommends a product from the retrieved passages and quotes its
+evidence. The label is mechanical - the recommended id must be one of the
+retrieved products and the quote must appear verbatim in a passage - so
+hallucination is detected, not graded (feature 047, P3b, `--judge`):
+
+| metric | value |
+| --- | ---: |
+| grounded (id retrieved + quote verbatim) | 0.882 |
+| recommended the labeled product | 0.441 |
+| cost (CNY) | 0.21858 |
 
 ## Method
 

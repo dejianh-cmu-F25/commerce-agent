@@ -13,4 +13,4 @@ than 20"). Otherwise use null.
 Shopper request: {query}
 
 Answer with JSON only, no prose:
-{"query": "<rewritten search query>", "max_price": <number or null>}
+{{"query": "<rewritten search query>", "max_price": <number or null>}}

@@ -198,7 +198,77 @@ def _chunk_index(config: str, products: list[dict], reviews):
     return PassageCatalogIndex(_bare_retriever(_CHUNK_BASE[config]), products, reviews=reviews)
 
 
-def run(configs: tuple[str, ...], write: bool) -> dict:
+async def _complete(llm, prompt: str, cost_meter=None, timeout_s: float = 20.0) -> str:
+    """One non-streaming LLM call (collect the stream), metering usage."""
+    from app.core.types import Message, TextDelta, Usage
+
+    stream = None
+    try:
+        stream = llm.stream([Message(role="user", content=prompt)], [])
+
+        async def consume() -> str:
+            buffer = ""
+            async for event in stream:  # type: ignore[union-attr]
+                if isinstance(event, Usage) and cost_meter is not None:
+                    cost_meter.record(event)
+                elif isinstance(event, TextDelta):
+                    buffer += event.text
+            return buffer
+
+        return await asyncio.wait_for(consume(), timeout=timeout_s)
+    finally:
+        aclose = getattr(stream, "aclose", None)
+        if aclose is not None:
+            try:
+                await aclose()
+            except Exception:  # noqa: BLE001
+                pass
+
+
+async def _grounded_answers(index, cases: list[dict], llm, prompt: str, cost_meter=None) -> dict:
+    """Ask the model to recommend from the retrieved passages, then *check* it.
+
+    The model is the judge, but the label is mechanical: the recommended product id
+    must be one of the retrieved products, and the quoted sentence must be a
+    substring of a retrieved passage. Hallucination is therefore detected, not
+    graded - so the number is verifiable (feature 047, P3b).
+    """
+    from app.adapters.query_llm import parse_plan
+    from app.evaluation.concurrency import run_bounded
+
+    async def one(case: dict, _index: int) -> dict:
+        chunks = index.retrieve_chunks(case["query"], 5)
+        ids = {str(chunk.metadata.get("product_id")) for chunk in chunks}
+        passages = "\n".join(
+            f"[{chunk.metadata.get('product_id')}] {chunk.text}" for chunk in chunks
+        )
+        try:
+            text = await _complete(
+                llm, prompt.format(query=case["query"], passages=passages), cost_meter
+            )
+        except Exception:  # noqa: BLE001 - a provider failure is not a grounding pass
+            return {"grounded": False, "recalled": False}
+        data = parse_plan(text) or {}
+        product_id = str(data.get("product_id") or "")
+        quote = _norm(data.get("quote"))
+        grounded = (
+            product_id in ids
+            and bool(quote)
+            and any(quote in _norm(chunk.text) for chunk in chunks)
+        )
+        return {"grounded": grounded, "recalled": product_id in set(case["expected_ids"])}
+
+    results = await run_bounded(cases, one, concurrency=4)
+    ok = [result for result in results if isinstance(result, dict)]
+    count = len(ok) or 1
+    return {
+        "cases": len(cases),
+        "grounded_rate": round(sum(1 for r in ok if r["grounded"]) / count, 4),
+        "product_recall": round(sum(1 for r in ok if r["recalled"]) / count, 4),
+    }
+
+
+def run(configs: tuple[str, ...], write: bool, judge: bool = False) -> dict:
     cases = _load_cases()
     products = _snapshot()
     if not cases or not products:
@@ -253,6 +323,30 @@ def run(configs: tuple[str, ...], write: bool) -> dict:
             cases, lambda query, limit, r=retriever: [h.id for h in r.retrieve(query, limit)]
         )
         print(f"  {config} done", flush=True)
+
+    if judge and "dense-openai" in chunk_cache:
+        from app.adapters.cost_meter import UsageCostMeter
+        from app.adapters.deepseek_client import DeepSeekClient
+        from app.core.prompts import load_prompt
+        from app.core.settings import load_settings
+
+        settings = load_settings()
+        meter = UsageCostMeter(settings.budget)
+        before = meter.spent_cny()
+        result["judge"] = asyncio.run(
+            _grounded_answers(
+                chunk_cache["dense-openai"],
+                cases,
+                DeepSeekClient(settings.llm),
+                load_prompt("grounded_answer"),
+                meter,
+            )
+        )
+        result["judge"]["cost_cny"] = round(meter.spent_cny() - before, 6)
+        print(
+            f"  judge: grounded={result['judge']['grounded_rate']:.3f} "
+            f"recall={result['judge']['product_recall']:.3f}"
+        )
 
     RESULTS.write_text(json.dumps(result, indent=2) + "\n")
     print(f"need benchmark (k={K}, {result['cases']} cases)")
@@ -420,6 +514,23 @@ def _write_report(result: dict) -> None:
             "| --- | ---: |",
         ]
         lines += [f"| {name} | {value:.3f} |" for name, value in grounded.items()]
+    judge = result.get("judge")
+    if judge:
+        lines += [
+            "",
+            "## Grounded answer (LLM judge, mechanically checked)",
+            "",
+            "The model recommends a product from the retrieved passages and quotes its",
+            "evidence. The label is mechanical - the recommended id must be one of the",
+            "retrieved products and the quote must appear verbatim in a passage - so",
+            "hallucination is detected, not graded (feature 047, P3b, `--judge`):",
+            "",
+            "| metric | value |",
+            "| --- | ---: |",
+            f"| grounded (id retrieved + quote verbatim) | {judge['grounded_rate']:.3f} |",
+            f"| recommended the labeled product | {judge['product_recall']:.3f} |",
+            f"| cost (CNY) | {judge.get('cost_cny', 0.0)} |",
+        ]
     lines += [
         "",
         "## Method",
@@ -448,9 +559,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--real", action="store_true", help="also run a real embedding")
     parser.add_argument("--write", action="store_true", help="write the report")
+    parser.add_argument(
+        "--judge", action="store_true", help="LLM grounded-answer judge (real model)"
+    )
     args = parser.parse_args()
     configs = KEYLESS + (REAL if args.real else ())
-    run(configs, args.write)
+    run(configs, args.write, judge=args.judge)
     return 0
 
 

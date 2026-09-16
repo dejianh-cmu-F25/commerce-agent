@@ -1905,10 +1905,10 @@
       "what": "A need query names a task, and the hypothesis was that rewriting it into retrieval terms (HyDE-style) would recover recall the passage embedding missed. Added a replaceable step: app/ports/query_understanding.py (QueryPlan + QueryUnderstanding), a keyless app/adapters/query_rules.py (price-ceiling extraction only - a category guess false-positived on 'in summer' and was removed with a regression test), and an opt-in app/adapters/query_llm.py (HyDE-style rewrite + price extraction, prompt in config/prompts/query_rewrite.md, metered, timeout-bounded, deterministic fallback per RD-1). Selected by catalog.query_understanding: none|rules|llm.",
       "metric": "need-query hit@10 on evals/need_cases.jsonl (passage + real embedding)",
       "before": 0.792,
-      "after": 0.792,
-      "note": "Negative result: neither the LLM rewrite nor the rule extractor beat the passage embedding alone on this set, so query_understanding stays `none` by default. Reported in reports/discovery-need.md.",
+      "after": 0.706,
+      "note": "Negative result, corrected: a JSON-brace bug in config/prompts/query_rewrite.md made .format() raise, so the rewrite silently fell back to the original query on the first run. With the prompt fixed the rewrite runs and is slightly worse - 0.735 -> 0.706 hit@10 at +2.1 s/query - and the rule extractor is neutral (none of the cases carries a price). query_understanding stays `none`; the LLM adapter keeps its deterministic fallback.",
       "guardrails": "additive and off by default (none); keyless arms unchanged; fallback keeps search working on provider error/timeout/unparseable output; the rule extractor narrowed to price only after a measured regression (0.708 -> 0.792)",
-      "verdict": "accepted (no lift; shipped as opt-in)",
+      "verdict": "accepted (no lift; opt-in, off by default)",
       "blast_radius": "new port + two adapters + a prompt + catalog config; evals/need_bench gained rewrite arms; no change to the shipped search path (default none)",
       "rollback": "git revert; the step is off by default",
       "evidence": "reports/discovery-need.md, tests/unit/test_query_understanding.py, specs/047-product-rag/spec.md"
@@ -1960,6 +1960,22 @@
       "blast_radius": "evals/need_cases.py (+ a ZH dictionary), evals/need_bench.py (by-language breakdown), reports/discovery-need.md, spec",
       "rollback": "git revert",
       "evidence": "reports/discovery-need.md, evals/need_cases.py, specs/047-product-rag/spec.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#126 047-product-rag (grounded-answer judge, mechanically checked)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "Added --judge to evals/need_bench.py: the model recommends a product from the retrieved passages and quotes its supporting sentence; the check is mechanical (the chosen id must be one of the retrieved products, the quote must appear verbatim in a retrieved passage), so hallucination is detected rather than graded. Prompt in config/prompts/grounded_answer.md.",
+      "metric": "grounded-answer rate (passage index, 34 cases)",
+      "before": 0.0,
+      "after": 0.882,
+      "note": "Grounded 0.882 (the model does not invent a product or a quote); single-pick recall 0.441 - picking the ONE best product is harder than retrieving it (hit@10 0.735). Cost CNY 0.22. This is a rate under a mechanical label, not a model's self-report.",
+      "guardrails": "opt-in (--judge), real model; recorded its own cost; the keyless gate is unaffected",
+      "verdict": "accepted",
+      "blast_radius": "evals/need_bench.py + config/prompts/grounded_answer.md + report + spec; no shipped-path change",
+      "rollback": "git revert",
+      "evidence": "reports/discovery-need.md, evals/need_bench.py, specs/047-product-rag/spec.md"
     }
   ]
 }

@@ -183,6 +183,9 @@ with the results in `evals/results-need.json`. Trace attributes unchanged.
 - **SC-008**: A Chinese need against the English catalog is served far better by a
   real embedding than by lexical search (met: zh hit@10 **0.000** keyword vs **0.600**
   passage+embedding).
+- **SC-009**: A model recommendation drawn from the retrieved passages does not
+  hallucinate a product or a quote (met: grounded rate **0.882** under the mechanical
+  judge).
 
 ## Measured Results
 
@@ -201,6 +204,7 @@ Need-query hit@10 over all 34 cases, by configuration:
 | `dense-openai` (document, real embedding) | 0.500 |
 | `chunks-tfidf` (passage) | 0.294 |
 | **`chunks-dense-openai` (passage, real embedding)** | **0.735** |
+| `chunks-dense-openai-llm` (HyDE rewrite, +2.1 s/query) | 0.706 |
 | `chunks-dense-openai` + filter `source=review` | **0.882** |
 
 **Language A/B** (a Chinese need against the English catalog) - lexical search
@@ -215,12 +219,19 @@ collapses, a real embedding over passages bridges it:
 Query-time metadata filters (passage index): `source=review` lifts hit@10 to
 **0.882**; `source=description` drops to 0.235 (the evidence lives in reviews).
 
-Query understanding (P2, measured): LLM rewrite and rule extraction are **neutral**
-(0.735 both ways), so `catalog.query_understanding` stays `none` by default.
+Query understanding (P2, measured): the rule extractor is **neutral** (0.735; none of
+the cases carries a price) and the LLM rewrite is **slightly worse** (0.735 -> 0.706)
+at **+2.1 s/query**, so `catalog.query_understanding` stays `none` by default.
 
 Evidence grounding (P3, keyless): the labeled evidence passage is retrieved for
 **0.676** of the cases with the passage embedding (vs 0.294 lexical) - the citation
-property of a grounded answer. The LLM judge is deferred.
+property of a grounded answer.
+
+Grounded answer (P3b, LLM judge, `--judge`): the model recommends from the retrieved
+passages and quotes its evidence; the label is mechanical (the id must be retrieved,
+the quote verbatim in a passage), so hallucination is **detected, not graded**:
+grounded **0.882**, single-pick recall **0.441**, **¥0.22**. Choosing one product is
+harder than retrieving it, which is why single-pick recall trails hit@10.
 
 ## Out of Scope
 
