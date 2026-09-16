@@ -96,3 +96,14 @@ Kept anyway, off by default: the port is a clean seam and the LLM adapter has a
 deterministic fallback (RD-1), so a deployment whose queries *are* short and whose
 corpus is formal (the Elastic "HyDE" case) can turn it on and re-measure. But the
 default is `none`, because a model call with no measured lift is a cost, not a feature.
+
+## Evidence grounding (P3) - the citation property, keyless
+
+A recommendation that is grounded in *what a review or feature says* must actually
+surface that passage; a product hit alone does not prove the reason. So the benchmark
+also measures the fraction of need cases whose labeled **evidence** sentence was
+retrieved: **0.417 (chunk-tfidf) → 0.750 (chunk-dense-openai)**. It is deterministic
+and model-free, which is why it is the part shipped; the LLM judge (generate a
+recommendation, then check it is supported by the retrieved passages) is deferred as
+optional, because it needs a verifiable label to be worth reporting - the same caution
+as `docs/notes` / `reports/judge-alignment.md`.

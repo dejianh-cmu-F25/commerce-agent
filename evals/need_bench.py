@@ -58,6 +58,31 @@ def _snapshot() -> list[dict]:
     return json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else []
 
 
+def _norm(text: Any) -> str:
+    return " ".join(str(text or "").lower().split())
+
+
+def _evidence_grounded(index, cases: list[dict], k: int = 50) -> float:
+    """Fraction of cases whose labeled **evidence** is in the retrieved passages.
+
+    This is the grounding property of a product-RAG answer, measured without a
+    model: if the system is going to recommend a product *because of what a review
+    or feature says*, it must actually surface that passage. A recommendation that
+    cannot quote its evidence is ungrounded, however high the product recall.
+    """
+    if not cases:
+        return 0.0
+    grounded = 0
+    for case in cases:
+        evidence = _norm(case.get("evidence"))
+        if not evidence:
+            continue
+        passages = " ".join(_norm(hit.text) for hit in index.retrieve_chunks(case["query"], k))
+        if evidence in passages:
+            grounded += 1
+    return round(grounded / len(cases), 4)
+
+
 def _evaluate(cases: list[dict], retrieve) -> dict:
     from app.evaluation.retrieval_metrics import evaluate_retrieval
 
@@ -205,6 +230,7 @@ def run(configs: tuple[str, ...], write: bool) -> dict:
                 result["configs"][config] = _evaluate(
                     cases, lambda query, limit, i=index: i.search(query, limit)
                 )
+                result["configs"][config]["evidence_grounded"] = _evidence_grounded(index, cases)
                 for name, where in _FILTERS.items():
                     result["filters"][f"{config}:{name}"] = _evaluate(
                         cases,
@@ -347,6 +373,25 @@ def _write_report(result: dict) -> None:
             'matching passage, which is what a shopper means by "only reviews" or',
             '"only 4★ and up".',
         ]
+    grounded = {
+        name: metrics["evidence_grounded"]
+        for name, metrics in result["configs"].items()
+        if "evidence_grounded" in metrics
+    }
+    if grounded:
+        lines += [
+            "",
+            "## Evidence grounding",
+            "",
+            "A recommendation grounded in *what a review or feature says* must surface",
+            "that passage. This is the fraction of need cases whose labeled evidence",
+            "sentence was retrieved - the citation property of a product-RAG answer,",
+            "measured without a model (feature 047, P3):",
+            "",
+            "| config | evidence retrieved |",
+            "| --- | ---: |",
+        ]
+        lines += [f"| {name} | {value:.3f} |" for name, value in grounded.items()]
     lines += [
         "",
         "## Method",

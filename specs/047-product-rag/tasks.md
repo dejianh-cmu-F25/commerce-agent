@@ -41,13 +41,20 @@
   (**0.792 → 0.792**); `none` stays the default. Negative result reported in
   `reports/discovery-need.md`.
 
+## Delivered (P3) — evidence grounding (keyless)
+
+- [x] T301 `evals/need_bench.py:_evidence_grounded` — the fraction of need cases whose
+  labeled **evidence** passage was retrieved (the citation property of a grounded
+  answer). Measured without a model: `chunks-tfidf` 0.417 → `chunks-dense-openai` 0.750.
+- [x] T302 Reported in `reports/discovery-need.md` (`## Evidence grounding`).
+
 ## Planned (not part of this change)
 
 - **Cross-lingual slice (zh → en)** — documented gap; a multilingual embedding or a
   translate step, measured separately.
-- **P3 grounded recommendation + judge** — the recommendation cites the passage it
-  used (the chunk is already returned); a judge scores the "grounded recommendation
-  rate" (pattern from `evals/judge.py`); guardrail: no ungrounded recommendation.
+- **P3b LLM judge** — a model-generated recommendation + a judge that checks it is
+  grounded in the retrieved passages (pattern from `evals/judge.py`). Deferred: the
+  keyless evidence-grounding metric (P3, below) is the reproducible part.
 - **P4 wire into the app** — `build_catalog_index`/`LocalSearchCatalog` honour the new
   config (`catalog.passages`, filters) with the tool schema unchanged; pre-filter
   (Azure's recommended default) as the mode; browser acceptance; finalize the report,

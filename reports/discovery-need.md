@@ -11,13 +11,13 @@ is the gap measured here.
 | --- | ---: | ---: | ---: | ---: |
 | tfidf-plain | 0.292 | 0.292 | 0.110 | 1.3 |
 | tfidf-enriched | 0.417 | 0.417 | 0.312 | 2.7 |
-| dense-hash | 0.083 | 0.083 | 0.049 | 43.4 |
-| chunks-tfidf | 0.417 | 0.417 | 0.231 | 11.2 |
-| dense-openai | 0.583 | 0.583 | 0.395 | 260.6 |
-| hybrid-openai | 0.583 | 0.583 | 0.316 | 259.5 |
-| chunks-dense-openai | 0.792 | 0.792 | 0.539 | 1394.7 |
-| chunks-dense-openai-rules | 0.792 | 0.792 | 0.539 | 1395.2 |
-| chunks-dense-openai-llm | 0.792 | 0.792 | 0.539 | 1390.5 |
+| dense-hash | 0.083 | 0.083 | 0.049 | 42.9 |
+| chunks-tfidf | 0.417 | 0.417 | 0.231 | 11.0 |
+| dense-openai | 0.583 | 0.583 | 0.395 | 258.8 |
+| hybrid-openai | 0.583 | 0.583 | 0.316 | 260.3 |
+| chunks-dense-openai | 0.792 | 0.792 | 0.539 | 1395.2 |
+| chunks-dense-openai-rules | 0.792 | 0.792 | 0.539 | 1409.0 |
+| chunks-dense-openai-llm | 0.792 | 0.792 | 0.539 | 1415.1 |
 
 Reading: a title-only keyword index scores **0.292** hit@10; retrieving
 over the product text (features + reviews) already scores **0.417** - the
@@ -76,6 +76,18 @@ no measured lift is a cost, not a feature - so `query_understanding` stays
 A filter trades recall for precision: it only counts products that have a
 matching passage, which is what a shopper means by "only reviews" or
 "only 4★ and up".
+
+## Evidence grounding
+
+A recommendation grounded in *what a review or feature says* must surface
+that passage. This is the fraction of need cases whose labeled evidence
+sentence was retrieved - the citation property of a product-RAG answer,
+measured without a model (feature 047, P3):
+
+| config | evidence retrieved |
+| --- | ---: |
+| chunks-tfidf | 0.417 |
+| chunks-dense-openai | 0.750 |
 
 ## Method
 

@@ -1912,6 +1912,22 @@
       "blast_radius": "new port + two adapters + a prompt + catalog config; evals/need_bench gained rewrite arms; no change to the shipped search path (default none)",
       "rollback": "git revert; the step is off by default",
       "evidence": "reports/discovery-need.md, tests/unit/test_query_understanding.py, specs/047-product-rag/spec.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#123 047-product-rag (evidence-grounding metric, keyless)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "Added a grounding metric to the need benchmark: the fraction of cases whose labeled evidence sentence was actually retrieved (the citation property of a product-RAG answer), measured without a model. Reported per passage config.",
+      "note": "New measurement, not a shipped behavior change: it makes the grounding of a recommendation checkable (the passage must be surfaced), and defers the LLM judge as optional. No app/tool/prompt change.",
+      "metric": "evidence-grounding rate on evals/need_cases.jsonl",
+      "before": 0.417,
+      "after": 0.75,
+      "guardrails": "keyless and deterministic; no network; the keyless gate is unaffected",
+      "verdict": "accepted",
+      "blast_radius": "evals/need_bench.py + reports/discovery-need.md + spec; nothing in the shipped path",
+      "rollback": "git revert",
+      "evidence": "reports/discovery-need.md, evals/need_bench.py, specs/047-product-rag/spec.md"
     }
   ]
 }

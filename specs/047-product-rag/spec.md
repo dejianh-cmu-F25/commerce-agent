@@ -122,8 +122,9 @@ keeps its schema (`query`, `limit`, `max_price`, `category`, `in_stock_only`,
 - **Dataset(s)**: `evals/need_cases.jsonl` (24 hand-authored need queries, labels
   provable from product text); ESCI (`tasksource/esci`, Apache-2.0) for semantic
   ranking; the rule set for lexical regression.
-- **Metric(s)**: hit@k, recall@k, MRR; grounded-recommendation rate *(P3, judge)*;
-  latency and cost.
+- **Metric(s)**: hit@k, recall@k, MRR; **evidence-grounding rate** (the labeled
+  evidence passage was retrieved); latency and cost. An LLM judge for reply grounding
+  is deferred.
 - **Threshold(s)**: the best config's need hit@10 MUST beat the keyword baseline by a
   measured, reported margin (current: **0.292 → 0.583, +0.292, 2.0×**); invariant
   guardrails (engine agreement, keyless gate) MUST NOT regress.
@@ -176,6 +177,8 @@ with the results in `evals/results-need.json`. Trace attributes unchanged.
 - **SC-005**: Existing discovery benchmarks (rule set, ESCI, attribute) do not regress.
 - **SC-006**: Passage-level indexing aggregates chunk hits to products and supports
   query-time metadata filters (met: filter `source=review` lifts hit@10 to 0.917).
+- **SC-007**: The labeled evidence passage is retrieved for a majority of need cases
+  (met: 0.750 with the passage embedding; the citation property of a grounded answer).
 
 ## Measured Results
 
@@ -208,6 +211,12 @@ passage index; **neither beat the passage embedding alone (0.792 both ways)**. T
 recorded as a **negative result**: on this corpus the passage embedding already
 retrieves the right chunks, so an extra model call buys no lift, and
 `catalog.query_understanding` stays `none` by default.
+
+Evidence grounding (P3, keyless): the fraction of need cases whose labeled **evidence**
+sentence was actually retrieved - the citation property of a product-RAG answer,
+measured without a model: `chunks-tfidf` **0.417** → `chunks-dense-openai` **0.750**.
+The LLM judge (generation + grounding review) is deferred; the keyless metric is the
+honest, reproducible part.
 
 ## Out of Scope
 
