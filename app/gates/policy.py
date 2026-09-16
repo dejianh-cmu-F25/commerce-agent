@@ -7,12 +7,14 @@ blocks anything that contradicts the policy. Gates never mutate state (P3).
 
 from __future__ import annotations
 
-from app.gates.base import GateContext, GateResult
+from app.gates.base import POLICY, Applicability, GateContext, GateResult
 from app.returns.amazon_policy import ELIGIBLE, AmazonPolicy, decide_return
 
 
 class PolicyGate:
     name = "policy"
+    applies_to = Applicability(tools=frozenset({"propose_return_decision"}))
+    priority = POLICY
 
     def __init__(self, policy: AmazonPolicy, *, version: str | None = None) -> None:
         self._policy = policy
@@ -31,10 +33,21 @@ class PolicyGate:
             # Validating a *proposal*: it passes when it agrees with the engine.
             # An "ineligible" verdict is a correct answer, not a refused action.
             if context.proposed != decision.decision:
-                return GateResult.block(
+                reason = (
                     f"proposal {context.proposed!r} contradicts the policy "
-                    f"({decision.decision!r}): {detail}{cited}",
+                    f"({decision.decision!r}): {detail}{cited}"
+                )
+                return GateResult.block(
+                    reason,
                     clauses,
+                    payload={
+                        "order_id": context.facts.order_id,
+                        "fulfillment_line_item_id": context.facts.fulfillment_line_item_id,
+                        "decision": context.proposed,
+                        "cited_clauses": list(clauses),
+                        "validated": False,
+                        "policy": reason,
+                    },
                 )
             return GateResult.allow(clauses)
         if decision.decision == ELIGIBLE:

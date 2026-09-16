@@ -7,6 +7,8 @@ import json
 
 from app.adapters.acp_checkout import AcpCheckout
 from app.core.session import Session
+from app.gates.approval import ApprovalGate
+from app.gates.registry import GateSet
 from app.ports.checkout import COMPLETED, CREATED, FAILED, READY
 from app.tools.checkout import register_checkout_tools
 from app.tools.registry import ToolRegistry
@@ -39,7 +41,7 @@ def test_unknown_session_raises() -> None:
 
 
 def _registry() -> ToolRegistry:
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([ApprovalGate()]))
     register_checkout_tools(registry, AcpCheckout())
     return registry
 

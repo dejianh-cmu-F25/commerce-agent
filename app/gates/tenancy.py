@@ -1,16 +1,26 @@
 """Tenancy gate: a customer may act only on their own orders (feature 046, INV-7).
 
 The harness enforces this, not the prompt. A request that names another
-customer's order is blocked before anything is read or written.
+customer's order is blocked before anything is read or written. A refusal is not
+an error: the status stays ``ok`` so the model relays it instead of retrying.
 """
 
 from __future__ import annotations
 
-from app.gates.base import GateContext, GateResult
+from app.gates.base import AUTHORIZATION, Applicability, GateContext, GateResult
+
+_GUIDANCE = (
+    "Do not reveal or act on this order. Say you can only help with the customer's "
+    "own orders and offer to look one of theirs up."
+)
 
 
 class TenancyGate:
     name = "tenancy"
+    applies_to = Applicability(
+        tools=frozenset({"get_order_status", "list_returnable_items", "propose_return_decision"})
+    )
+    priority = AUTHORIZATION
 
     def check(self, context: GateContext) -> GateResult:
         """An order that declares an owner may only be read by that customer.
@@ -28,8 +38,22 @@ class TenancyGate:
         if not owner:
             return GateResult.allow()  # no declared owner: nothing to protect
         customer = str(getattr(context.session, "customer_id", "") or "")
+        blocked_reason = ""
         if not customer:
-            return GateResult.block("order belongs to a customer; no authenticated customer")
-        if owner != customer:
-            return GateResult.block("order belongs to another customer")
-        return GateResult.allow()
+            blocked_reason = "order belongs to a customer; no authenticated customer"
+        elif owner != customer:
+            blocked_reason = "order belongs to another customer"
+        if not blocked_reason:
+            return GateResult.allow()
+        order_id = str(context.arguments.get("order_id") or getattr(order, "id", ""))
+        return GateResult.block(
+            blocked_reason,
+            status="ok",
+            component="order",
+            payload={
+                "order_id": order_id,
+                "accessible": False,
+                "reason": blocked_reason,
+                "guidance": _GUIDANCE,
+            },
+        )

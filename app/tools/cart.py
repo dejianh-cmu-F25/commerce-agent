@@ -3,7 +3,8 @@
 The cart is a proposal (P3): these tools mutate the session cart and render a
 summary; nothing is charged and no order is placed. Only server-issued product
 ids may be added (P4); titles and prices come from the storefront, never the
-model.
+model. The provenance gate (in the registry's gate set) enforces the id origin at
+the write (046 hardening).
 """
 
 from __future__ import annotations
@@ -14,13 +15,8 @@ from typing import Any
 from app.adapters.cart_session import SessionCart
 from app.core.session import Session
 from app.core.types import ToolSpec
-from app.gates.base import GateContext
-from app.gates.pipeline import GatePipeline
-from app.gates.provenance import ProvenanceGate
 from app.ports.storefront import StorefrontBackend
 from app.tools.registry import ToolRegistry, ToolResult
-
-_PROVENANCE = GatePipeline([ProvenanceGate()])
 
 ADD_TO_CART_SPEC = ToolSpec(
     name="add_to_cart",
@@ -99,14 +95,6 @@ def register_cart_tools(
 
     async def _add_to_cart(arguments: dict[str, Any], session: Session) -> ToolResult:
         product_id = str(arguments.get("product_id", "")).strip()
-        if not _PROVENANCE.run(GateContext(session=session, ids=[product_id])).allowed:
-            # P4: the model may only add ids the session has already seen.
-            return ToolResult(
-                content=json.dumps(
-                    {"error": "unknown product id; search for it first", "product_id": product_id}
-                ),
-                status="error",
-            )
         product = storefront.get(product_id)
         if product is None:
             return ToolResult(
@@ -134,6 +122,6 @@ def register_cart_tools(
         payload = checkout_payload(session)
         return ToolResult(content=json.dumps(payload), component="checkout", payload=payload)
 
-    registry.register(ADD_TO_CART_SPEC, _add_to_cart)
-    registry.register(VIEW_CART_SPEC, _view_cart)
-    registry.register(CHECKOUT_SPEC, _render_checkout)
+    registry.register(ADD_TO_CART_SPEC, _add_to_cart, effect="write", id_args=("product_id",))
+    registry.register(VIEW_CART_SPEC, _view_cart, effect="read")
+    registry.register(CHECKOUT_SPEC, _render_checkout, effect="read")

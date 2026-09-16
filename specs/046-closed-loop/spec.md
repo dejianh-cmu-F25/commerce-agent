@@ -183,6 +183,14 @@ customer's order is refused and escalated; nothing is read.
 - **FR-015**: The agent MUST degrade observably when a dependency fails (RD-1).
 - **FR-016**: The model-facing tools MUST be exposed over **MCP** so the surface
   is portable and can be consumed by an external client.
+- **FR-017** *(hardening, 2026-09-16)*: Every guardrail gate MUST run at the single
+  tool-execution point (`ToolRegistry.execute`), so no surface (web, MCP) can omit
+  it; a gate MUST declare where it applies (`applies_to`: tool names and/or an effect
+  class) and when it runs (`priority`); adding a gate MUST NOT require editing a
+  tool; a tool whose effect is `proposal` or `irreversible` and that no gate covers
+  MUST be refused (fail-closed). The gate set MUST be built in one factory
+  (`app/gates/factory.py`) from `config/settings.yaml:gates`; an unknown gate name in
+  that config MUST fail loud (PB-1).
 
 ### Key Entities
 

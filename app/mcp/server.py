@@ -27,6 +27,7 @@ from app.adapters.retriever_memory import InMemoryRetriever
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.core.session import Session
 from app.core.settings import Settings, load_settings
+from app.gates.factory import build_gate_set
 from app.knowledge.ingest import load_chunks
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
@@ -98,7 +99,7 @@ def _retriever() -> InMemoryRetriever:
 
 def build_storefront_server(settings: Settings | None = None) -> MCPServer:
     settings = settings or load_settings()
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=build_gate_set(settings), hit_policy=settings.gates.hit_policy)
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront, build_cart(settings))
@@ -108,15 +109,22 @@ def build_storefront_server(settings: Settings | None = None) -> MCPServer:
     )
 
 
-def build_customer_accounts_server() -> MCPServer:
-    registry = ToolRegistry()
-    register_post_purchase_tools(registry, InMemoryPostPurchase({}))
+def customer_accounts_registry(settings: Settings, backend: Any) -> ToolRegistry:
+    """The customer-accounts tool registry, gated like every other surface (WP-6)."""
+    registry = ToolRegistry(gates=build_gate_set(settings), hit_policy=settings.gates.hit_policy)
+    register_post_purchase_tools(registry, backend)
+    return registry
+
+
+def build_customer_accounts_server(settings: Settings | None = None) -> MCPServer:
+    settings = settings or load_settings()
+    registry = customer_accounts_registry(settings, InMemoryPostPurchase({}))
     return build_server("customer-accounts", registry, instructions="Orders and returns.")
 
 
 def build_checkout_server(settings: Settings | None = None) -> MCPServer:
     settings = settings or load_settings()
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=build_gate_set(settings), hit_policy=settings.gates.hit_policy)
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_cart_tools(registry, storefront, build_cart(settings))
     return build_server("checkout", registry, instructions="Checkout (simulated; no charge).")

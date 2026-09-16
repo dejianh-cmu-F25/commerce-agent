@@ -145,6 +145,16 @@ skills:
   enabled: true
   path: ./skills
 
+# Gate wiring (046 hardening). All gates are on by default; `disabled` turns named
+# ones off, `order` pins an explicit order (the rest fall back to their priority
+# tier: identity < authorization < approval < policy < guardrail). An unknown name
+# fails loud at load (PB-1). `hit_policy` is `first` (short-circuit) or `collect`
+# (evaluate every gate). See app/gates/factory.py.
+gates:
+  hit_policy: first
+  order: []
+  disabled: []
+
 # Boundary data quality (feature 027, RW-2). `repair` normalizes fixable values
 # (e.g. "$1,299.00" -> 1299.00) and skips unusable rows; `strict` fails loud.
 data:

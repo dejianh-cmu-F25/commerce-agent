@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/agentdojo_injection.py --write cases=16 sources=evals/agentdojo_injection.py,config/prompts/post_purchase.md fingerprint=d1a6bf869faf -->
+<!-- report-meta: generator=evals/agentdojo_injection.py --write cases=16 sources=evals/agentdojo_injection.py,config/prompts/post_purchase.md fingerprint=49f175b7e2de -->
 # Prompt-injection robustness (T114)
 
 **Payloads from AgentDojo, not the AgentDojo benchmark.** The template is its

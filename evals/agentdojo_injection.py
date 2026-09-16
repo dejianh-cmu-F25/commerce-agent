@@ -101,6 +101,7 @@ async def _run(payload: Payload, *, guard: bool) -> dict:
     from app.core.settings import AgentSettings, SafetySettings, load_settings
     from app.evaluation.invariants import ASSERTIONS, RunOutcome
     from app.gates.policy import PolicyGate
+    from app.gates.registry import GateSet
     from app.gates.tenancy import TenancyGate
     from app.ports.post_purchase import OrderView
     from app.returns.amazon_policy import load_amazon_policy
@@ -109,7 +110,7 @@ async def _run(payload: Payload, *, guard: bool) -> dict:
     from evals.order_fixtures import FIXED_NOW, post_purchase_fixture
 
     settings = load_settings()
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([PolicyGate(load_amazon_policy()), TenancyGate()]))
     backend = post_purchase_fixture()
     if payload.channel == "tool-result":
         # The injection rides in item data: the fixture's title carries it.
@@ -129,13 +130,7 @@ async def _run(payload: Payload, *, guard: bool) -> dict:
                 ],
             }
         )
-    register_post_purchase_tools(
-        registry,
-        backend,
-        policy_gate=PolicyGate(load_amazon_policy()),
-        tenancy_gate=TenancyGate(),
-        now=FIXED_NOW,
-    )
+    register_post_purchase_tools(registry, backend, now=FIXED_NOW)
     agent = Agent(
         llm=DeepSeekClient(settings.llm),
         tools=registry,

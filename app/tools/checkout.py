@@ -97,15 +97,6 @@ def register_checkout_tools(registry: ToolRegistry, checkout: CheckoutBackend) -
 
     async def complete_checkout(arguments: dict[str, Any], _session: Session) -> ToolResult:
         session_id = str(arguments.get("session_id", "")).strip()
-        if not bool(arguments.get("approved", False)):
-            payload = {
-                "session_id": session_id,
-                "status": "pending_approval",
-                "charge_issued": False,
-            }
-            return ToolResult(
-                content=json.dumps(payload), component="checkout", payload=payload, status="error"
-            )
         try:
             session = checkout.complete(session_id)
         except KeyError as exc:
@@ -113,6 +104,7 @@ def register_checkout_tools(registry: ToolRegistry, checkout: CheckoutBackend) -
         payload = _session_dict(session)
         return ToolResult(content=json.dumps(payload), component="checkout", payload=payload)
 
-    registry.register(CREATE_SPEC, create_checkout_session)
-    registry.register(UPDATE_SPEC, update_checkout)
-    registry.register(COMPLETE_SPEC, complete_checkout)
+    registry.register(CREATE_SPEC, create_checkout_session, effect="write")
+    registry.register(UPDATE_SPEC, update_checkout, effect="write")
+    # HITL is enforced by the ApprovalGate in the registry's gate set (046 hardening).
+    registry.register(COMPLETE_SPEC, complete_checkout, effect="irreversible")

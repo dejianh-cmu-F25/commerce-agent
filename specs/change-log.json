@@ -1848,6 +1848,22 @@
       "rollback": "git revert the commit (the session provider is the default on every surface)",
       "verdict": "accepted",
       "evidence": "tests/integration/test_app_wiring.py, specs/046-closed-loop/tasks.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#119 046-closed-loop (pluggable gates: registry choke point + declarative applicability)",
+      "area": "agent",
+      "class": "measurable",
+      "what": "Gates were invoked inside tool handlers and wired per surface, so enforcement depended on remembering to inject them; app/mcp/server.py registered the customer-accounts tools with no policy/tenancy gate (WP-6). Gates now run at the single execution point (ToolRegistry.execute): a gate declares applies_to (tool names and/or effect class) and priority; a new GateSet/order_gates resolves the order explicitly (an unknown name fails loud, PB-1/PB-3); the registry runs the applicable gates before the handler and is fail-closed for proposal/irreversible tools with no covering gate. Because applies_to can target an effect class, adding a gate is one class plus one registration line with no tool change. HITL moved from an inline if in complete_checkout to ApprovalGate; the tenancy/policy blocks carry their exact payload (status, component) so behaviour is unchanged; the loop records the blocking gate on the tool span. Every surface (web, MCP) builds its gate set from app/gates/factory.build_gate_set.",
+      "metric": "money-adjacent tools (proposal/irreversible) gated on the MCP customer-accounts surface",
+      "before": 0,
+      "after": 2,
+      "note": null,
+      "guardrails": "no regression: engine agreement 1.000; existing decision eval unchanged (mean 0.976, floor 0.929, invariants 18/18, no-fail 1.000); the AgentDojo report changed only in its fingerprint; guardrails within floors; 300 unit + 52 integration tests pass",
+      "verdict": "accepted",
+      "blast_radius": "app/gates/* (base/registry/pipeline/approval/factory + the four gates), app/tools/registry.py (gate execution, effects, context builders), app/tools/{cart,checkout,post_purchase}.py (bindings), app/core/loop.py (one span attribute), config/settings.yaml + settings.py (gates section), evals that built gates per call, and tests. The ~50 ToolRegistry() build sites are unaffected: a registry with no gate set is unchanged.",
+      "rollback": "git revert; the change is additive - a ToolRegistry() with no GateSet behaves exactly as before",
+      "evidence": "tests/integration/test_mcp_gates.py, tests/unit/test_gate_coverage.py, tests/unit/test_gate_registry.py"
     }
   ]
 }

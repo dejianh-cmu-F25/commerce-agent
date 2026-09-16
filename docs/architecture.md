@@ -76,6 +76,16 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
                        -> block the PR or trigger a fix
 ```
 
+**Gates (control, 046 hardening).** A gate is decision-only (`GateResult`), never
+an effect (P3). Gates run at the single execution point, `ToolRegistry.execute`, so
+no surface can forget one. A gate declares `applies_to` (tool names and/or an
+effect class) and `priority`; `app/gates/registry.py:order_gates` resolves the
+order explicitly (an unknown name fails loud, PB-1/PB-3) and `GateSet.select` picks
+the gates for a call. A `proposal` / `irreversible` tool with no covering gate is
+refused (fail-closed). Adding a gate is one class plus one line in
+`app/gates/factory.py:build_gate_set` -- no tool changes. HITL is `ApprovalGate`;
+`config/settings.yaml:gates` can disable gates by name or pin their order.
+
 ## Where new behavior goes (HR-11)
 
 | Goal | Mechanism |
@@ -95,7 +105,7 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
 | Run or change the gold scenarios | `evals/runner.py` + `evals/scenarios.py` are the source of truth: 13 keyless scenarios driving the **shipped** closed-loop tools (`get_order_status`, `list_returnable_items`, `propose_return_decision`) over `evals/order_fixtures.py`; `evals/run.py` runs them in the gate. The 016 spec is archived, so the code and this row are the documentation |
 | Change chunking | Edit `app/knowledge/ingest.py` (one chunk per section, heading kept) and `ingestion.chunk_size` |
-| Add a write guardrail | Add a gate in `app/gates/` and run it through the tool's `GatePipeline` (see `ProvenanceGate`, `ReturnEligibilityGate`) |
+| Add a write guardrail | Add a `Gate` in `app/gates/` (name + `applies_to` + `priority` + `check`) and register it in `app/gates/factory.py`; the registry runs it at `ToolRegistry.execute` |
 | Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |
 | Change how backend events reach the UI | Edit `frontend/src/lib/transport.ts` (SSE → AI SDK `UIMessageChunk`) |
 | Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |

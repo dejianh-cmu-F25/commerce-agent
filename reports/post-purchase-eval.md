@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/post_purchase_eval.py --real --repeat 3 (hand-written summary) cases=32 sources=evals/post_purchase_cases.jsonl,evals/invariant_cases.jsonl,config/policies/amazon.yaml,app/returns/amazon_policy.py,app/tools/post_purchase.py,app/gates/tenancy.py,config/prompts/post_purchase.md fingerprint=5f46453f0a5f -->
+<!-- report-meta: generator=evals/post_purchase_eval.py --real --repeat 3 (hand-written summary) cases=32 sources=evals/post_purchase_cases.jsonl,evals/invariant_cases.jsonl,config/policies/amazon.yaml,app/returns/amazon_policy.py,app/tools/post_purchase.py,app/gates/tenancy.py,config/prompts/post_purchase.md fingerprint=5c389f681102 -->
 # Post-purchase evaluation
 
 Two-layer evaluation of the post-purchase resolution agent against the real model:
@@ -37,11 +37,10 @@ times and reported two ways:
 
 | Case | Pass rate | What varies |
 | --- | --- | --- |
-| `return-window-edge-31` | 2/3 | One day past the window (31 days, expected `ineligible`): the model sometimes still reads it as inside. A boundary case, and a boundary is exactly where a stochastic reader is least reliable. |
+| `ambiguous-01` | 2/3 | The missing-detail case ("return the one that doesn't fit"): the model sometimes acts instead of asking which one. The flaky case moves between this and `return-window-edge-31` (one day past the window) across runs — both are exactly where a stochastic reader is least reliable. |
 
-The two cases that were flaky in the previous runs are now stable: `warranty-vs-return-01`
-(the SoT gained `exception_window_days: 90` and the clause says past it the warranty
-applies) and `ambiguous-01` (the missing-detail case).
+`warranty-vs-return-01` is now stable (the SoT gained `exception_window_days: 90` and the
+clause says past it the warranty applies).
 
 **There are no deterministic decision failures and no stale expectations left.** The two cases that looked like
 persistent failures were **stale expectations of mine**, found by printing the score

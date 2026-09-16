@@ -199,6 +199,20 @@ class SkillsSettings(BaseModel):
     path: str = "./skills"
 
 
+class GateSettings(BaseModel):
+    """Gate wiring (046 hardening).
+
+    ``disabled`` turns named gates off (they are all on by default); ``order``
+    pins an explicit order (the rest fall back to their priority tier). An
+    unknown name fails loud at load (PB-1). ``hit_policy`` is ``first``
+    (short-circuit) or ``collect`` (evaluate every gate).
+    """
+
+    hit_policy: Literal["first", "collect"] = "first"
+    order: list[str] = Field(default_factory=list)
+    disabled: list[str] = Field(default_factory=list)
+
+
 class SessionSettings(BaseModel):
     store: Literal["memory", "sqlite"] = "sqlite"
     sqlite_path: str = "./data/db/sessions.sqlite"
@@ -238,6 +252,7 @@ class Settings(BaseModel):
     reviews: ReviewsSettings = Field(default_factory=ReviewsSettings)
     returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
     skills: SkillsSettings = Field(default_factory=SkillsSettings)
+    gates: GateSettings = Field(default_factory=GateSettings)
     data: DataSettings = Field(default_factory=DataSettings)
     shopify: ShopifySettings = Field(default_factory=ShopifySettings)
     safety: SafetySettings = Field(default_factory=SafetySettings)

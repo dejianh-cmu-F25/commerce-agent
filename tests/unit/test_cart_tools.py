@@ -5,12 +5,14 @@ from __future__ import annotations
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.core.session import Session
+from app.gates.provenance import ProvenanceGate
+from app.gates.registry import GateSet
 from app.tools.cart import register_cart_tools
 from app.tools.registry import ToolRegistry
 
 
 def make() -> ToolRegistry:
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([ProvenanceGate()]))
     register_cart_tools(registry, InMemoryStorefront(SEED_PRODUCTS))
     return registry
 

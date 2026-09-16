@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from app.core.types import Order
-from app.gates.base import GateContext, GateResult
+from app.gates.base import POLICY, Applicability, GateContext, GateResult
 from app.returns.policy import return_eligibility
 
 
 class ReturnEligibilityGate:
     name = "return_eligibility"
+    applies_to = Applicability(effects=frozenset({"write"}))
+    priority = POLICY
 
     def check(self, context: GateContext) -> GateResult:
         # The legacy gate belongs to the storefront path, where the context carries an

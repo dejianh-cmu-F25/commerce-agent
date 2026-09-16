@@ -11,6 +11,7 @@ import json
 
 from app.adapters.post_purchase_memory import InMemoryPostPurchase
 from app.core.session import Session
+from app.gates.registry import GateSet
 from app.gates.tenancy import TenancyGate
 from app.ports.post_purchase import LineItem, OrderView, ReturnableItem
 from app.tools.post_purchase import register_post_purchase_tools
@@ -51,8 +52,8 @@ def _registry(owner: str) -> ToolRegistry:
     backend = InMemoryPostPurchase(
         {"1006": order}, {"1006": [ReturnableItem("fli-1", "Sonic Rush Adventure", "B0", 1)]}
     )
-    registry = ToolRegistry()
-    register_post_purchase_tools(registry, backend, tenancy_gate=TenancyGate())
+    registry = ToolRegistry(gates=GateSet([TenancyGate()]))
+    register_post_purchase_tools(registry, backend)
     return registry
 
 
@@ -104,14 +105,14 @@ def test_an_authenticated_customer_is_required_for_an_owned_order():
 
 
 def test_listing_is_scoped_to_the_principal():
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([TenancyGate()]))
     backend = InMemoryPostPurchase(
         {
             "mine": _order("mine", ME),
             "theirs": _order("theirs", SOMEONE_ELSE),
         }
     )
-    register_post_purchase_tools(registry, backend, tenancy_gate=TenancyGate())
+    register_post_purchase_tools(registry, backend)
     result = asyncio.run(registry.execute("list_orders", {}, Session(id="t", customer_id=ME)))
     items = json.loads(result.content)["orders"]
     assert [item["id"] for item in items] == ["mine"]
@@ -119,9 +120,9 @@ def test_listing_is_scoped_to_the_principal():
 
 
 def test_listing_without_a_principal_refuses_rather_than_listing_the_shop():
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([TenancyGate()]))
     backend = InMemoryPostPurchase({"mine": _order("mine", ME)})
-    register_post_purchase_tools(registry, backend, tenancy_gate=TenancyGate())
+    register_post_purchase_tools(registry, backend)
     result = asyncio.run(registry.execute("list_orders", {}, Session(id="t")))
     payload = json.loads(result.content)
     assert payload["orders"] == []

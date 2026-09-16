@@ -59,8 +59,7 @@ from app.core.resilience import FallbackLLM, FallbackRetriever
 from app.core.session import derive_messages
 from app.core.settings import Settings, SettingsError, load_settings
 from app.core.types import Message
-from app.gates.policy import PolicyGate
-from app.gates.tenancy import TenancyGate
+from app.gates.factory import build_gate_set
 from app.knowledge.ingest import load_chunks
 from app.ports.cost_meter import CostMeter
 from app.ports.llm import LLMClient
@@ -72,7 +71,6 @@ from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
 from app.ports.vector_store import VectorStore
-from app.returns.amazon_policy import load_amazon_policy
 from app.skills.loader import SkillLibrary, load_skills
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
@@ -408,7 +406,7 @@ def build_agent(
     llm: LLMClient | None = None,
     cost_meter: CostMeter | None = None,
 ) -> Agent:
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=build_gate_set(settings), hit_policy=settings.gates.hit_policy)
     meter = cost_meter if cost_meter is not None else UsageCostMeter(settings.budget)
     catalog = build_catalog(settings)
     register_catalog_tools(registry, catalog, reranker=build_reranker(settings, meter))
@@ -416,12 +414,7 @@ def build_agent(
     register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
     register_review_tools(registry, build_reviews(settings), catalog)
-    register_post_purchase_tools(
-        registry,
-        build_post_purchase(settings),
-        policy_gate=PolicyGate(load_amazon_policy()),
-        tenancy_gate=TenancyGate(),
-    )
+    register_post_purchase_tools(registry, build_post_purchase(settings))
     if merchant is not None:
         register_merchant_tools(registry, merchant)
 

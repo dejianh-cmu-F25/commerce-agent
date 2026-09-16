@@ -34,6 +34,7 @@ from app.core.session import MemoryNote, Session
 from app.core.settings import AgentSettings, load_settings
 from app.core.types import MemoryFact
 from app.gates.policy import PolicyGate
+from app.gates.registry import GateSet
 from app.knowledge.ingest import load_chunks
 from app.ports.retriever import Retriever
 from app.returns.amazon_policy import load_amazon_policy
@@ -101,16 +102,11 @@ def _build_agent(
     config: RunConfig,
     tmp_dir: str,
 ) -> Agent:
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([PolicyGate(load_amazon_policy())]))
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
-    register_post_purchase_tools(
-        registry,
-        post_purchase_fixture(),
-        policy_gate=PolicyGate(load_amazon_policy()),
-        now=FIXED_NOW,
-    )
+    register_post_purchase_tools(registry, post_purchase_fixture(), now=FIXED_NOW)
     register_knowledge_tools(registry, _build_retriever(config.knowledge, tmp_dir))
     if config.use_skills:
         register_skill_tools(registry, load_skills(SKILLS_DIR))

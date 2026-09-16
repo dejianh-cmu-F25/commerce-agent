@@ -60,3 +60,23 @@ that was never created (or was consolidated), the actual path is given instead.
   entry (EV-1/EV-6) and rollback point.
 - The project halts for human review at ¥10 cumulative model spend (HR-12).
 - `specs/046-closed-loop/review.md` still lists 7 MANUAL clauses awaiting sign-off.
+
+## Hardening — pluggable gates (2026-09-16)
+
+- [x] H1 Gate mechanism — `app/gates/base.py` (`Effect`, `Applicability`, `GateResult`
+  with `status`/`payload`/`component`, `GateContext` plugin fields), `app/gates/registry.py`
+  (`GateSet`, `order_gates` with explicit order + fail-loud), `app/gates/pipeline.py`
+  (clause aggregation, `hit_policy`).
+- [x] H2 Registry enforcement — `ToolRegistry(gates=…)` runs the applicable gates at
+  `execute`, fail-closed for `proposal`/`irreversible`, `ToolResult.blocked_by`,
+  per-tool `context`/`consumes_context`/`id_args`.
+- [x] H3 Approval as a gate — `app/gates/approval.py` replaces the inline HITL check
+  in `complete_checkout`.
+- [x] H4 One factory on every surface — `app/gates/factory.py:build_gate_set`; `web/main.py`
+  and `app/mcp/server.py` build from it (closes WP-6).
+- [x] H5 Config — `settings.gates` (`hit_policy`, `order`, `disabled`) + `config/settings.yaml`.
+- [x] H6 Observability — the loop records the blocking gate on the tool span.
+- [x] H7 Tests — `tests/unit/test_gate_registry.py`, `tests/unit/test_gate_coverage.py`
+  (meta-test), `tests/integration/test_mcp_gates.py`; evals migrated to pass `GateSet`.
+- [x] H8 Evidence — `specs/change-log.json` #119; the reports that declare the changed
+  files refreshed (`reports/agentdojo.md`, `reports/post-purchase-eval.md`).

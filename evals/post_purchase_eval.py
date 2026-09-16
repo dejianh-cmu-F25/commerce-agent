@@ -29,6 +29,7 @@ from app.core.session import AssistantMessage, Session, ToolResultEvent
 from app.core.settings import AgentSettings, load_settings
 from app.evaluation.invariants import RunOutcome, evaluate
 from app.gates.policy import PolicyGate
+from app.gates.registry import GateSet
 from app.ports.post_purchase import LineItem, OrderView, ReturnableItem
 from app.returns.amazon_policy import ReturnFacts, decide_return, load_amazon_policy
 from app.tools.post_purchase import register_post_purchase_tools
@@ -132,10 +133,10 @@ def _backend_for(case: dict) -> tuple[InMemoryPostPurchase, str]:
 
 
 def _build_agent(backend: InMemoryPostPurchase, llm, cost_meter=None) -> Agent:
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([PolicyGate(POLICY)]))
     # Mirror production (web/main.py): the policy gate is what attaches the
     # authoritative clause citations to a proposal.
-    register_post_purchase_tools(registry, backend, policy_gate=PolicyGate(POLICY), now=EVAL_NOW)
+    register_post_purchase_tools(registry, backend, now=EVAL_NOW)
     return Agent(
         llm=llm,
         tools=registry,
