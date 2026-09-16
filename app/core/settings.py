@@ -163,6 +163,10 @@ class CatalogSettings(BaseModel):
     # that has left the shop does not silently shrink the result set.
     overfetch: int = 4
     query_understanding: Literal["none", "rules", "llm"] = "none"
+    # Passage-level index (feature 047): one chunk per review/feature, aggregated to
+    # a product. Off by default; measured in reports/discovery-need.md (need hit@10
+    # 0.583 doc-level -> 0.792 passage-level, 0.917 with a review filter).
+    passages: bool = False
 
 
 class ShopifySettings(BaseModel):
@@ -309,6 +313,7 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
     "CATALOG_PROVIDER": ("catalog", "provider", str),
     "CATALOG_QUERY_UNDERSTANDING": ("catalog", "query_understanding", str),
+    "CATALOG_PASSAGES": ("catalog", "passages", _to_bool),
     "RERANK_ENABLED": ("rerank", "enabled", _to_bool),
     "RERANK_PROVIDER": ("rerank", "provider", str),
     "RERANK_TOP_K": ("rerank", "top_k", int),

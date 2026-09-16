@@ -23,6 +23,7 @@ from app.adapters.cart_factory import build_cart
 from app.adapters.catalog_index import (
     CatalogIndex,
     LocalSearchCatalog,
+    PassageCatalogIndex,
     load_snapshot,
 )
 from app.adapters.catalog_seed import SEED_PRODUCTS
@@ -144,7 +145,9 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
     )
 
 
-def build_catalog_index(settings: Settings, *, enrich: bool | None = None) -> CatalogIndex | None:
+def build_catalog_index(
+    settings: Settings, *, enrich: bool | None = None
+) -> CatalogIndex | PassageCatalogIndex | None:
     """Build the local discovery index from the synced snapshot (feature 046 step A).
 
     Returns ``None`` when no snapshot exists, so the caller can tell "not synced"
@@ -160,8 +163,10 @@ def build_catalog_index(settings: Settings, *, enrich: bool | None = None) -> Ca
         sparse: Retriever = Bm25Retriever()
     else:
         sparse = InMemoryRetriever()
+    # Passage-level index when configured (feature 047); document-level by default.
+    index_cls = PassageCatalogIndex if settings.catalog.passages else CatalogIndex
     if settings.catalog.provider == "tfidf":
-        return CatalogIndex(sparse, products, reviews=reviews)
+        return index_cls(sparse, products, reviews=reviews)
 
     if settings.vector_store.provider == "memory":
         store: VectorStore = InMemoryVectorStore()
@@ -190,10 +195,8 @@ def build_catalog_index(settings: Settings, *, enrich: bool | None = None) -> Ca
     )
     # Dense retrieval degrades to the keyless lexical retriever on an outage (RD-1).
     if settings.resilience.fallback_enabled:
-        return CatalogIndex(
-            FallbackRetriever(hybrid, InMemoryRetriever()), products, reviews=reviews
-        )
-    return CatalogIndex(hybrid, products, reviews=reviews)
+        return index_cls(FallbackRetriever(hybrid, InMemoryRetriever()), products, reviews=reviews)
+    return index_cls(hybrid, products, reviews=reviews)
 
 
 def build_catalog(settings: Settings) -> StorefrontBackend:

@@ -78,7 +78,8 @@ product's text.
 - **FR-007**: Retrieval MUST support **passage-level** indexing: each review/feature is
   a chunk carrying `metadata` (at least `product_id`, `source`, `category`, `price`,
   and for reviews `rating`/`verified`/`helpful_votes`), and chunk hits MUST aggregate
-  back to a product (the link).
+  back to a product (the link). The passage index MUST be selectable by config
+  (`catalog.passages`), default off.
 - **FR-008**: A **metadata filter** (`where`) MUST be applied at retrieval time
   (pre-filter before scoring/aggregation), with equality, `$in`, and range
   (`$gt/$gte/$lt/$lte`) operators; the document-level and in-memory paths MUST accept
@@ -245,9 +246,10 @@ honest, reproducible part.
 
 ## Known Gaps
 
-- P3–P4 (grounded-answer judge, agent wiring) are planned but not yet implemented; P0
-  (dataset/benchmark/report), P1 (passage index + filters) and P2 (query understanding,
-  measured neutral) are delivered.
+- P0-P4 are delivered: data set + benchmark, passage index + filters, query
+  understanding (measured neutral), the evidence-grounding metric, and the opt-in
+  wiring (`catalog.passages`). The remaining, explicit gap is the **LLM judge** and
+  **cross-lingual** retrieval (both optional, below).
 - 24 cases is a start; the plan is to extend toward 60–100.
 - The passage index and filters are measured in the benchmark; wiring them into the
   live `search_products` path is P4.

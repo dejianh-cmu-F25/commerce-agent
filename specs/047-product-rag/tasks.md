@@ -48,6 +48,15 @@
   answer). Measured without a model: `chunks-tfidf` 0.417 → `chunks-dense-openai` 0.750.
 - [x] T302 Reported in `reports/discovery-need.md` (`## Evidence grounding`).
 
+## Delivered (P4) — opt-in wiring
+
+- [x] T401 `web/main.py:build_catalog_index` builds a `PassageCatalogIndex` when
+  `catalog.passages` is true (default false, so the shipped path is unchanged);
+  `LocalSearchCatalog` takes an `IdIndex` so either index fits. Tool schema unchanged.
+- [x] T402 Config `catalog.passages` + `CATALOG_PASSAGES` (`.env.example` parity) +
+  `config/settings.yaml`; wiring test `tests/integration/test_catalog_passages.py`.
+- [x] T403 `docs/architecture.md` extension rows + Agent Note.
+
 ## Planned (not part of this change)
 
 - **Cross-lingual slice (zh → en)** — documented gap; a multilingual embedding or a
@@ -55,7 +64,3 @@
 - **P3b LLM judge** — a model-generated recommendation + a judge that checks it is
   grounded in the retrieved passages (pattern from `evals/judge.py`). Deferred: the
   keyless evidence-grounding metric (P3, below) is the reproducible part.
-- **P4 wire into the app** — `build_catalog_index`/`LocalSearchCatalog` honour the new
-  config (`catalog.passages`, filters) with the tool schema unchanged; pre-filter
-  (Azure's recommended default) as the mode; browser acceptance; finalize the report,
-  change-log, `docs/architecture.md` row, Agent Note.

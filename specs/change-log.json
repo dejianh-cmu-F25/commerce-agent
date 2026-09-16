@@ -1928,6 +1928,22 @@
       "blast_radius": "evals/need_bench.py + reports/discovery-need.md + spec; nothing in the shipped path",
       "rollback": "git revert",
       "evidence": "reports/discovery-need.md, evals/need_bench.py, specs/047-product-rag/spec.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#124 047-product-rag (opt-in passage index in the live catalog)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "The passage index was measured in the benchmark but not reachable from the app. web/main.py:build_catalog_index now builds a PassageCatalogIndex when catalog.passages is true, and LocalSearchCatalog takes an IdIndex so the document index and the passage index are interchangeable; the model-facing search_products schema is unchanged. Default false, so the shipped path is byte-for-byte the document index.",
+      "metric": "need-query hit@10 on evals/need_cases.jsonl (document vs passage index)",
+      "before": 0.583,
+      "after": 0.792,
+      "note": "Opt-in (default off): enabling it also costs ~60x the index (16,035 chunks vs 3,000 products) and ~1.5 s/query with a real embedding, so the default stays document-level.",
+      "guardrails": "default unchanged (passages=false) so every existing keyless eval and report is unaffected; the wiring test is skipped without the dataset; pyright/ruff/tests green",
+      "verdict": "accepted (default off; measured)",
+      "blast_radius": "web/main.py (one branch), app/adapters/catalog_index.py (IdIndex protocol), app/core/settings.py + config + .env.example; no tool/gate/prompt change",
+      "rollback": "git revert; passages defaults to false",
+      "evidence": "tests/integration/test_catalog_passages.py, reports/discovery-need.md, specs/047-product-rag/spec.md"
     }
   ]
 }

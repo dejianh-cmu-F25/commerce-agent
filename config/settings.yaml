@@ -124,6 +124,9 @@ catalog:
   # Query understanding (feature 047): rewrite a need into retrieval terms and
   # extract filters. none = as-is; rules = keyless constraint extraction; llm = HyDE-style.
   query_understanding: none
+  # Passage-level index (feature 047): one chunk per review/feature, aggregated to a
+  # product. Off by default; measured in reports/discovery-need.md.
+  passages: false
   # Two indexes are built: the plain one (title/vendor/type/tags) and an enriched one
   # (+ features & review evidence). search_products(evidence=true) routes a query to the
   # enriched index; measured, that trades 0.037 of lexical hit@10 for 0.714 of attribute

@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from app.core.types import Chunk, Order, Product
 from app.ports.retriever import Retriever
@@ -31,6 +31,14 @@ from app.reviews.clean import clean_review, is_usable_body
 SNIPPET_CHARS = 200
 
 _SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+
+
+class IdIndex(Protocol):
+    """What `LocalSearchCatalog` needs: ids from a local index, facts from the shop."""
+
+    def search(self, query: str, limit: int) -> list[str]: ...
+
+    def record(self, product_id: str) -> dict[str, Any] | None: ...
 
 
 def _review_snippets(product: dict[str, Any], reviews: Any, limit: int) -> list[str]:
@@ -295,9 +303,9 @@ class LocalSearchCatalog:
     def __init__(
         self,
         live: StorefrontBackend,
-        index: CatalogIndex,
+        index: IdIndex,
         *,
-        enriched: CatalogIndex | None = None,
+        enriched: IdIndex | None = None,
         overfetch: int = 4,
     ) -> None:
         self._live = live

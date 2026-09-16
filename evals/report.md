@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=7f12aa0532f0 -->
+<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=32a332a89fd2 -->
 
 # Evaluation report
 
@@ -18,7 +18,7 @@ Queries: 17 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 1.000 | 1.000 | 0.873 | 0.0 |
 | `dense-hash` | 0.941 | 0.941 | 0.853 | 0.2 |
-| `dense-chroma` | 0.941 | 0.941 | 0.853 | 0.3 |
+| `dense-chroma` | 0.941 | 0.941 | 0.853 | 0.4 |
 
 hit-rate@3 by difficulty:
 
@@ -102,7 +102,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 17.4 | +1.9000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 16.7 | +1.2000 | 10000.0 | ≤ | `scale` | OK |
 
 ## Regressions (keyless)
 
@@ -126,16 +126,16 @@ Keyless stack (catalog 5 products, 14 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 10.1/13.9 | 15.8/24.7 | 42371 | 0 |
-| 4 | 10.1/13.3 | 15.2/16.8 | 54333 | 0 |
-| 16 | 9.4/13.8 | 14.6/17.4 | 55739 | 0 |
-| 64 | 9.1/12.3 | 15.3/18.7 | 52208 | 0 |
+| 1 | 10.0/13.7 | 15.6/25.8 | 43163 | 0 |
+| 4 | 9.8/13.7 | 15.5/19.0 | 51864 | 0 |
+| 16 | 9.6/12.8 | 15.4/16.7 | 53748 | 0 |
+| 64 | 9.4/12.7 | 15.4/17.5 | 53751 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **6183.2/8538.8 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **6571.6/9034.2 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **12524.7/16185.0 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **13182.8/17699.7 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.7 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.8 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -311,3 +311,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-16 | #121 047-product-rag (passage index + query-time metadata filters) | discovery | `measurable` | Discovery indexed one flattened document per product (features + top-3 reviews truncated), which cannot link a passage to its product or filter on passage fields. Products are now indexed as passages: one chunk per review, one per feature sentence, plus a product summary, each with metadata (product_id, source, category, price, vendor; reviews add rating/verified/helpful_votes). Chunk hits are aggregated back to a product (PassageCatalogIndex), and a query-time `where` filter (equality/$in/range) restricts candidates before scoring -- the same shape across the in-memory stores, the retrievers, and Chroma. Ports gained an additive `where` (default None) and `Chunk.metadata`. | need-query hit@10 on evals/need_cases.jsonl (passage + real embedding) | 0.583 → 0.792 | additive: `where` defaults to None and `Chunk.metadata` defaults to {} so existing callers are unchanged; the keyless arms still run; rule set / ESCI / attribute benchmarks untouched; latency reported per config (keyless chunk 12 ms; real chunk 1.5 s) | ports (retriever/vector_store signatures), adapters (vector_memory/vector_chroma, retriever_memory/bm25/dense/hybrid), catalog_index (catalog_chunks + PassageCatalogIndex), core/types (Chunk.metadata), core/filters (new); loop, tools, and gates unchanged | git revert; the port change is additive (defaults preserve behaviour) | accepted | `reports/discovery-need.md, evals/need_bench.py, app/adapters/catalog_index.py, specs/047-product-rag/spec.md` |
 | 2026-09-16 | #122 047-product-rag (query understanding: measured neutral) | discovery | `measurable` | A need query names a task, and the hypothesis was that rewriting it into retrieval terms (HyDE-style) would recover recall the passage embedding missed. Added a replaceable step: app/ports/query_understanding.py (QueryPlan + QueryUnderstanding), a keyless app/adapters/query_rules.py (price-ceiling extraction only - a category guess false-positived on 'in summer' and was removed with a regression test), and an opt-in app/adapters/query_llm.py (HyDE-style rewrite + price extraction, prompt in config/prompts/query_rewrite.md, metered, timeout-bounded, deterministic fallback per RD-1). Selected by catalog.query_understanding: none|rules|llm. | need-query hit@10 on evals/need_cases.jsonl (passage + real embedding) | 0.792 → 0.792 | additive and off by default (none); keyless arms unchanged; fallback keeps search working on provider error/timeout/unparseable output; the rule extractor narrowed to price only after a measured regression (0.708 -> 0.792) | new port + two adapters + a prompt + catalog config; evals/need_bench gained rewrite arms; no change to the shipped search path (default none) | git revert; the step is off by default | accepted (no lift; shipped as opt-in) | `reports/discovery-need.md, tests/unit/test_query_understanding.py, specs/047-product-rag/spec.md` |
 | 2026-09-16 | #123 047-product-rag (evidence-grounding metric, keyless) | discovery | `measurable` | Added a grounding metric to the need benchmark: the fraction of cases whose labeled evidence sentence was actually retrieved (the citation property of a product-RAG answer), measured without a model. Reported per passage config. | evidence-grounding rate on evals/need_cases.jsonl | 0.417 → 0.75 | keyless and deterministic; no network; the keyless gate is unaffected | evals/need_bench.py + reports/discovery-need.md + spec; nothing in the shipped path | git revert | accepted | `reports/discovery-need.md, evals/need_bench.py, specs/047-product-rag/spec.md` |
+| 2026-09-16 | #124 047-product-rag (opt-in passage index in the live catalog) | discovery | `measurable` | The passage index was measured in the benchmark but not reachable from the app. web/main.py:build_catalog_index now builds a PassageCatalogIndex when catalog.passages is true, and LocalSearchCatalog takes an IdIndex so the document index and the passage index are interchangeable; the model-facing search_products schema is unchanged. Default false, so the shipped path is byte-for-byte the document index. | need-query hit@10 on evals/need_cases.jsonl (document vs passage index) | 0.583 → 0.792 | default unchanged (passages=false) so every existing keyless eval and report is unaffected; the wiring test is skipped without the dataset; pyright/ruff/tests green | web/main.py (one branch), app/adapters/catalog_index.py (IdIndex protocol), app/core/settings.py + config + .env.example; no tool/gate/prompt change | git revert; passages defaults to false | accepted (default off; measured) | `tests/integration/test_catalog_passages.py, reports/discovery-need.md, specs/047-product-rag/spec.md` |
