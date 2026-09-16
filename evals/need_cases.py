@@ -152,6 +152,23 @@ _STOP = frozenset(
 )
 _SENT = re.compile(r"(?<=[.!?])\s+")
 
+# Faithful Chinese translations of a subset of the needs (feature 047, cross-lingual
+# slice). The catalog and its reviews are English, so these measure the documented
+# gap: lexical search collapses on a non-English query, and a real embedding may or
+# may not bridge it. The label (product + evidence) is the same as the English case.
+ZH: dict[str, str] = {
+    "something to keep dog hair off my clothes while grooming him": "给狗梳毛时怎么不让狗毛沾到衣服上",  # noqa: E501
+    "something to keep my ears warm without a full hat": "不想戴整顶帽子，怎么让耳朵保暖",
+    "a gentle way to remove facial hair at home": "在家温和去除面部毛发的方法",
+    "an oil for a relaxing foot massage": "做放松足部按摩用的精油",
+    "hand soap for when there is no sink or water": "没有洗手池和水的时候用的洗手皂",
+    "a face wash small enough to pack in a carry-on": "能放进随身登机箱的小瓶洗面奶",
+    "something to protect my braids while I sleep": "睡觉时保护辫子的东西",
+    "something to get grease off my hands after working on the car": "修完车后去除手上油污的东西",
+    "something to keep my legs warm on a cold run": "冷天跑步时给腿部保暖的装备",
+    "sun protection that will not look chalky on my skin": "涂在皮肤上不泛白的防晒",
+}
+
 
 def _content_words(text: str) -> set[str]:
     return {w for w in re.findall(r"[a-z']+", text.casefold()) if w not in _STOP and len(w) > 2}
@@ -221,6 +238,20 @@ def build() -> list[dict]:
                 "notes": f"label provable: product text states it serves the need ({cue!r})",
             }
         )
+    # Cross-lingual slice: the same needs asked in Chinese against the English catalog.
+    for case in list(cases):
+        translation = ZH.get(str(case["query"]))
+        if not translation:
+            continue
+        cases.append(
+            {
+                **case,
+                "case_id": f"{case['case_id']}-zh",
+                "query": translation,
+                "language": "zh",
+                "notes": f"{case['notes']}; Chinese translation of {case['case_id']}",
+            }
+        )
     if problems:
         raise SystemExit("FAIL:\n  " + "\n  ".join(problems))
     return cases
@@ -234,10 +265,13 @@ def main() -> int:
     cases = build()
     overlap = sum(1 for c in cases if not c["title_overlap_words"])
     by_type: dict[str, int] = {}
+    by_language: dict[str, int] = {}
     for case in cases:
         by_type[case["need_type"]] = by_type.get(case["need_type"], 0) + 1
+        by_language[case["language"]] = by_language.get(case["language"], 0) + 1
     print(f"{len(cases)} need cases; {overlap} with zero title overlap (pure need queries)")
     print("by type:", dict(sorted(by_type.items())))
+    print("by language:", dict(sorted(by_language.items())))
     for case in cases:
         print(f"  [{case['need_type']:9}] {case['query'][:58]:58} -> {case['evidence'][:54]}")
     if args.write:

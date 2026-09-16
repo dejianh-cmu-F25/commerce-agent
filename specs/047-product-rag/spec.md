@@ -170,54 +170,57 @@ with the results in `evals/results-need.json`. Trace attributes unchanged.
 ### Measurable Outcomes
 
 - **SC-001**: The best retrieval config's need-query hit@10 is **≥ 2×** the keyword
-  baseline on `evals/need_cases.jsonl` (met: 0.292 → 0.792, 2.7×; 0.917 with a filter).
+  baseline on `evals/need_cases.jsonl` (met: keyword 0.206 → passage 0.735, 3.6×; 0.882 with a filter).
 - **SC-002**: Retrieval over product text alone (no embedding) beats the title-only
-  keyword index (met: 0.417 vs 0.292).
+  keyword index (met: 0.294 vs 0.206).
 - **SC-003**: Every need label is provable from product text (builder fails otherwise).
 - **SC-004**: The keyless gate stays green and downloads nothing.
 - **SC-005**: Existing discovery benchmarks (rule set, ESCI, attribute) do not regress.
 - **SC-006**: Passage-level indexing aggregates chunk hits to products and supports
-  query-time metadata filters (met: filter `source=review` lifts hit@10 to 0.917).
+  query-time metadata filters (met: filter `source=review` lifts hit@10 to 0.882).
 - **SC-007**: The labeled evidence passage is retrieved for a majority of need cases
-  (met: 0.750 with the passage embedding; the citation property of a grounded answer).
+  (met: 0.676 with the passage embedding; the citation property of a grounded answer).
+- **SC-008**: A Chinese need against the English catalog is served far better by a
+  real embedding than by lexical search (met: zh hit@10 **0.000** keyword vs **0.600**
+  passage+embedding).
 
 ## Measured Results
 
-Need-query hit@10 on `evals/need_cases.jsonl` (24 cases), by configuration:
+Corpus: `evals/need_cases.jsonl` - **34 cases** (24 English + 10 Chinese, the
+cross-lingual slice), labels provable from product text. Source:
+`reports/discovery-need.md`, `evals/results-need.json`. Change log:
+`specs/change-log.json`.
 
-| Config | hit@10 | note |
-| --- | ---: | --- |
-| `tfidf-plain` (traditional keyword: title/type/tags) | 0.292 | control |
-| `tfidf-enriched` (document: features + reviews) | 0.417 | +0.125 |
-| `dense-hash` (keyless, lexical) | 0.083 | not semantics |
-| `dense-openai` (document, real embedding) | 0.583 | |
-| `chunks-tfidf` (passage-level) | 0.417 | |
-| **`chunks-dense-openai` (passage, real embedding)** | **0.792** | **+0.500, 2.7×** |
-| `chunks-dense-openai` + filter `source=review` | **0.917** | **+0.625, 3.1×** |
+Need-query hit@10 over all 34 cases, by configuration:
 
-Query-time metadata filters on the passage index (`where` before aggregation):
+| Config | hit@10 |
+| --- | ---: |
+| `tfidf-plain` (traditional keyword) | 0.206 |
+| `tfidf-enriched` (document text) | 0.294 |
+| `dense-hash` (keyless, lexical) | 0.059 |
+| `dense-openai` (document, real embedding) | 0.500 |
+| `chunks-tfidf` (passage) | 0.294 |
+| **`chunks-dense-openai` (passage, real embedding)** | **0.735** |
+| `chunks-dense-openai` + filter `source=review` | **0.882** |
 
-| filter | chunk-tfidf hit@10 | chunk-dense hit@10 |
+**Language A/B** (a Chinese need against the English catalog) - lexical search
+collapses, a real embedding over passages bridges it:
+
+| config | en | zh |
 | --- | ---: | ---: |
-| reviews-only (`source: review`) | 0.542 | **0.917** |
-| high-rating (`rating >= 4`) | 0.458 | 0.917 |
-| features-only (`source: description`) | 0.083 | 0.292 |
+| `tfidf-plain` (traditional keyword) | 0.292 | **0.000** |
+| `dense-openai` (document) | 0.583 | 0.300 |
+| `chunks-dense-openai` (passage) | 0.792 | **0.600** |
 
-Corpus: `evals/need_cases.jsonl` (24 cases, 9 with zero title overlap). Source:
-`reports/discovery-need.md`, `evals/results-need.json`. Change log: `specs/change-log.json`.
+Query-time metadata filters (passage index): `source=review` lifts hit@10 to
+**0.882**; `source=description` drops to 0.235 (the evidence lives in reviews).
 
-Query understanding (P2, measured): rewriting the need into retrieval terms (`-llm`,
-HyDE-style) and rule-based constraint extraction (`-rules`) were run against the same
-passage index; **neither beat the passage embedding alone (0.792 both ways)**. This is
-recorded as a **negative result**: on this corpus the passage embedding already
-retrieves the right chunks, so an extra model call buys no lift, and
-`catalog.query_understanding` stays `none` by default.
+Query understanding (P2, measured): LLM rewrite and rule extraction are **neutral**
+(0.735 both ways), so `catalog.query_understanding` stays `none` by default.
 
-Evidence grounding (P3, keyless): the fraction of need cases whose labeled **evidence**
-sentence was actually retrieved - the citation property of a product-RAG answer,
-measured without a model: `chunks-tfidf` **0.417** → `chunks-dense-openai` **0.750**.
-The LLM judge (generation + grounding review) is deferred; the keyless metric is the
-honest, reproducible part.
+Evidence grounding (P3, keyless): the labeled evidence passage is retrieved for
+**0.676** of the cases with the passage embedding (vs 0.294 lexical) - the citation
+property of a grounded answer. The LLM judge is deferred.
 
 ## Out of Scope
 

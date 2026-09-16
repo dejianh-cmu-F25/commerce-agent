@@ -1944,6 +1944,22 @@
       "blast_radius": "web/main.py (one branch), app/adapters/catalog_index.py (IdIndex protocol), app/core/settings.py + config + .env.example; no tool/gate/prompt change",
       "rollback": "git revert; passages defaults to false",
       "evidence": "tests/integration/test_catalog_passages.py, reports/discovery-need.md, specs/047-product-rag/spec.md"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#125 047-product-rag (cross-lingual slice: Chinese needs vs the English catalog)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "Added a cross-lingual slice to the need set: 10 faithful Chinese translations of the English needs (same product + evidence labels). Measured the same configs on a Chinese query against the English catalog and its English reviews.",
+      "metric": "need-query hit@10, Chinese slice (evals/need_cases.jsonl, 10 zh cases)",
+      "before": 0.0,
+      "after": 0.7,
+      "note": "Lexical search scores 0.000 on Chinese (it matches words); a real embedding over passages scores 0.700 (document embedding 0.300). The English catalog is unchanged - the gap is the query language, and the passage embedding mostly bridges it.",
+      "guardrails": "keyless arms unchanged; the passages/dense path is opt-in; no shipped-path change",
+      "verdict": "accepted",
+      "blast_radius": "evals/need_cases.py (+ a ZH dictionary), evals/need_bench.py (by-language breakdown), reports/discovery-need.md, spec",
+      "rollback": "git revert",
+      "evidence": "reports/discovery-need.md, evals/need_cases.py, specs/047-product-rag/spec.md"
     }
   ]
 }

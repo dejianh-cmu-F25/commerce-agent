@@ -1,4 +1,4 @@
-<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=32a332a89fd2 -->
+<!-- report-meta: generator=evals/report.py --write cases=456 sources=/Users/dejianhuang/Documents/AI_Agent/commerce-agent/evals/results-keyless.json fingerprint=27121c45ffb4 -->
 
 # Evaluation report
 
@@ -18,7 +18,7 @@ Queries: 17 (easy / medium / hard) over `config/knowledge/` (shipping, returns, 
 | --- | ---: | ---: | ---: | ---: |
 | `tfidf` | 1.000 | 1.000 | 0.873 | 0.0 |
 | `dense-hash` | 0.941 | 0.941 | 0.853 | 0.2 |
-| `dense-chroma` | 0.941 | 0.941 | 0.853 | 0.4 |
+| `dense-chroma` | 0.941 | 0.941 | 0.853 | 0.3 |
 
 hit-rate@3 by difficulty:
 
@@ -102,7 +102,7 @@ Declared floors (`docs/guardrails.md`); the gate fails a regression (EV-3).
 | `safety:regression_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `regressions` | OK |
 | `data:dirty_accuracy` | 1.0 | +0.0000 | 1.0 | ≥ | `data_quality` | OK |
 | `resilience:fallback_coverage` | 1.0 | +0.0000 | 1.0 | ≥ | `fallbacks` | OK |
-| `latency:turn_p95_us` | 16.7 | +1.2000 | 10000.0 | ≤ | `scale` | OK |
+| `latency:turn_p95_us` | 16.2 | +0.7000 | 10000.0 | ≤ | `scale` | OK |
 
 ## Regressions (keyless)
 
@@ -126,16 +126,16 @@ Keyless stack (catalog 5 products, 14 knowledge chunks); 64 ops per level. Decla
 
 | Concurrency | Retrieval p50/p95 (µs) | Turn p50/p95 (µs) | Turn throughput (ops/s) | Errors |
 | ---: | ---: | ---: | ---: | ---: |
-| 1 | 10.0/13.7 | 15.6/25.8 | 43163 | 0 |
-| 4 | 9.8/13.7 | 15.5/19.0 | 51864 | 0 |
-| 16 | 9.6/12.8 | 15.4/16.7 | 53748 | 0 |
-| 64 | 9.4/12.7 | 15.4/17.5 | 53751 | 0 |
+| 1 | 9.9/13.9 | 15.0/19.2 | 45819 | 0 |
+| 4 | 9.2/12.6 | 14.7/15.9 | 56140 | 0 |
+| 16 | 9.1/12.2 | 14.6/16.2 | 56120 | 0 |
+| 64 | 9.0/12.0 | 14.6/17.2 | 56153 | 0 |
 
-Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **6571.6/9034.2 µs** (budget 50000 µs).
+Large corpus (10000 chunks, concurrency 16): retrieval p50/p95 **5936.6/8029.3 µs** (budget 50000 µs).
 
-Large catalog (5000 products, concurrency 16): search p50/p95 **13182.8/17699.7 µs** (budget 50000 µs).
+Large catalog (5000 products, concurrency 16): search p50/p95 **12376.5/15952.9 µs** (budget 50000 µs).
 
-Long session (100 turns): **6.8 ms**, 200 events, reconstructable=True (budget 5000 ms).
+Long session (100 turns): **6.6 ms**, 200 events, reconstructable=True (budget 5000 ms).
 
 ## Agent evaluation (real model, opt-in)
 
@@ -312,3 +312,4 @@ Rubric judge: graded 18 answers, 0 vetoes.
 | 2026-09-16 | #122 047-product-rag (query understanding: measured neutral) | discovery | `measurable` | A need query names a task, and the hypothesis was that rewriting it into retrieval terms (HyDE-style) would recover recall the passage embedding missed. Added a replaceable step: app/ports/query_understanding.py (QueryPlan + QueryUnderstanding), a keyless app/adapters/query_rules.py (price-ceiling extraction only - a category guess false-positived on 'in summer' and was removed with a regression test), and an opt-in app/adapters/query_llm.py (HyDE-style rewrite + price extraction, prompt in config/prompts/query_rewrite.md, metered, timeout-bounded, deterministic fallback per RD-1). Selected by catalog.query_understanding: none|rules|llm. | need-query hit@10 on evals/need_cases.jsonl (passage + real embedding) | 0.792 → 0.792 | additive and off by default (none); keyless arms unchanged; fallback keeps search working on provider error/timeout/unparseable output; the rule extractor narrowed to price only after a measured regression (0.708 -> 0.792) | new port + two adapters + a prompt + catalog config; evals/need_bench gained rewrite arms; no change to the shipped search path (default none) | git revert; the step is off by default | accepted (no lift; shipped as opt-in) | `reports/discovery-need.md, tests/unit/test_query_understanding.py, specs/047-product-rag/spec.md` |
 | 2026-09-16 | #123 047-product-rag (evidence-grounding metric, keyless) | discovery | `measurable` | Added a grounding metric to the need benchmark: the fraction of cases whose labeled evidence sentence was actually retrieved (the citation property of a product-RAG answer), measured without a model. Reported per passage config. | evidence-grounding rate on evals/need_cases.jsonl | 0.417 → 0.75 | keyless and deterministic; no network; the keyless gate is unaffected | evals/need_bench.py + reports/discovery-need.md + spec; nothing in the shipped path | git revert | accepted | `reports/discovery-need.md, evals/need_bench.py, specs/047-product-rag/spec.md` |
 | 2026-09-16 | #124 047-product-rag (opt-in passage index in the live catalog) | discovery | `measurable` | The passage index was measured in the benchmark but not reachable from the app. web/main.py:build_catalog_index now builds a PassageCatalogIndex when catalog.passages is true, and LocalSearchCatalog takes an IdIndex so the document index and the passage index are interchangeable; the model-facing search_products schema is unchanged. Default false, so the shipped path is byte-for-byte the document index. | need-query hit@10 on evals/need_cases.jsonl (document vs passage index) | 0.583 → 0.792 | default unchanged (passages=false) so every existing keyless eval and report is unaffected; the wiring test is skipped without the dataset; pyright/ruff/tests green | web/main.py (one branch), app/adapters/catalog_index.py (IdIndex protocol), app/core/settings.py + config + .env.example; no tool/gate/prompt change | git revert; passages defaults to false | accepted (default off; measured) | `tests/integration/test_catalog_passages.py, reports/discovery-need.md, specs/047-product-rag/spec.md` |
+| 2026-09-16 | #125 047-product-rag (cross-lingual slice: Chinese needs vs the English catalog) | discovery | `measurable` | Added a cross-lingual slice to the need set: 10 faithful Chinese translations of the English needs (same product + evidence labels). Measured the same configs on a Chinese query against the English catalog and its English reviews. | need-query hit@10, Chinese slice (evals/need_cases.jsonl, 10 zh cases) | 0.0 → 0.7 | keyless arms unchanged; the passages/dense path is opt-in; no shipped-path change | evals/need_cases.py (+ a ZH dictionary), evals/need_bench.py (by-language breakdown), reports/discovery-need.md, spec | git revert | accepted | `reports/discovery-need.md, evals/need_cases.py, specs/047-product-rag/spec.md` |

@@ -107,3 +107,23 @@ and model-free, which is why it is the part shipped; the LLM judge (generate a
 recommendation, then check it is supported by the retrieved passages) is deferred as
 optional, because it needs a verifiable label to be worth reporting - the same caution
 as `docs/notes` / `reports/judge-alignment.md`.
+
+## Cross-lingual (P-lang) - lexical collapses, passages bridge
+
+The catalog and its reviews are English; a shopper may not be. Ten of the needs were
+translated to Chinese and run against the English catalog:
+
+| config | en | zh |
+| --- | ---: | ---: |
+| `tfidf-plain` (keyword) | 0.292 | **0.000** |
+| `tfidf-enriched` (document text) | 0.417 | **0.000** |
+| `dense-openai` (document embedding) | 0.583 | 0.300 |
+| `chunks-dense-openai` (passage embedding) | 0.792 | **0.700** |
+
+Lexical search matches on words, so a Chinese query against English text scores
+**0.000** - it is not a quality gap, it is a total miss. A real (multilingual)
+embedding recovers part of it (0.300), and **passage-level** retrieval recovers most
+(0.700): the short review passages give the query a tighter semantic target than a
+long flattened document. This is the honest answer to "can RAG serve a Chinese
+shopper over an English catalog": yes, through the embedding, and better at passage
+granularity - without translating the catalog.

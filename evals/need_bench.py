@@ -88,6 +88,7 @@ def _evaluate(cases: list[dict], retrieve) -> dict:
 
     pairs: list[tuple[list[str], set[str]]] = []
     by_type: dict[str, list[tuple[list[str], set[str]]]] = {}
+    by_language: dict[str, list[tuple[list[str], set[str]]]] = {}
     latencies: list[float] = []
     for case in cases:
         start = time.perf_counter()
@@ -96,6 +97,7 @@ def _evaluate(cases: list[dict], retrieve) -> dict:
         pair = (ranked, set(case["expected_ids"]))
         pairs.append(pair)
         by_type.setdefault(case["need_type"], []).append(pair)
+        by_language.setdefault(case.get("language", "en"), []).append(pair)
     metrics = evaluate_retrieval(pairs, K)
     return {
         "hit_rate": metrics.hit_rate,
@@ -104,6 +106,10 @@ def _evaluate(cases: list[dict], retrieve) -> dict:
         "avg_ms": round(sum(latencies) / len(latencies), 2) if latencies else 0.0,
         "by_type": {
             kind: evaluate_retrieval(items, K).hit_rate for kind, items in sorted(by_type.items())
+        },
+        "by_language": {
+            lang: evaluate_retrieval(items, K).hit_rate
+            for lang, items in sorted(by_language.items())
         },
     }
 
@@ -316,6 +322,28 @@ def _write_report(result: dict) -> None:
             f"(vs {plain:.3f} keyword): restricting to the passage kind that carries the",
             "evidence is a precision win, not a cost.",
         ]
+    langs = sorted(
+        {lang for metrics in result["configs"].values() for lang in metrics.get("by_language", {})}
+    )
+    if len(langs) > 1:
+        lines += [
+            "",
+            "## Language A/B (Chinese needs vs the English catalog)",
+            "",
+            "The catalog and its reviews are English, so a Chinese need query is the honest",
+            "cross-lingual test (feature 047, P-lang). Lexical search matches on words and",
+            "collapses; a real embedding may bridge the gap semantically.",
+            "",
+            "| config | " + " | ".join(langs) + " |",
+            "| --- | " + " | ".join("---:" for _ in langs) + " |",
+        ]
+        for name in ("tfidf-plain", "tfidf-enriched", "dense-openai", "chunks-dense-openai"):
+            metrics = result["configs"].get(name)
+            if not metrics:
+                continue
+            by_lang = metrics.get("by_language", {})
+            cells = " | ".join(f"{by_lang.get(lang, 0.0):.3f}" for lang in langs)
+            lines.append(f"| {name} | {cells} |")
     if result.get("filters"):
         lines += [
             "",
