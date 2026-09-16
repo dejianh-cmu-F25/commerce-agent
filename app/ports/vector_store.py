@@ -7,7 +7,7 @@ chunk id, so re-ingestion does not duplicate vectors (RD-2).
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from app.core.types import Chunk
 
@@ -17,8 +17,14 @@ class VectorStore(Protocol):
         """Insert or replace chunks and their vectors, keyed by chunk id."""
         ...
 
-    def query(self, embedding: list[float], k: int = 3) -> list[Chunk]:
-        """Return at most ``k`` chunks with a positive similarity, best first."""
+    def query(
+        self, embedding: list[float], k: int = 3, where: dict[str, Any] | None = None
+    ) -> list[Chunk]:
+        """Return at most ``k`` chunks with a positive similarity, best first.
+
+        ``where`` restricts candidates to chunks whose ``metadata`` matches every
+        condition (feature 047); ``None`` means no filter.
+        """
         ...
 
     def size(self) -> int:

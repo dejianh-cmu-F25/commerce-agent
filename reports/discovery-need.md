@@ -9,18 +9,43 @@ is the gap measured here.
 
 | Config | hit@10 | recall@10 | MRR | avg ms |
 | --- | ---: | ---: | ---: | ---: |
-| tfidf-plain | 0.292 | 0.292 | 0.110 | 1.2 |
-| tfidf-enriched | 0.417 | 0.417 | 0.312 | 2.7 |
-| dense-hash | 0.083 | 0.083 | 0.049 | 42.7 |
-| dense-openai | 0.583 | 0.583 | 0.395 | 256.4 |
-| hybrid-openai | 0.583 | 0.583 | 0.316 | 257.3 |
+| tfidf-plain | 0.292 | 0.292 | 0.110 | 1.3 |
+| tfidf-enriched | 0.417 | 0.417 | 0.312 | 2.8 |
+| dense-hash | 0.083 | 0.083 | 0.049 | 43.5 |
+| chunks-tfidf | 0.417 | 0.417 | 0.231 | 11.2 |
+| dense-openai | 0.583 | 0.583 | 0.395 | 268.6 |
+| hybrid-openai | 0.583 | 0.583 | 0.316 | 262.8 |
+| chunks-dense-openai | 0.792 | 0.792 | 0.539 | 1407.6 |
 
 Reading: a title-only keyword index scores **0.292** hit@10; retrieving
 over the product text (features + reviews) already scores **0.417** - the
 capability a product RAG adds before any semantic embedding.
 
-**Headline** - the best config (`dense-openai`) reaches **0.583** hit@10 vs the keyword baseline's **0.292** (**+0.292** absolute, **2.0×**): a real embedding, not just extra
-words in the index, is what serves need queries.
+**Headline** - the best config (`chunks-dense-openai`) reaches **0.792** hit@10 vs the keyword baseline's **0.292** (**+0.500** absolute, **2.7×**).
+Passage-level retrieval (each review/feature as a linked chunk) over a
+real embedding is what closes the gap; a metadata filter sharpens it
+further still.
+
+Best filter: `chunks-dense-openai:reviews-only` reaches **0.917** hit@10 (vs 0.292 keyword): restricting to the passage kind that carries the
+evidence is a precision win, not a cost.
+
+## Query-time metadata filters (passage index)
+
+The passage index stores each review/feature as a chunk with metadata; a
+`where` clause restricts the candidates before aggregation (feature 047).
+
+| filter | hit@10 |
+| --- | ---: |
+| chunks-tfidf:reviews-only | 0.542 |
+| chunks-tfidf:high-rating | 0.458 |
+| chunks-tfidf:features-only | 0.083 |
+| chunks-dense-openai:reviews-only | 0.917 |
+| chunks-dense-openai:high-rating | 0.917 |
+| chunks-dense-openai:features-only | 0.292 |
+
+A filter trades recall for precision: it only counts products that have a
+matching passage, which is what a shopper means by "only reviews" or
+"only 4★ and up".
 
 ## Method
 
@@ -29,4 +54,6 @@ words in the index, is what serves need queries.
 - Metrics via `app/evaluation/retrieval_metrics.py` (hit@k / recall@k / MRR).
 - `dense-hash` is keyless feature hashing (lexical), not semantics; run `--real`
   for a real embedding.
+- `chunks-*` configs index each review/feature as a passage and aggregate chunk
+  hits back to a product (`app/adapters/catalog_index.py:PassageCatalogIndex`).
 

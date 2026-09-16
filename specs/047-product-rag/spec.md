@@ -75,6 +75,14 @@ product's text.
   fallback when the model is unavailable (RD-1). *(P2)*
 - **FR-006**: No regression to the existing discovery/attribution benchmarks; the
   keyless gate stays green and downloads nothing (TT).
+- **FR-007**: Retrieval MUST support **passage-level** indexing: each review/feature is
+  a chunk carrying `metadata` (at least `product_id`, `source`, `category`, `price`,
+  and for reviews `rating`/`verified`/`helpful_votes`), and chunk hits MUST aggregate
+  back to a product (the link).
+- **FR-008**: A **metadata filter** (`where`) MUST be applied at retrieval time
+  (pre-filter before scoring/aggregation), with equality, `$in`, and range
+  (`$gt/$gte/$lt/$lte`) operators; the document-level and in-memory paths MUST accept
+  the same `where` shape as the Chroma path.
 
 ### Key Entities
 
@@ -160,22 +168,36 @@ with the results in `evals/results-need.json`. Trace attributes unchanged.
 ### Measurable Outcomes
 
 - **SC-001**: The best retrieval config's need-query hit@10 is **≥ 2×** the keyword
-  baseline on `evals/need_cases.jsonl` (met: 0.292 → 0.583).
+  baseline on `evals/need_cases.jsonl` (met: 0.292 → 0.792, 2.7×; 0.917 with a filter).
 - **SC-002**: Retrieval over product text alone (no embedding) beats the title-only
   keyword index (met: 0.417 vs 0.292).
 - **SC-003**: Every need label is provable from product text (builder fails otherwise).
 - **SC-004**: The keyless gate stays green and downloads nothing.
 - **SC-005**: Existing discovery benchmarks (rule set, ESCI, attribute) do not regress.
+- **SC-006**: Passage-level indexing aggregates chunk hits to products and supports
+  query-time metadata filters (met: filter `source=review` lifts hit@10 to 0.917).
 
 ## Measured Results
 
-| Config | need hit@10 | note |
+Need-query hit@10 on `evals/need_cases.jsonl` (24 cases), by configuration:
+
+| Config | hit@10 | note |
 | --- | ---: | --- |
 | `tfidf-plain` (traditional keyword: title/type/tags) | 0.292 | control |
-| `tfidf-enriched` (RAG over features + reviews) | 0.417 | +0.125 |
+| `tfidf-enriched` (document: features + reviews) | 0.417 | +0.125 |
 | `dense-hash` (keyless, lexical) | 0.083 | not semantics |
-| **`dense-openai` (real embedding)** | **0.583** | **+0.292, 2.0×** |
-| `hybrid-openai` (RRF) | 0.583 | same hit, MRR lower |
+| `dense-openai` (document, real embedding) | 0.583 | |
+| `chunks-tfidf` (passage-level) | 0.417 | |
+| **`chunks-dense-openai` (passage, real embedding)** | **0.792** | **+0.500, 2.7×** |
+| `chunks-dense-openai` + filter `source=review` | **0.917** | **+0.625, 3.1×** |
+
+Query-time metadata filters on the passage index (`where` before aggregation):
+
+| filter | chunk-tfidf hit@10 | chunk-dense hit@10 |
+| --- | ---: | ---: |
+| reviews-only (`source: review`) | 0.542 | **0.917** |
+| high-rating (`rating >= 4`) | 0.458 | 0.917 |
+| features-only (`source: description`) | 0.083 | 0.292 |
 
 Corpus: `evals/need_cases.jsonl` (24 cases, 9 with zero title overlap). Source:
 `reports/discovery-need.md`, `evals/results-need.json`. Change log: `specs/change-log.json`.
@@ -207,6 +229,9 @@ Corpus: `evals/need_cases.jsonl` (24 cases, 9 with zero title overlap). Source:
 
 ## Known Gaps
 
-- P1–P4 (passage-level review index, query understanding, grounded-answer judge, agent
-  wiring) are planned but not yet implemented; this spec records P0 delivered.
+- P2–P4 (query understanding, grounded-answer judge, agent wiring) are planned but not
+  yet implemented; P0 (dataset/benchmark/report) and P1 (passage index + filters) are
+  delivered.
 - 24 cases is a start; the plan is to extend toward 60–100.
+- The passage index and filters are measured in the benchmark; wiring them into the
+  live `search_products` path is P4.

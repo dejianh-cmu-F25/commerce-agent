@@ -8,7 +8,9 @@ idempotent (RD-2). Suitable for the small policy corpus.
 from __future__ import annotations
 
 import math
+from typing import Any
 
+from app.core.filters import metadata_matches
 from app.core.types import Chunk
 
 
@@ -36,14 +38,25 @@ class InMemoryVectorStore:
     def size(self) -> int:
         return len(self._chunks)
 
-    def query(self, embedding: list[float], k: int = 3) -> list[Chunk]:
+    def query(
+        self, embedding: list[float], k: int = 3, where: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         scored: list[tuple[float, Chunk]] = []
         for chunk_id, vector in self._vectors.items():
+            chunk = self._chunks[chunk_id]
+            if not metadata_matches(chunk.metadata, where):
+                continue
             score = _cosine(embedding, vector)
             if score > 0:
-                scored.append((score, self._chunks[chunk_id]))
+                scored.append((score, chunk))
         scored.sort(key=lambda pair: (-pair[0], pair[1].id))
         return [
-            Chunk(id=chunk.id, text=chunk.text, source=chunk.source, score=round(score, 6))
+            Chunk(
+                id=chunk.id,
+                text=chunk.text,
+                source=chunk.source,
+                score=round(score, 6),
+                metadata=chunk.metadata,
+            )
             for score, chunk in scored[: max(1, k)]
         ]

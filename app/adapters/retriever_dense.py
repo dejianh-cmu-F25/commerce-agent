@@ -9,6 +9,8 @@ store for the nearest chunks.
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.core.types import Chunk
 from app.ports.embedding import EmbeddingProvider
 from app.ports.vector_store import VectorStore
@@ -31,8 +33,8 @@ class DenseRetriever:
     def size(self) -> int:
         return self._store.size()
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where: dict[str, Any] | None = None) -> list[Chunk]:
         if not query.strip():
             return []
         vector = self._embedding.embed([query])[0]
-        return self._store.query(vector, k)
+        return self._store.query(vector, k, where)

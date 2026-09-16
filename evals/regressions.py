@@ -58,7 +58,7 @@ async def _dense_failure_falls_back() -> bool:
         def add(self, chunks: list[Chunk]) -> None:
             return None
 
-        def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+        def retrieve(self, query: str, k: int = 3, where=None) -> list[Chunk]:
             raise RuntimeError("vector store unavailable")
 
     secondary = InMemoryRetriever()

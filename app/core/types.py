@@ -131,12 +131,19 @@ class Change:
 
 @dataclass
 class Chunk:
-    """A retrieved knowledge chunk (P4: answers come from these)."""
+    """A retrieved knowledge chunk (P4: answers come from these).
+
+    ``metadata`` carries structured fields for **query-time filtering** (feature
+    047): e.g. ``source`` (product | description | review), ``product_id``,
+    ``category``, ``price``, ``rating``. Values are JSON scalars so a vector store
+    can hold them and a filter can match on them.
+    """
 
     id: str
     text: str
     source: str
     score: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

@@ -43,10 +43,36 @@ assertion, not a measurement.
 ## Consequences
 
 - The measured gap is real and large: need-query hit@10 **0.292 (keyword) → 0.417 (text
-  retrieval) → 0.583 (real embedding), +0.292 / 2.0×**. Retrieving over the product
-  text, and above all a real embedding, is what serves this class.
+  retrieval) → 0.583 (real embedding) → 0.792 (passage-level) → 0.917 (with a
+  `source=review` filter)**. Retrieving over the product text, at passage granularity,
+  with a real embedding, is what serves this class.
 - The keyless `dense-hash` arm is *worse* than keyword (0.083), which keeps the earlier
   lesson honest: keyless hashing is not semantics.
-- Later phases (passage-level review index, query understanding, a grounded-answer
-  judge, cross-lingual) now have a benchmark to move; the spec records them as planned.
+- Later phases (query understanding, a grounded-answer judge, cross-lingual) now have a
+  benchmark to move; the spec records them as planned.
 - Cost: one more markered report to keep fresh (`scripts/check_reports.py`).
+
+## Passage-level index and metadata filters (P1)
+
+Follows the design every authoritative product-RAG stack uses (Google Agent Search
+*Parse and chunk documents* + *Filter … metadata*; Azure AI Search *Vector Query
+Filters*): content is **chunked**, each chunk is **linked to its product** by id, and a
+query-time **metadata filter** narrows the candidates before scoring.
+
+- **Chunks and the link.** `catalog_chunks` emits one chunk per review, one per feature
+  sentence, and a product summary; every chunk carries `metadata` (`product_id`,
+  `source`, `category`, `price`, `vendor`; reviews add `rating`/`verified`/
+  `helpful_votes`). `PassageCatalogIndex` aggregates chunk hits to a product by best
+  passage score - the "documents are returned by aggregating chunks into documents"
+  shape, and it keeps the hits so an answer can cite the evidence it used.
+- **Filters.** A `where` clause filters on `Chunk.metadata` with equality, `$in`, and
+  range operators (`app/core/filters.py`); the in-memory stores and retrievers apply it
+  directly and Chroma receives the same shape (`to_chroma_where`). The ports gained it
+  **additively** (`where=None` default), so nothing else changes.
+- **Result.** Passage-level retrieval lifts need hit@10 **0.583 → 0.792**; a
+  `source=review` filter (the evidence kind these needs live in) lifts it to **0.917** -
+  a filter here is a precision win, not a cost. Filtering to features-only drops to
+  0.292, which is the honest other side: the filter must match the passage kind.
+- Cost: the keyless passage index is ~60× the document index (16,035 chunks vs 3,000
+  products) and ~12 ms/query; the dense passage index is ~1.5 s/query with a real
+  embedding. That trade is stated in the report, not hidden.

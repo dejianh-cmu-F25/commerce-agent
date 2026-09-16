@@ -7,7 +7,7 @@ model. Providers live in ``app/adapters`` and are selected by configuration
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from app.core.types import Chunk
 
@@ -17,9 +17,11 @@ class Retriever(Protocol):
         """Ingest chunks. Idempotent by chunk id (RD-2)."""
         ...
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where: dict[str, Any] | None = None) -> list[Chunk]:
         """Return at most ``k`` chunks with a positive score, best first.
 
-        An empty query or no matches returns ``[]``.
+        ``where`` restricts the candidates to chunks whose ``metadata`` matches
+        every condition (feature 047); ``None`` means no filter. An empty query or
+        no matches returns ``[]``.
         """
         ...

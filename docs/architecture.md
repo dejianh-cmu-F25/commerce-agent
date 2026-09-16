@@ -101,6 +101,7 @@ refused (fail-closed). Adding a gate is one class plus one line in
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); `knowledge.provider` selects `memory` (keyless TF-IDF, default) or `dense` |
 | Add embeddings | Implement `EmbeddingProvider` (`app/ports/embedding.py`); `embedding.provider` selects keyless `hash` (default) or `openai` |
 | Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects persistent `chroma` (default) or in-process `memory` |
+| Add a passage index / metadata filter | Build chunks with `catalog_index.catalog_chunks` and aggregate with `PassageCatalogIndex`; a `where` clause filters on `Chunk.metadata` (`app/core/filters.py`), the same shape across the retrievers and Chroma (feature 047) |
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
 | Run or change the gold scenarios | `evals/runner.py` + `evals/scenarios.py` are the source of truth: 13 keyless scenarios driving the **shipped** closed-loop tools (`get_order_status`, `list_returnable_items`, `propose_return_decision`) over `evals/order_fixtures.py`; `evals/run.py` runs them in the gate. The 016 spec is archived, so the code and this row are the documentation |
