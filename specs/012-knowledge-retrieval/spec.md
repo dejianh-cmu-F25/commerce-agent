@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Add a `Retriever` port with a keyless in-memory TF-IDF provider over
 policy docs in `config/knowledge/`, ingested by paragraph chunks; add a
 `search_knowledge` tool so the agent answers policy questions from grounded
@@ -112,6 +111,18 @@ records the query and the number of hits. No new events.
 - **SC-002**: Re-ingestion does not duplicate chunks.
 - **SC-003**: A missing knowledge directory yields an empty retriever.
 - **SC-004**: The retriever is keyless and adds no dependency.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

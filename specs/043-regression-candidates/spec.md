@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Export real-eval failures to a committed candidate file (deduped) so
 promotion starts from evidence, closing the EV-5 manual-export residual.
 
@@ -72,6 +71,14 @@ candidates are written and deduped.
 - **SC-002**: A missing results file is a no-op.
 - **SC-003**: The gate passes; candidates are not run as regressions.
 - **SC-004**: The flow is documented.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

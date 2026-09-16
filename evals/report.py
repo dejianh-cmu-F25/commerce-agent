@@ -12,6 +12,8 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from app.evaluation.report_meta import with_marker
+
 ROOT = Path(__file__).resolve().parents[1]
 KEYLESS = ROOT / "evals" / "results-keyless.json"
 REAL = ROOT / "evals" / "results-real.json"
@@ -455,7 +457,14 @@ def main() -> int:
     args = parser.parse_args()
     text = render()
     if args.write:
-        REPORT.write_text(text)
+        REPORT.write_text(
+            with_marker(
+                text,
+                "evals/report.py --write",
+                len(KEYLESS.read_text().splitlines()),
+                [KEYLESS],
+            )
+        )
         _update_results_change_log(_load(CHANGE_LOG).get("entries", []))
         print(f"wrote {REPORT} and refreshed the change log in {RESULTS}")
     else:

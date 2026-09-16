@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Segment the keyless metrics by intent and by tool so a failure can be
 localized; render the segments in the report and validate them in the gate (SC-2).
 
@@ -77,6 +76,14 @@ tables; a failing scenario is attributable to its intent and its tools.
   appears with an error rate.
 - **SC-002**: The segments match the artifact (gate-validated).
 - **SC-003**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

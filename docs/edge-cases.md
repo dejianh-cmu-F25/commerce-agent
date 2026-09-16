@@ -17,7 +17,7 @@ adds only feature-specific boundaries. Enforcement is a guard or a test — neve
 | Missing knowledge directory | empty corpus; retrieval returns `[]` | `app/knowledge/ingest.py`, `evals/fallbacks.py` |
 | Dense retrieval / vector-store failure | degrades to keyless lexical, recorded | `app/core/resilience.py`, `evals/fallbacks.py` |
 | LLM provider failure | surfaced `ErrorEvent`; the turn ends `reason=error` | `app/core/loop.py`, `evals/fallbacks.py` |
-| Budget exhausted | the turn stops at the cap (`BudgetExceeded`) | `app/ports/cost_meter.py` (HR-12) |
+| Cap exceeded (only when `budget.enabled`) | the turn stops with `BudgetExceeded`; by default spend is recorded and reported with no in-app cap | `app/ports/cost_meter.py` (HR-12) |
 | Return outside the policy window | blocked by the gate, no refund | `app/gates/returns.py`, gold scenario `return_out_of_window` |
 | Merchant write without approval | staged only; never applied (P3) | `app/gates/provenance.py`, `tests/unit/test_merchant.py` |
 | Duplicate ingestion / re-seed | idempotent by id (no duplicates) | `INSERT OR IGNORE`, `tests/unit/test_orders.py` |

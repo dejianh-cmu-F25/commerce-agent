@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Superseded by `046-closed-loop` (still the production path during migration)
 **Input**: Post-purchase care for the shopping agent: grounded order status and a
 policy-gated, render-only return request. Orders live in the storefront system of
 record; the agent reads them through tools and never invents an order. A return
@@ -191,6 +190,18 @@ the existing product, cart, and checkout cards. There is no new tab.
 - **SC-004**: No refund, charge, or order mutation occurs on `start_return` (P3).
 - **SC-005**: The local gate (ruff, pyright, pytest, evals, spec self-review,
   frontend) passes with the feature enabled.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Human-in-the-Loop
+
+- n/a: this feature performs no state-changing action (read-only or a proposal).
 
 ## Assumptions
 

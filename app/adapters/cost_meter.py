@@ -7,10 +7,16 @@ budget survives restarts. Prices are USD per 1M tokens; the cap is CNY.
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 
 from app.core.settings import BudgetSettings
 from app.core.types import Usage
+
+# Persist at most every this many CNY. Writing the file on every model call is
+# wasteful when many calls run concurrently; the worst case loss on a crash is
+# one interval.
+PERSIST_EVERY_CNY = 0.05
 
 
 class UsageCostMeter:
@@ -18,6 +24,13 @@ class UsageCostMeter:
         self._settings = settings
         self._state_path = Path(settings.state_file)
         self._spent_cny = self._load()
+        self._persisted_cny = self._spent_cny
+        self._lock = threading.Lock()
+
+    def flush(self) -> None:
+        """Persist the running total now (call after a batch of work)."""
+        with self._lock:
+            self._persist()
 
     def _load(self) -> float:
         if not self._state_path.exists():
@@ -31,6 +44,7 @@ class UsageCostMeter:
     def _persist(self) -> None:
         self._state_path.parent.mkdir(parents=True, exist_ok=True)
         self._state_path.write_text(json.dumps({"spent_cny": round(self._spent_cny, 6)}))
+        self._persisted_cny = self._spent_cny
 
     def cost_of(self, usage: Usage) -> float:
         """Cost of one call, in CNY.
@@ -53,17 +67,25 @@ class UsageCostMeter:
         return usd * s.usd_to_cny
 
     def record(self, usage: Usage) -> None:
-        self._spent_cny += self.cost_of(usage)
-        self._persist()
+        with self._lock:
+            self._spent_cny += self.cost_of(usage)
+            if self._spent_cny - self._persisted_cny >= PERSIST_EVERY_CNY:
+                self._persist()
 
     def spent_cny(self) -> float:
         return self._spent_cny
 
     def limit_cny(self) -> float:
-        return self._settings.total_limit
+        """The enforced cap, or ``0.0`` when the meter is report-only.
+
+        Zero means "no limit": the harness records spend but never stops the loop
+        (HR-12 leaves the hard limit to the deployment). Callers render a limit
+        only when this is non-zero.
+        """
+        return self._settings.total_limit if self._settings.enabled else 0.0
 
     def remaining_cny(self) -> float:
-        return max(0.0, self._settings.total_limit - self._spent_cny)
+        return max(0.0, self.limit_cny() - self._spent_cny)
 
     def over_budget(self) -> bool:
         if not self._settings.enabled:
@@ -87,4 +109,7 @@ class NullCostMeter:
         return False
 
     def record(self, usage: Usage) -> None:
+        return None
+
+    def flush(self) -> None:
         return None

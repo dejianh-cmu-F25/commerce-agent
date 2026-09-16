@@ -83,3 +83,54 @@ describe("mapEvent", () => {
     expect(mapEvent({ type: "CartUpdate", data: {} }, ctx())).toEqual([]);
   });
 });
+
+describe("the closed-loop components reach the UI", () => {
+  // Regression: the tools emitted `return_decision`, `returnable_items` and `reviews`
+  // while this mapper only knew `return` - so the return decision card never rendered,
+  // silently. A component the mapper does not know is a component nobody sees.
+  const ui = (component: string, payload: Record<string, unknown>) =>
+    mapEvent({ type: "UIComponent", data: { component, payload } }, ctx());
+
+  it("maps return_decision, in all three shapes it is emitted", () => {
+    const accepted = ui("return_decision", {
+      order_id: "1006",
+      decision: "eligible",
+      cited_clauses: ["returns#window-default"],
+      validated: true,
+    });
+    expect(accepted[0].type).toBe("data-return-decision");
+    expect((accepted[0] as { data: { decision: string } }).data.decision).toBe("eligible");
+
+    const refused = ui("return_decision", {
+      order_id: "1006",
+      decision: "eligible",
+      validated: false,
+      policy: "ineligible: delivered 45 days ago",
+    });
+    expect(refused[0].type).toBe("data-return-decision");
+
+    const unreadable = ui("return_decision", {
+      order_id: "1002",
+      accessible: false,
+      reason: "order belongs to another customer",
+    });
+    expect(unreadable[0].type).toBe("data-return-decision");
+  });
+
+  it("maps returnable_items and reviews when they carry items", () => {
+    expect(ui("returnable_items", { items: [{ title: "Tent", quantity: 1 }] })[0].type).toBe(
+      "data-returnable-items",
+    );
+    expect(ui("reviews", { items: [{ rating: 1, title: "Very tight", text: "…" }] })[0].type).toBe(
+      "data-reviews",
+    );
+  });
+
+  it("renders nothing for an empty list rather than an empty card", () => {
+    expect(ui("returnable_items", { items: [] })).toHaveLength(0);
+    expect(ui("reviews", { items: [] })).toHaveLength(0);
+    // A component emitted without a payload (as returnable_items was) must not crash
+    // the mapper either.
+    expect(ui("returnable_items", {})).toHaveLength(0);
+  });
+});

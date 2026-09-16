@@ -91,7 +91,9 @@ class SqliteStorefront:
     def count(self) -> int:
         return int(self._conn.execute("SELECT COUNT(*) FROM products").fetchone()[0])
 
-    def search(self, query: str, limit: int) -> list[Product]:
+    def search(self, query: str, limit: int, *, evidence: bool = False) -> list[Product]:
+        # One index, so the query class does not change the answer.
+        del evidence
         return rank_products(self._all(), query)[: clamp_limit(limit)]
 
     def get(self, product_id: str) -> Product | None:

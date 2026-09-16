@@ -37,6 +37,10 @@ retrieval:
   sparse_top_k: 20
   fusion_top_k: 10
   rrf_k: 60
+  # RRF weights. Equal weights let the weaker leg drag the fusion down (measured:
+  # val hit@10 0.983 at 1:1 vs 0.991 at 2:1), so the dense leg is down-weighted.
+  sparse_weight: 2.0
+  dense_weight: 1.0
 
 rerank:
   enabled: false
@@ -45,8 +49,6 @@ rerank:
 
 evaluation:
   enabled: false
-  provider: custom
-  metrics: [hit_rate, mrr, faithfulness]
 
 observability:
   log_level: INFO
@@ -54,14 +56,10 @@ observability:
   trace_file: ./logs/traces.jsonl
   trace_max_attr_len: 500   # redact (truncate) span inputs/outputs (OB-5)
 
+# Knowledge chunking: one chunk per markdown section (deep-linkable clause id), split
+# further only past `chunk_size`, with the heading kept on every part.
 ingestion:
   chunk_size: 1000
-  chunk_overlap: 200
-  splitter: recursive       # recursive | semantic | fixed
-  chunk_refiner:
-    use_llm: false
-  metadata_enricher:
-    use_llm: false
 
 # Cross-session customer memory (feature 013). Facts are grounded in the
 # customer's own text (P4) and recalled into later sessions through the log
@@ -72,10 +70,13 @@ memory:
   extraction: deterministic # deterministic (keyless)
   retention_days: 365
 
-# Spend guard (constitution HR-12). Prices are USD per 1M tokens; the cap is CNY.
-# Defaults use conservative (peak) DeepSeek Flash prices so we never overspend.
+# Cost meter (constitution HR-12): records token usage per call, converts it to the
+# configured currency, and reports the running total. Prices are USD per 1M tokens
+# (conservative peak DeepSeek Flash). The in-app cap is OFF: HR-12 places the hard
+# limit on the deployment, so the limit lives in the provider console. Set
+# `enabled: true` together with `total_limit` to re-arm the in-app stop.
 budget:
-  enabled: true
+  enabled: false
   currency: CNY
   total_limit: 10.0
   usd_to_cny: 7.25
@@ -101,6 +102,30 @@ session:
   store: sqlite             # memory | sqlite
   sqlite_path: ./data/db/sessions.sqlite
 
+# Local discovery retrieval (feature 046 step A). Live discovery searches a local
+# index of the catalog (scripts/sync_catalog.py) instead of the shop's keyword
+# search: measured hit@10 0.991 vs 0.920 at ~0.6 ms vs ~1360 ms. `hybrid` fuses
+# the keyless lexical retriever with a real embedding (needs a real
+# `embedding.provider`); `tfidf` stays keyless.
+# Provider chosen by measurement, not taste: on the 216-case rule set the weighted
+# hybrid only catches up to the lexical retriever (val hit@10 0.991 vs tfidf 0.991,
+# full set 0.986 vs 0.991) while costing an embedding call per query, so the live
+# path ships lexical. See reports/discovery-rrf-weights.md.
+cart:
+  # session = lines on the session (keyless default). shopify_storefront writes a real
+  # cart through the Storefront API and needs SHOPIFY_STOREFRONT_TOKEN.
+  provider: session
+
+catalog:
+  provider: tfidf           # tfidf (keyless, shipped) | hybrid (lexical + embedding, RRF)
+  index_path: ./data/discovery/products.json
+  collection_name: catalog
+  overfetch: 4
+  # Two indexes are built: the plain one (title/vendor/type/tags) and an enriched one
+  # (+ features & review evidence). search_products(evidence=true) routes a query to the
+  # enriched index; measured, that trades 0.037 of lexical hit@10 for 0.714 of attribute
+  # recall, so the query decides rather than one global switch.
+
 # Knowledge retrieval (P4). Keyless lexical retriever over config/knowledge/.
 knowledge:
   provider: dense           # dense (embeddings + Chroma) | memory (keyless TF-IDF)
@@ -109,7 +134,7 @@ knowledge:
   min_chars: 40
 
 # Post-purchase returns (feature 014). This is the machine-readable return
-# window; keep it in sync with config/knowledge/returns.md. A return is a
+# window; see config/policies/amazon.yaml (feature 046); the prose is derived. A return is a
 # request only — the harness never refunds or changes the order (P3).
 returns:
   window_days: 30
@@ -120,10 +145,27 @@ skills:
   enabled: true
   path: ./skills
 
+# Gate wiring (046 hardening). All gates are on by default; `disabled` turns named
+# ones off, `order` pins an explicit order (the rest fall back to their priority
+# tier: identity < authorization < approval < policy < guardrail). An unknown name
+# fails loud at load (PB-1). `hit_policy` is `first` (short-circuit) or `collect`
+# (evaluate every gate). See app/gates/factory.py.
+gates:
+  hit_policy: first
+  order: []
+  disabled: []
+
 # Boundary data quality (feature 027, RW-2). `repair` normalizes fixable values
 # (e.g. "$1,299.00" -> 1299.00) and skips unusable rows; `strict` fails loud.
 data:
   quality: repair           # repair | strict
+
+# Shopify: the real post-purchase system of record (feature 045). Empty shop /
+# token falls back to the keyless fixture backend. See docs/shopify-setup.md.
+shopify:
+  shop: ""                  # e.g. my-store.myshopify.com
+  access_token: ""          # Admin API access token (start with read_orders)
+  api_version: "2025-07"
 
 # Input guard (feature 028, RW-1). A deterministic guard classifies the message
 # before the model: injection attempts and oversized input are refused with a

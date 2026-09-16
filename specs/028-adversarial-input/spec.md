@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Guard hostile and out-of-distribution input: detect prompt injection
 and oversized input before the model, refuse without tools, and score the guard
 with a keyless labeled set (RW-1).
@@ -121,6 +120,18 @@ minimum, and the report shows it.
 - **SC-002**: A blocked turn calls no tool and records a refusal in the log.
 - **SC-003**: Obfuscated injections are blocked; benign trigger words are not.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

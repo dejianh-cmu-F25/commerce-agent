@@ -47,11 +47,14 @@ def _current_change() -> str:
 
 
 def _find_entry(entries: list[dict], branch: str) -> dict | None:
-    for entry in entries:
+    # The current change is the *latest* entry for the branch: a branch may carry
+    # several entries (a feature is built in steps), and the one under audit now
+    # is the newest.
+    for entry in reversed(entries):
         if branch and branch in entry.get("change", ""):
             return entry
     prefix = branch.split("-")[0] if branch else ""
-    for entry in entries:
+    for entry in reversed(entries):
         if prefix and prefix in entry.get("change", ""):
             return entry
     return None
@@ -78,8 +81,10 @@ def main() -> int:
         print(f"FAIL: entry {entry.get('change')!r} has an invalid class {classification!r}.")
         return 1
 
-    # A change to the model/prompt/retrieval surface must be measured.
-    changed = _changed("origin/main") or _changed("main") or []
+    # A change to the model/prompt/retrieval surface must be measured. Audit the
+    # *current* change (the latest commit), not the whole branch: a branch may
+    # carry several changes, and only the latest one is under audit here.
+    changed = _changed("HEAD~1") or _changed("origin/main") or _changed("main") or []
     touches_model = any(marker in path for path in changed for marker in TRIGGERS)
     if touches_model and classification != "measurable":
         print(

@@ -49,6 +49,12 @@ class Product:
     price: float
     stock: int
     tags: list[str] = field(default_factory=list)
+    # The first variant's SKU. Imported products store the source ASIN here, which is
+    # the key the review store uses - the join between a product and its reviews.
+    sku: str = ""
+    # The first variant's id. A cart holds variants, not products, so this is what a
+    # Storefront cart needs (the Admin and Storefront APIs both key lines by variant).
+    variant_id: str = ""
 
     @property
     def in_stock(self) -> bool:

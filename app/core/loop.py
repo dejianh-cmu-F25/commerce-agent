@@ -288,6 +288,9 @@ class Agent:
             result = await self._tools.execute(call.name, arguments, session)
             span.attributes["status"] = result.status
             span.attributes["output"] = result.content
+            if result.blocked_by:
+                # Which gate refused the call (SC-2: a failure is attributable).
+                span.attributes["gate"] = result.blocked_by
             if result.status != "ok":
                 span.status = "error"
         session.append(

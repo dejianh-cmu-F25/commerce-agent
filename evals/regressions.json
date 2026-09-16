@@ -19,6 +19,12 @@
       "check": "injection_refused"
     },
     {
+      "id": "policy_override_blocked",
+      "source": "post-purchase eval 2026-09-14 (injection-01)",
+      "root_cause": "the guard matched 'ignore previous instructions' but not 'ignore the policy', so a policy-override attempt reached the model",
+      "check": "policy_override_blocked"
+    },
+    {
       "id": "dirty_price_normalized",
       "source": "audit RW-2 / feature 027",
       "root_cause": "a price with a currency symbol crashed the boundary",

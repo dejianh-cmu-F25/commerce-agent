@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Rebuild the browser chat surface with React 19 and Vercel AI Elements
 (Tailwind v4 + shadcn/ui), driven by `useChat` over a custom transport that
 adapts the existing SSE event stream, and served by FastAPI as a built SPA. Keep
@@ -178,7 +177,7 @@ error and Retry.
 ## Observability
 
 The UI consumes the existing 001/002 event stream; no new backend events. The
-turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
+turn `trace_id` remains the link to `logs/traces.jsonl` (feature 007).
 
 ## Success Criteria *(mandatory)*
 
@@ -190,6 +189,14 @@ turn `trace_id` remains the link to `logs/traces.jsonl` (feature 080).
   at desktop — verified in the checkpoint.
 - **SC-004**: `npm run build`, `eslint`, `tsc --noEmit`, and `vitest` pass in the
   local gate (`scripts/ci.sh`); the Docker image builds with the frontend bundled.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

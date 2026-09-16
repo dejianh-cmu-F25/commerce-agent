@@ -31,7 +31,14 @@ import { CartCard } from "@/components/app/cart-card";
 import { MemoryView } from "@/components/app/memory-view";
 import { MerchantView } from "@/components/app/merchant-view";
 import { MetricsView } from "@/components/app/metrics-view";
-import { OrderCard, OrdersCard, ReturnCard } from "@/components/app/order-cards";
+import {
+  OrderCard,
+  OrdersCard,
+  ReturnableItemsCard,
+  ReturnCard,
+  ReturnDecisionCard,
+  ReviewsCard,
+} from "@/components/app/order-cards";
 import { ReportView } from "@/components/app/report-view";
 import { ScenarioRunner } from "@/components/app/scenario-runner";
 import { SourcesList } from "@/components/app/sources-list";
@@ -293,6 +300,15 @@ function Chat() {
                     }
                     if (part.type === "data-return") {
                       return <ReturnCard key={index} data={part.data} />;
+                    }
+                    if (part.type === "data-return-decision") {
+                      return <ReturnDecisionCard key={index} data={part.data} />;
+                    }
+                    if (part.type === "data-returnable-items") {
+                      return <ReturnableItemsCard key={index} items={part.data.items} />;
+                    }
+                    if (part.type === "data-reviews") {
+                      return <ReviewsCard key={index} items={part.data.items} />;
                     }
                     return null;
                   })}

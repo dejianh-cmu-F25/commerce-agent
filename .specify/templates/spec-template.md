@@ -103,7 +103,16 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
-## Real-World Coverage *(mandatory when the feature touches inputs, data, the model, or retrieval; RW-1..RW-5, SC-1..SC-4, EV-1..EV-5)*
+### Tool Contracts *(when the feature exposes tools to the model)*
+
+<!-- The model-facing tools and their JSON schemas. The harness is the only
+     executor (P3, PB-2). Name the source-of-truth file. -->
+
+| Tool | Purpose | Parameters (JSON Schema) |
+| --- | --- | --- |
+| `[tool_name]` | [what it does] | `{param: type}` |
+
+## Real-World Coverage *(mandatory when the feature touches inputs, data, the model, or retrieval; RW-1..RW-4, SC-1..SC-4, EV-1..EV-6)*
 
 <!--
   Fill this in when the feature interprets free-form input, handles data, or
@@ -114,7 +123,8 @@
 ### Input distribution
 
 - The real inputs the feature must handle (phrasings, ambiguity, languages, adversarial).
-- Behavior for unseen / out-of-distribution input: clarify, refuse, or fall back.
+- Behavior for unseen / out-of-distribution input: clarify, redirect (off-topic),
+  refuse, or fall back.
 
 ### Data quality
 
@@ -136,6 +146,39 @@
 ### Change evidence
 
 - For a model / prompt / retrieval / module change: the before/after evaluation (paired, seeds, guardrails) and where it is recorded (`specs/RESULTS.md`).
+
+## Evaluation Plan *(when the feature touches the model, prompt, retrieval, or data)*
+
+<!-- Best practice for agent/LLM features: name the dataset, the metric, and the
+     threshold, and say what is keyless vs model. A claim without a dataset and a
+     threshold cannot be checked (EV). -->
+
+- **Dataset(s)**: [e.g. `evals/cases.jsonl` (human-labeled), a public benchmark]
+- **Metric(s)**: [e.g. decision accuracy, citation support, hit@k, invariant pass rate]
+- **Threshold(s)**: [e.g. accuracy ≥ 0.90; invariant pass rate = 1.000]
+- **Slices**: [by intent, difficulty, language, policy version, …]
+- **Cost/speed**: [keyless layers are free/fast; the model layer runs on a stratified sample under the budget cap]
+- **Report**: [where the numbers live]
+
+## Human-in-the-Loop *(when the feature performs or proposes a state change)*
+
+- Which actions require human approval, and where the approval happens.
+- Which actions are **out of the agent's authority** and enforced by the harness.
+
+## Data Provenance & Licensing *(when the feature uses external data)*
+
+| Source | Use | License | Retrieved |
+| --- | --- | --- | --- |
+| [name + URL] | [what it provides] | [license / public page] | [date] |
+
+- State honestly what is real vs generated. Never claim generated data is real.
+
+## Non-Functional Requirements
+
+- **Latency**: [budget / where measured]
+- **Cost**: [budget cap / where tracked]
+- **Security & privacy**: [tenancy, PII, injection]
+- **Reliability**: [no-fail rule, degradation]
 
 ## UI Requirements *(when the feature is browser-visible; WV-6..WV-8)*
 
@@ -208,6 +251,19 @@
 <!-- Required when the feature has measured data (EV). The slice of
      specs/RESULTS.md for this feature: metric, before → after, and the change
      log entry. Otherwise omit. -->
+
+## Out of Scope
+
+<!-- Explicit exclusions. "Not doing X" is as important as "doing Y". -->
+
+- [What this feature explicitly does not do]
+
+## Rollback & Versioning
+
+- **Prompt version**: [file + rendered-prompt hash recorded with results, EV-4]
+- **Model version**: [where recorded]
+- **Data/policy version**: [versioning scheme]
+- **Rollback**: [how to undo; blast radius]
 
 ## Assumptions
 

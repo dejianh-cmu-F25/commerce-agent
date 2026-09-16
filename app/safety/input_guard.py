@@ -39,6 +39,11 @@ _INJECTION_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
         r"\b(new|updated|revised)\s+(instruction|prompt|rule)s?\b",
         r"\boverride\s+(your|the)\s+(instruction|prompt|rule|safety)s?\b",
         r"\bfrom\s+now\s+on\s+you\s+(will|must|should)\b",
+        # Policy-override phrasing (a customer trying to bypass store policy).
+        r"\bignore\s+(the\s+|your\s+|all\s+)?(policy|policies|rules|guidelines|terms)\b",
+        r"\boverride\s+(the\s+|your\s+)?(policy|policies|rules|terms)\b",
+        r"\b(skip|bypass|forget)\s+(the\s+|your\s+)?(return\s+)?"
+        r"(policy|policies|rules|window|restocking)\b",
         # Non-English instruction override (es / fr / de / zh).
         r"\bignora\s+(todas\s+)?(las\s+)?(instrucciones|reglas|indicaciones)\b",
         r"\bignorez\s+(toutes\s+)?(les\s+)?(instructions|r[eè]gles|consignes)\b",

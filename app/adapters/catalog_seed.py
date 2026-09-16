@@ -1,7 +1,8 @@
-"""Seed products shared by the storefront adapters.
+"""Keyless test fixture: a tiny product set for offline runs (P8).
 
-A single source for the demo catalog so the in-memory and SQLite providers stay
-consistent (and so keyless runs still have data, P8).
+**This is a fixture, not live data.** The live catalog is the real Shopify catalog
+(imported from Amazon Reviews'23, feature 046). This seed exists only so tests and
+keyless runs (no token) have deterministic data.
 """
 
 from __future__ import annotations

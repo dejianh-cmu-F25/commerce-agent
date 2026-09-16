@@ -114,7 +114,7 @@ assistant reply streaming in; with a real provider it also shows the
 ## Observability
 
 Each turn emits `TurnStart`/`TurnEnd` with a `turn_id`. Structured tracing to
-`logs/traces.jsonl` arrives with feature 080; this feature defines the event
+`logs/traces.jsonl` shipped in feature 007; this feature defines the event
 boundary it will attach to.
 
 ## Success Criteria *(mandatory)*
@@ -123,6 +123,14 @@ boundary it will attach to.
 - **SC-002**: Unit tests cover the happy path, an unknown tool, and the turn bound.
 - **SC-003**: `derive_messages` is deterministic.
 - **SC-004**: The web app starts and streams a reply in mock mode without any API key.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 
@@ -140,5 +148,5 @@ boundary it will attach to.
 - **Edge & failure modes**: unknown tool → error event, the turn continues; max
   turns is bounded; the budget stops the loop.
 - **Scale envelope**: single process, single session; the system envelope is measured in `docs/scale.md`.
-- **Degradation**: an LLM failure surfaces as an error event; there is no model fallback.
+- **Degradation**: an LLM failure surfaces as an error event; provider fallback shipped in feature 039 (RD-1).
 - **Change evidence**: model/prompt changes must update `specs/RESULTS.md` (EV-1).

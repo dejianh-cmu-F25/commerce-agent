@@ -18,19 +18,34 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
+from app.adapters.acp_checkout import AcpCheckout
+from app.adapters.cart_factory import build_cart
+from app.adapters.catalog_index import (
+    CatalogIndex,
+    LocalSearchCatalog,
+    load_snapshot,
+)
 from app.adapters.catalog_seed import SEED_PRODUCTS
 from app.adapters.cost_meter import UsageCostMeter
 from app.adapters.deepseek_client import DeepSeekClient
+from app.adapters.embedding_cache import CachedEmbeddingProvider
 from app.adapters.embedding_hash import HashEmbeddingProvider
 from app.adapters.embedding_openai import OpenAIEmbeddingProvider
 from app.adapters.memory_memory import InMemoryMemoryStore
 from app.adapters.memory_sqlite import SqliteMemoryStore
 from app.adapters.merchant_sqlite import SqliteMerchant
 from app.adapters.mock_llm import MockLLMClient, text_turn
+from app.adapters.post_purchase_memory import InMemoryPostPurchase
+from app.adapters.rerank_llm import LlmListwiseReranker
 from app.adapters.retriever_dense import DenseRetriever
+from app.adapters.retriever_hybrid import HybridRetriever
 from app.adapters.retriever_memory import InMemoryRetriever
+from app.adapters.reviews_sqlite import SqliteReviewStore
 from app.adapters.session_memory import InMemorySessionStore
 from app.adapters.session_sqlite import SqliteSessionStore
+from app.adapters.shopify_catalog import ShopifyCatalog
+from app.adapters.shopify_client import ShopifyAdminClient
+from app.adapters.shopify_post_purchase import ShopifyPostPurchase
 from app.adapters.storefront_memory import InMemoryStorefront
 from app.adapters.storefront_sqlite import SqliteStorefront
 from app.adapters.tracer_jsonl import JsonlTracer, NullTracer
@@ -42,22 +57,29 @@ from app.core.metrics import summarize
 from app.core.prompts import load_prompt
 from app.core.resilience import FallbackLLM, FallbackRetriever
 from app.core.session import derive_messages
-from app.core.settings import Settings, load_settings
+from app.core.settings import Settings, SettingsError, load_settings
 from app.core.types import Message
+from app.gates.factory import build_gate_set
 from app.knowledge.ingest import load_chunks
+from app.ports.cost_meter import CostMeter
+from app.ports.llm import LLMClient
 from app.ports.memory import MemoryStore
 from app.ports.merchant import MerchantBackend
+from app.ports.post_purchase import LineItem, OrderView, PostPurchaseBackend, ReturnableItem
 from app.ports.retriever import Retriever
 from app.ports.session_store import SessionRepository
 from app.ports.storefront import StorefrontBackend
 from app.ports.tracer import Tracer
+from app.ports.vector_store import VectorStore
 from app.skills.loader import SkillLibrary, load_skills
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
+from app.tools.checkout import register_checkout_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
-from app.tools.orders import register_order_tools
+from app.tools.post_purchase import register_post_purchase_tools
 from app.tools.registry import ToolRegistry
+from app.tools.reviews import register_review_tools
 from app.tools.skills import register_skill_tools
 from evals.runner import run_scenarios
 from evals.scenarios import SCENARIOS
@@ -120,6 +142,93 @@ def build_storefront(settings: Settings) -> StorefrontBackend:
         seed_orders=settings.storefront.seed_orders,
         quality=settings.data.quality,
     )
+
+
+def build_catalog_index(settings: Settings, *, enrich: bool | None = None) -> CatalogIndex | None:
+    """Build the local discovery index from the synced snapshot (feature 046 step A).
+
+    Returns ``None`` when no snapshot exists, so the caller can tell "not synced"
+    apart from "synced but empty".
+    """
+    products = load_snapshot(settings.catalog.index_path)
+    if not products:
+        return None
+    reviews = build_reviews(settings) if enrich else None
+    if settings.retrieval.sparse == "bm25":
+        from app.adapters.retriever_bm25 import Bm25Retriever
+
+        sparse: Retriever = Bm25Retriever()
+    else:
+        sparse = InMemoryRetriever()
+    if settings.catalog.provider == "tfidf":
+        return CatalogIndex(sparse, products, reviews=reviews)
+
+    if settings.vector_store.provider == "memory":
+        store: VectorStore = InMemoryVectorStore()
+    else:
+        # Its own collection, labelled by the embedding it holds: Chroma fixes a
+        # collection's dimension, so switching providers must NOT reuse the name
+        # (and must not collide with the knowledge collection either).
+        label = (
+            f"{settings.embedding.provider}-{settings.embedding.dimensions}"
+            if settings.embedding.provider in ("hash", "mock")
+            else f"{settings.embedding.provider}-{settings.embedding.model}"
+        )
+        store = ChromaVectorStore(
+            settings.vector_store.persist_directory,
+            f"{settings.catalog.collection_name}-{label}",
+        )
+    embedding = build_embedding(settings)
+    if settings.embedding.cache_path:
+        embedding = CachedEmbeddingProvider(embedding, Path(settings.embedding.cache_path))
+    hybrid = HybridRetriever(
+        sparse,
+        DenseRetriever(embedding, store),
+        rrf_k=settings.retrieval.rrf_k,
+        candidate_k=settings.retrieval.dense_top_k,
+        weights=(settings.retrieval.sparse_weight, settings.retrieval.dense_weight),
+    )
+    # Dense retrieval degrades to the keyless lexical retriever on an outage (RD-1).
+    if settings.resilience.fallback_enabled:
+        return CatalogIndex(
+            FallbackRetriever(hybrid, InMemoryRetriever()), products, reviews=reviews
+        )
+    return CatalogIndex(hybrid, products, reviews=reviews)
+
+
+def build_catalog(settings: Settings) -> StorefrontBackend:
+    """Resolve the product catalog (PB-1). Shopify when configured, else the storefront.
+
+    Discovery searches a **local index** of the catalog; prices and stock still come
+    from the shop, so the index cannot serve a stale fact. A configured shop with no
+    index fails loud rather than silently answering from nothing.
+    """
+    if settings.shopify.shop and settings.shopify.access_token:
+        live = ShopifyCatalog(
+            settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
+        )
+        # Both indexes, always: the query class chooses the document set, so no query
+        # pays the trade either way. Measured, enrichment costs 0.037 of lexical hit@10
+        # and buys 0.714 of attribute recall (reports/discovery-attribute.md).
+        index = build_catalog_index(settings, enrich=False)
+        enriched = build_catalog_index(settings, enrich=True)
+        if index is None:
+            raise SettingsError(
+                "catalog index is missing; run `uv run python scripts/sync_catalog.py` "
+                f"(expected {settings.catalog.index_path})"
+            )
+        return LocalSearchCatalog(
+            live,
+            index,
+            enriched=enriched,
+            overfetch=settings.catalog.overfetch,
+        )
+    return build_storefront(settings)
+
+
+def build_reviews(settings: Settings) -> SqliteReviewStore:
+    """Resolve the local real-review store (PB-1). Empty store = no reviews."""
+    return SqliteReviewStore(settings.reviews.path)
 
 
 def build_session_store(settings: Settings) -> SessionRepository:
@@ -194,7 +303,11 @@ def build_vector_store(settings: Settings):
 
 def build_retriever(settings: Settings) -> Retriever:
     """Load knowledge documents into the configured retriever (PB-1)."""
-    chunks = load_chunks(settings.knowledge.path, settings.knowledge.min_chars)
+    chunks = load_chunks(
+        settings.knowledge.path,
+        settings.knowledge.min_chars,
+        settings.ingestion.chunk_size,
+    )
     retriever: Retriever
     if settings.knowledge.provider == "dense":
         primary = DenseRetriever(build_embedding(settings), build_vector_store(settings))
@@ -224,22 +337,88 @@ def build_skill_library(settings: Settings) -> SkillLibrary:
     return load_skills(settings.skills.path)
 
 
+def _seed_post_purchase_orders() -> dict[str, OrderView]:
+    """Keyless test fixture: one order so the post-purchase path runs without a token (P8).
+
+    **This is a fixture, not live data.** With Shopify configured, ``build_post_purchase``
+    uses the real store instead.
+    """
+    return {
+        "gid://shopify/Order/1001": OrderView(
+            id="gid://shopify/Order/1001",
+            name="#1001",
+            created_at="2026-08-20T10:00:00Z",
+            financial_status="PAID",
+            fulfillment_status="FULFILLED",
+            total=189.0,
+            currency="USD",
+            delivered_at="2026-09-01T12:00:00Z",
+            line_items=[
+                LineItem(
+                    id="gid://shopify/FulfillmentLineItem/1",
+                    title="2-Person Tent",
+                    quantity=1,
+                    sku="P-101",
+                    tags=("category:all",),
+                )
+            ],
+        )
+    }
+
+
+def build_post_purchase(settings: Settings) -> PostPurchaseBackend:
+    """Resolve the post-purchase backend (PB-1). Shopify when configured, else fixture."""
+    if settings.shopify.shop and settings.shopify.access_token:
+        client = ShopifyAdminClient(
+            settings.shopify.shop, settings.shopify.access_token, settings.shopify.api_version
+        )
+        return ShopifyPostPurchase(client)
+    orders = _seed_post_purchase_orders()
+    returnable = {
+        order_id: [
+            ReturnableItem(
+                fulfillment_line_item_id=line.id,
+                title=line.title,
+                sku=line.sku,
+                quantity=line.quantity,
+            )
+            for line in order.line_items
+        ]
+        for order_id, order in orders.items()
+    }
+    return InMemoryPostPurchase(orders, returnable)
+
+
+def build_reranker(settings: Settings, cost_meter: CostMeter | None = None):
+    """Second-stage reranker (A6). Off by default: it costs a call per search."""
+    if not settings.rerank.enabled or settings.rerank.provider != "llm":
+        return None
+    return LlmListwiseReranker(
+        build_llm(settings), top_k=settings.rerank.top_k, cost_meter=cost_meter
+    )
+
+
 def build_agent(
     settings: Settings,
     tracer: Tracer | None = None,
     merchant: MerchantBackend | None = None,
     memory: MemoryStore | None = None,
+    llm: LLMClient | None = None,
+    cost_meter: CostMeter | None = None,
 ) -> Agent:
-    registry = ToolRegistry()
-    storefront = build_storefront(settings)
-    register_catalog_tools(registry, storefront)
-    register_cart_tools(registry, storefront)
-    register_order_tools(registry, storefront, settings.returns.window_days)
+    registry = ToolRegistry(gates=build_gate_set(settings), hit_policy=settings.gates.hit_policy)
+    meter = cost_meter if cost_meter is not None else UsageCostMeter(settings.budget)
+    catalog = build_catalog(settings)
+    register_catalog_tools(registry, catalog, reranker=build_reranker(settings, meter))
+    register_cart_tools(registry, catalog, build_cart(settings))
+    register_checkout_tools(registry, AcpCheckout())
     register_knowledge_tools(registry, build_retriever(settings))
+    register_review_tools(registry, build_reviews(settings), catalog)
+    register_post_purchase_tools(registry, build_post_purchase(settings))
     if merchant is not None:
         register_merchant_tools(registry, merchant)
 
-    system_prompt = load_prompt("system")
+    system_prompt = load_prompt("journey")
     skills = build_skill_library(settings)
     if len(skills) > 0:
         register_skill_tools(registry, skills)
@@ -250,11 +429,11 @@ def build_agent(
         )
 
     return Agent(
-        llm=build_llm(settings),
+        llm=llm or build_llm(settings),
         tools=registry,
         settings=settings.agent,
         system_prompt=system_prompt,
-        cost_meter=UsageCostMeter(settings.budget),
+        cost_meter=meter,
         tracer=tracer,
         memory=memory,
         safety=settings.safety,

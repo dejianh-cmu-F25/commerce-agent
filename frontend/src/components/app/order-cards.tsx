@@ -1,4 +1,12 @@
-import type { OrderDetail, OrderSummary, ReturnData } from "@/lib/transport";
+import { cn } from "@/lib/utils";
+import type {
+  OrderDetail,
+  OrderSummary,
+  ReturnableItem,
+  ReturnData,
+  ReturnDecisionData,
+  ReviewItem,
+} from "@/lib/transport";
 
 const STATUS_LABEL: Record<string, string> = {
   processing: "Processing",
@@ -87,6 +95,101 @@ export function ReturnCard({ data }: { data: ReturnData }) {
         Order <span className="font-mono">{data.order_id}</span> · within the {data.window_days}-day
         window. No refund is issued yet — support will confirm by email.
       </p>
+    </div>
+  );
+}
+
+// The return proposal and the harness's verdict on it (feature 046). The model
+// proposes; the PolicyGate disposes, so this card is where a customer sees both the
+// decision and - when the harness refused it - why.
+export function ReturnDecisionCard({ data }: { data: ReturnDecisionData }) {
+  if (data.accessible === false) {
+    return (
+      <div className="not-prose mt-2 w-full max-w-md rounded-md border border-dashed text-xs">
+        <div className="border-b px-3 py-2 font-medium">Order not available</div>
+        <p className="px-3 py-2 text-muted-foreground">
+          {data.guidance ?? "You can only see your own orders."}
+        </p>
+      </div>
+    );
+  }
+  const refused = data.validated === false;
+  return (
+    <div className="not-prose mt-2 w-full max-w-md rounded-md border text-xs">
+      <div className="flex items-center justify-between gap-3 border-b px-3 py-2 font-medium">
+        <span>Return decision</span>
+        <span className="rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+          {data.decision ?? "unknown"}
+        </span>
+      </div>
+      <dl className="grid gap-1 px-3 py-2">
+        <div className="flex gap-2">
+          <dt className="text-muted-foreground">Order</dt>
+          <dd className="font-mono">{data.order_id}</dd>
+        </div>
+        {data.cited_clauses && data.cited_clauses.length > 0 ? (
+          <div className="flex gap-2">
+            <dt className="text-muted-foreground">Policy</dt>
+            <dd className="font-mono">{data.cited_clauses.join(", ")}</dd>
+          </div>
+        ) : null}
+      </dl>
+      <p
+        className={cn(
+          "border-t px-3 py-2",
+          refused ? "text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {refused
+          ? `The harness rejected this proposal — it is not recorded. ${data.policy ?? ""}`
+          : "Proposed only: nothing is approved or refunded here."}
+      </p>
+    </div>
+  );
+}
+
+// The order's returnable items, with the refs the model uses (feature 046).
+export function ReturnableItemsCard({ items }: { items: ReturnableItem[] }) {
+  return (
+    <div className="not-prose mt-2 w-full max-w-md rounded-md border text-xs">
+      <div className="border-b px-3 py-2 font-medium">Returnable items</div>
+      <ul>
+        {items.map((item, index) => (
+          <li
+            key={item.fulfillment_line_item_id}
+            className="flex items-center gap-3 border-b px-3 py-1.5 last:border-b-0"
+          >
+            <span className="font-mono text-muted-foreground">ref {index + 1}</span>
+            <span className="truncate">{item.title}</span>
+            <span className="ml-auto shrink-0 tabular-nums">x{item.quantity}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// The reviews the model actually read: the evidence behind any "customers say" claim.
+export function ReviewsCard({ items }: { items: ReviewItem[] }) {
+  return (
+    <div className="not-prose mt-2 w-full max-w-md rounded-md border text-xs">
+      <div className="border-b px-3 py-2 font-medium">Customer reviews</div>
+      <ul>
+        {items.map((review, index) => (
+          <li key={index} className="border-b px-3 py-2 last:border-b-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{review.rating.toFixed(1)}★</span>
+              <span className="truncate">{review.title}</span>
+              {review.verified ? (
+                <span className="ml-auto shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  verified
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-muted-foreground">{review.text}</p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

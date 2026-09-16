@@ -19,7 +19,7 @@ Dependencies point inward only.
 | L4 Surfaces | `frontend/` (React SPA + AI Elements), `web/` (SSE API), CLI | L3 |
 | L3 Capabilities | `app/tools`, `app/skills`, `app/memory`, `app/gates` | L2 |
 | L2 Adapters | `app/adapters` (DeepSeek, mock, SQLite, SSE, CLI, storefront, session, tracer, merchant, memory, embedding, vector) | L1 |
-| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Embedding, VectorStore, Memory, EventSink) | L0 |
+| L1 Ports | `app/ports` (LLM, Storefront, Merchant, Session, Tracer, Backend, Retriever, Embedding, VectorStore, Memory, EventSink, PostPurchase, Catalog[planned]) | L0 |
 | L0 Core | `app/core` (loop, session, events, settings, prompts) | none |
 
 `app/core` imports only `app/ports`. Adapters implement the ports and are
@@ -76,6 +76,16 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
                        -> block the PR or trigger a fix
 ```
 
+**Gates (control, 046 hardening).** A gate is decision-only (`GateResult`), never
+an effect (P3). Gates run at the single execution point, `ToolRegistry.execute`, so
+no surface can forget one. A gate declares `applies_to` (tool names and/or an
+effect class) and `priority`; `app/gates/registry.py:order_gates` resolves the
+order explicitly (an unknown name fails loud, PB-1/PB-3) and `GateSet.select` picks
+the gates for a call. A `proposal` / `irreversible` tool with no covering gate is
+refused (fail-closed). Adding a gate is one class plus one line in
+`app/gates/factory.py:build_gate_set` -- no tool changes. HITL is `ApprovalGate`;
+`config/settings.yaml:gates` can disable gates by name or pin their order.
+
 ## Where new behavior goes (HR-11)
 
 | Goal | Mechanism |
@@ -84,15 +94,18 @@ Sensors (feedback):   ruff, pyright, tests, evals, gates
 | Add a model-facing capability | Register a `ToolSpec` + handler in `app/tools/registry.py` |
 | Add a long-tail procedure | Add `skills/<name>/SKILL.md`; `app/skills/loader.py` advertises it in the system prompt and `use_skill` loads the body on demand |
 | Add a storefront/merchant system | Implement `StorefrontBackend` (`app/ports/storefront.py`) / `MerchantBackend`; select the provider in `settings.yaml` |
+| Add a commerce backend | Implement `PostPurchaseBackend` (`app/ports/post_purchase.py`); `post_purchase.provider` selects `shopify` (real, read-only) or `memory` |
+| Add a product catalog | Implement the `Catalog` port (planned, feature 045); the ESCI adapter ranks a real catalog against human relevance labels |
 | Add post-purchase orders | Extend `StorefrontBackend` (orders) and register tools in `app/tools/orders.py`; demo orders live in `app/adapters/order_seed.py` |
-| Change the return policy | Edit `returns.window_days` in `settings.yaml`; keep `config/knowledge/returns.md` in sync |
+| Change the return policy | Edit `config/policies/amazon.yaml` (feature 046); the prose and the engine derive from it |
 | Add retrieval | Implement `Retriever` (`app/ports/retriever.py`); `knowledge.provider` selects `memory` (keyless TF-IDF, default) or `dense` |
 | Add embeddings | Implement `EmbeddingProvider` (`app/ports/embedding.py`); `embedding.provider` selects keyless `hash` (default) or `openai` |
 | Add a vector store | Implement `VectorStore` (`app/ports/vector_store.py`); `vector_store.provider` selects persistent `chroma` (default) or in-process `memory` |
 | Add customer memory | Implement `MemoryStore` (`app/ports/memory.py`); select it in `settings.yaml` (keyless memory + SQLite providers) |
 | Change memory extraction | Edit `app/memory/extract.py`; the deterministic extractor is the fallback for any future LLM extractor (RD-1) |
-| Change chunking | Implement `ChunkingStrategy`; select it in config |
-| Add a write guardrail | Add a gate in `app/gates/` and run it through the tool's `GatePipeline` (see `ProvenanceGate`, `ReturnEligibilityGate`) |
+| Run or change the gold scenarios | `evals/runner.py` + `evals/scenarios.py` are the source of truth: 13 keyless scenarios driving the **shipped** closed-loop tools (`get_order_status`, `list_returnable_items`, `propose_return_decision`) over `evals/order_fixtures.py`; `evals/run.py` runs them in the gate. The 016 spec is archived, so the code and this row are the documentation |
+| Change chunking | Edit `app/knowledge/ingest.py` (one chunk per section, heading kept) and `ingestion.chunk_size` |
+| Add a write guardrail | Add a `Gate` in `app/gates/` (name + `applies_to` + `priority` + `check`) and register it in `app/gates/factory.py`; the registry runs it at `ToolRegistry.execute` |
 | Add or change a UI component | Add an AI Elements/shadcn component under `frontend/src/components`; wire it in `frontend/src/App.tsx` |
 | Change how backend events reach the UI | Edit `frontend/src/lib/transport.ts` (SSE → AI SDK `UIMessageChunk`) |
 | Add a UI state or a11y behavior | Follow `docs/ui-conventions.md`; update the spec's `## UI Requirements` |
@@ -112,3 +125,27 @@ Changing the loop itself is the exception, not the rule. If you change
 `app/core/loop.py`, update this document in the same pull request. The loop
 closes each provider stream deterministically after the final event, so stopping
 on `Finish` never leaves an async generator to be collected mid-flight.
+
+## Runtime wiring: the journey agent (feature 046)
+
+`web/main.py:build_agent` wires the closed-loop tool set:
+
+- **storefront**: `search_products` (catalog), `cart_*` (cart), `search_knowledge`
+  (policy retrieval from the SoT-derived corpus).
+- **cart backend** (`app/ports/cart.py`, resolved by `web/main.py:build_cart`): `session`
+  (keyless default — lines live on the session) or `shopify_storefront`
+  (`app/adapters/cart_shopify.py`, a real Storefront cart; needs
+  `SHOPIFY_STOREFRONT_TOKEN`, a credential this project's store does not have, so that
+  path is implemented and MockTransport-tested but **not live-verified**). Either
+  provider mirrors its lines onto the session, so the transcript and session
+  persistence are unchanged.
+- **checkout**: `create/update/complete_checkout` over the simulated ACP adapter
+  (`complete_checkout` is HITL-gated).
+- **customer-accounts**: `get_order_status`, `list_returnable_items`,
+  `propose_return_decision`, validated at runtime by `PolicyGate`
+  (`app/gates/policy.py`) against the policy SoT (`config/policies/amazon.yaml`).
+
+The system prompt is `config/prompts/journey.md` and holds **only the procedure**,
+never policy facts. **Legacy path**: `app/tools/orders.py` and
+`app/returns/policy.py` are deprecated (kept for the legacy storefront evals) and
+are no longer wired into the app.

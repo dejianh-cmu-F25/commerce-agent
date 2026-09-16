@@ -13,11 +13,13 @@ from app.core.types import Order, Product
 
 
 class StorefrontBackend(Protocol):
-    def search(self, query: str, limit: int) -> list[Product]:
+    def search(self, query: str, limit: int, *, evidence: bool = False) -> list[Product]:
         """Return at most ``limit`` products matching ``query``.
 
         An empty query returns ``[]``; the caller never receives the whole
-        catalog by accident.
+        catalog by accident. ``evidence`` asks for the enriched index (features and
+        review text), which answers attribute questions a title cannot ("runs small")
+        at the cost of lexical precision - providers with a single index ignore it.
         """
         ...
 

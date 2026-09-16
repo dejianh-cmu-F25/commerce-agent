@@ -43,6 +43,9 @@ class EmbeddingSettings(BaseModel):
     dimensions: int = 256
     base_url: str = ""
     api_key: str = ""
+    # Vectors are cached by text so re-indexing a catalog (or re-running a
+    # benchmark) does not pay for the same embedding twice.
+    cache_path: str = "./data/embeddings.sqlite"
 
 
 class VectorStoreSettings(BaseModel):
@@ -56,6 +59,14 @@ class RetrievalSettings(BaseModel):
     sparse_top_k: int = 20
     fusion_top_k: int = 10
     rrf_k: int = 60
+    # The lexical leg of a hybrid: `tfidf` (shipped) or `bm25` (saturating, length
+    # normalised). Measured, not assumed - see reports/discovery-bm25.md.
+    sparse: Literal["tfidf", "bm25"] = "tfidf"
+    # RRF weights (sparse, dense). Equal weights let the weaker retriever drag the
+    # fused ranking down, so these are tuned on a held-out split of the rule set
+    # (evals/tune_rrf.py) rather than guessed.
+    sparse_weight: float = 1.0
+    dense_weight: float = 1.0
 
 
 class RerankSettings(BaseModel):
@@ -66,9 +77,7 @@ class RerankSettings(BaseModel):
 
 class EvaluationSettings(BaseModel):
     enabled: bool = False
-    provider: Literal["custom", "ragas"] = "custom"
-    metrics: list[str] = Field(default_factory=lambda: ["hit_rate", "mrr", "faithfulness"])
-    # Real-model evaluation (feature 023): opt-in, budget-capped.
+    # Real-model evaluation (feature 023): opt-in.
     seeds: int = Field(default=3, ge=1, le=20)
     pass_k: int = Field(default=3, ge=1, le=20)
     judge: bool = True
@@ -83,20 +92,17 @@ class ObservabilitySettings(BaseModel):
     trace_max_attr_len: int = 500
 
 
-class ChunkRefinerSettings(BaseModel):
-    use_llm: bool = False
-
-
-class MetadataEnricherSettings(BaseModel):
-    use_llm: bool = False
-
-
 class IngestionSettings(BaseModel):
+    """Knowledge chunking (P4). One chunk per markdown section, split further only
+    when a section exceeds `chunk_size`; every part keeps its heading, so a clause
+    cannot lose the id that names it.
+
+    This replaces a set of knobs (`splitter: recursive|semantic|fixed`,
+    `chunk_overlap`, `chunk_refiner`, `metadata_enricher`) that were declared in
+    config but implemented nowhere - the honest fix for config that lies.
+    """
+
     chunk_size: int = 1000
-    chunk_overlap: int = 200
-    splitter: Literal["recursive", "semantic", "fixed"] = "recursive"
-    chunk_refiner: ChunkRefinerSettings = Field(default_factory=ChunkRefinerSettings)
-    metadata_enricher: MetadataEnricherSettings = Field(default_factory=MetadataEnricherSettings)
 
 
 class MemorySettings(BaseModel):
@@ -128,6 +134,42 @@ class StorefrontSettings(BaseModel):
     seed_orders: bool = True
 
 
+class CartSettings(BaseModel):
+    """Where cart lines live (feature 046, T108).
+
+    ``session`` is the keyless default and needs nothing; ``shopify_storefront`` writes
+    a real cart through the Storefront API and needs ``SHOPIFY_STOREFRONT_TOKEN``.
+    """
+
+    provider: Literal["session", "shopify_storefront"] = "session"
+
+
+class CatalogSettings(BaseModel):
+    """Local discovery retrieval (feature 046 step A).
+
+    The live catalog is searched from a local index (``scripts/sync_catalog.py``).
+    ``tfidf`` is keyless (P8); ``hybrid`` fuses it with a real embedding, which
+    needs ``embedding.provider`` to be a real provider.
+    """
+
+    provider: Literal["tfidf", "hybrid"] = "tfidf"
+    index_path: str = "./data/discovery/products.json"
+    collection_name: str = "catalog"
+    # Widen the retrieval window before mapping ids to live products, so a product
+    # that has left the shop does not silently shrink the result set.
+    overfetch: int = 4
+
+
+class ShopifySettings(BaseModel):
+    # Real post-purchase system of record (feature 045). Empty = keyless fixture.
+    shop: str = ""  # e.g. my-store.myshopify.com
+    access_token: str = ""
+    # Storefront API token (a different credential from the Admin token): needed only by
+    # cart.provider=shopify_storefront, which is not live-verified without it.
+    storefront_token: str = ""
+    api_version: str = "2025-07"
+
+
 class SafetySettings(BaseModel):
     # Deterministic input guard before the model (feature 028, RW-1).
     input_guard: bool = True
@@ -147,7 +189,7 @@ class DataSettings(BaseModel):
 
 class ReturnsSettings(BaseModel):
     # The machine-readable return window; keep in sync with
-    # config/knowledge/returns.md (feature 014).
+    # config/knowledge/amazon-returns.md (feature 046, derived from config/policies/amazon.yaml).
     window_days: int = Field(default=30, gt=0)
 
 
@@ -155,6 +197,20 @@ class SkillsSettings(BaseModel):
     # Long-tail procedures in ``skills/<name>/SKILL.md`` (feature 019).
     enabled: bool = True
     path: str = "./skills"
+
+
+class GateSettings(BaseModel):
+    """Gate wiring (046 hardening).
+
+    ``disabled`` turns named gates off (they are all on by default); ``order``
+    pins an explicit order (the rest fall back to their priority tier). An
+    unknown name fails loud at load (PB-1). ``hit_policy`` is ``first``
+    (short-circuit) or ``collect`` (evaluate every gate).
+    """
+
+    hit_policy: Literal["first", "collect"] = "first"
+    order: list[str] = Field(default_factory=list)
+    disabled: list[str] = Field(default_factory=list)
 
 
 class SessionSettings(BaseModel):
@@ -168,6 +224,11 @@ class KnowledgeSettings(BaseModel):
     path: str = "./config/knowledge"
     top_k: int = 3
     min_chars: int = 40
+
+
+class ReviewsSettings(BaseModel):
+    # Local real review store (feature 046, from Amazon Reviews'23).
+    path: str = "./data/reviews/reviews.sqlite"
 
 
 class Settings(BaseModel):
@@ -184,11 +245,16 @@ class Settings(BaseModel):
     budget: BudgetSettings = Field(default_factory=BudgetSettings)
     web: WebSettings = Field(default_factory=WebSettings)
     storefront: StorefrontSettings = Field(default_factory=StorefrontSettings)
+    catalog: CatalogSettings = Field(default_factory=CatalogSettings)
+    cart: CartSettings = Field(default_factory=CartSettings)
     session: SessionSettings = Field(default_factory=SessionSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
+    reviews: ReviewsSettings = Field(default_factory=ReviewsSettings)
     returns: ReturnsSettings = Field(default_factory=ReturnsSettings)
     skills: SkillsSettings = Field(default_factory=SkillsSettings)
+    gates: GateSettings = Field(default_factory=GateSettings)
     data: DataSettings = Field(default_factory=DataSettings)
+    shopify: ShopifySettings = Field(default_factory=ShopifySettings)
     safety: SafetySettings = Field(default_factory=SafetySettings)
     resilience: ResilienceSettings = Field(default_factory=ResilienceSettings)
 
@@ -228,11 +294,22 @@ _ENV_OVERRIDES: dict[str, tuple[str, str, Callable[[str], object]]] = {
     "SAFETY_INPUT_GUARD": ("safety", "input_guard", _to_bool),
     "SAFETY_MAX_INPUT_CHARS": ("safety", "max_input_chars", int),
     "RESILIENCE_FALLBACK_ENABLED": ("resilience", "fallback_enabled", _to_bool),
+    "SHOPIFY_SHOP": ("shopify", "shop", str),
+    "SHOPIFY_ACCESS_TOKEN": ("shopify", "access_token", str),
+    "SHOPIFY_STOREFRONT_TOKEN": ("shopify", "storefront_token", str),
+    "CART_PROVIDER": ("cart", "provider", str),
+    "SHOPIFY_API_VERSION": ("shopify", "api_version", str),
     "RETURNS_WINDOW_DAYS": ("returns", "window_days", int),
     "SESSION_STORE": ("session", "store", str),
     "SESSION_SQLITE_PATH": ("session", "sqlite_path", str),
+    "CATALOG_PROVIDER": ("catalog", "provider", str),
+    "RERANK_ENABLED": ("rerank", "enabled", _to_bool),
+    "RERANK_PROVIDER": ("rerank", "provider", str),
+    "RERANK_TOP_K": ("rerank", "top_k", int),
+    "CATALOG_INDEX_PATH": ("catalog", "index_path", str),
     "KNOWLEDGE_PROVIDER": ("knowledge", "provider", str),
     "KNOWLEDGE_PATH": ("knowledge", "path", str),
+    "REVIEWS_PATH": ("reviews", "path", str),
     "MEMORY_PROVIDER": ("memory", "provider", str),
     "MEMORY_SQLITE_PATH": ("memory", "sqlite_path", str),
     "SKILLS_ENABLED": ("skills", "enabled", _to_bool),

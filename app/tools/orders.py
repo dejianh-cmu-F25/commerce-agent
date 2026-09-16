@@ -1,5 +1,10 @@
 """Post-purchase tools: order status and a render-only return request (014).
 
+**Deprecated (feature 046).** The journey agent uses ``app/tools/post_purchase.py``
+(Shopify-backed, policy-validated) instead. This module is retained only for the
+legacy storefront evals (``evals/runner.py``, ``evals/agent_eval.py``); it is no
+longer wired into ``web/main.py``.
+
 Orders come only from the storefront (P4); the session may reference only ids the
 storefront returned. ``start_return`` records a request and renders it — it never
 refunds, charges, or changes the order (P3).

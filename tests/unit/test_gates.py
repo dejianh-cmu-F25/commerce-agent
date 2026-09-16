@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 
 from app.core.session import Session
 from app.core.types import Order, OrderItem
-from app.gates.base import GateContext, GateResult
+from app.gates.base import ALL, GateContext, GateResult
 from app.gates.pipeline import GatePipeline
 from app.gates.provenance import ProvenanceGate
 from app.gates.returns import ReturnEligibilityGate
@@ -71,6 +71,9 @@ def test_pipeline_short_circuits_on_the_first_block():
     calls: list[str] = []
 
     class Recording:
+        applies_to = ALL
+        priority = 0
+
         def __init__(self, name: str, allowed: bool) -> None:
             self.name = name
             self._allowed = allowed

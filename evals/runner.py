@@ -31,18 +31,22 @@ from app.adapters.vector_memory import InMemoryVectorStore
 from app.core import events as ev
 from app.core.loop import Agent
 from app.core.session import MemoryNote, Session
-from app.core.settings import AgentSettings
+from app.core.settings import AgentSettings, load_settings
 from app.core.types import MemoryFact
+from app.gates.policy import PolicyGate
+from app.gates.registry import GateSet
 from app.knowledge.ingest import load_chunks
 from app.ports.retriever import Retriever
+from app.returns.amazon_policy import load_amazon_policy
 from app.skills.loader import load_skills
 from app.tools.cart import register_cart_tools
 from app.tools.catalog import register_catalog_tools
 from app.tools.knowledge import register_knowledge_tools
 from app.tools.merchant import register_merchant_tools
-from app.tools.orders import register_order_tools
+from app.tools.post_purchase import register_post_purchase_tools
 from app.tools.registry import ToolRegistry
 from app.tools.skills import register_skill_tools
+from evals.order_fixtures import FIXED_NOW, post_purchase_fixture
 from evals.scenarios import SCENARIOS, Scenario
 
 SYSTEM = "You are a commerce agent."
@@ -98,11 +102,11 @@ def _build_agent(
     config: RunConfig,
     tmp_dir: str,
 ) -> Agent:
-    registry = ToolRegistry()
+    registry = ToolRegistry(gates=GateSet([PolicyGate(load_amazon_policy())]))
     storefront = InMemoryStorefront(SEED_PRODUCTS)
     register_catalog_tools(registry, storefront)
     register_cart_tools(registry, storefront)
-    register_order_tools(registry, storefront, 30)
+    register_post_purchase_tools(registry, post_purchase_fixture(), now=FIXED_NOW)
     register_knowledge_tools(registry, _build_retriever(config.knowledge, tmp_dir))
     if config.use_skills:
         register_skill_tools(registry, load_skills(SKILLS_DIR))
@@ -113,6 +117,7 @@ def _build_agent(
         settings=AgentSettings(max_turns=12),
         system_prompt=SYSTEM,
         memory=memory,
+        safety=load_settings().safety,
     )
 
 

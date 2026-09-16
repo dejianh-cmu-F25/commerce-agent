@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Add a web Trace Viewer: a Chat/Traces toggle in the header, a list of
 recent traces from `GET /traces`, and a turn/step/tool span timeline with
 durations, status and redacted attributes from `GET /traces/{id}`.
@@ -84,9 +83,8 @@ reloads the list.
 
 ### Key Entities
 
-- **TraceSummary**: `trace_id`, `start_ms`, `duration_ms`, `span_count`, `status`.
-- **Span**: `trace_id`, `span_id`, `parent_id`, `name`, `start_ms`, `end_ms`,
-  `status`, `attributes`.
+- **TraceSummary** / **Span**: defined by the observability producer (feature 007,
+  `## Key Entities`); this read-only view renders them and does not redefine them.
 
 ## UI Requirements
 
@@ -120,6 +118,14 @@ backend events.
   error state; Refresh reloads.
 - **SC-003**: Toggling views preserves the chat transcript and composer.
 - **SC-004**: The view is usable at 375px and follows the theme.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

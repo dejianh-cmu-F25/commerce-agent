@@ -14,7 +14,9 @@ from app.core.types import Usage
 class CostMeter(Protocol):
     def spent_cny(self) -> float: ...
 
-    def limit_cny(self) -> float: ...
+    def limit_cny(self) -> float:
+        """The enforced cap, or ``0.0`` when the meter is report-only (HR-12)."""
+        ...
 
     def remaining_cny(self) -> float: ...
 
@@ -22,4 +24,8 @@ class CostMeter(Protocol):
 
     def record(self, usage: Usage) -> None:
         """Add the cost of one model call to the running total."""
+        ...
+
+    def flush(self) -> None:
+        """Persist the running total now."""
         ...

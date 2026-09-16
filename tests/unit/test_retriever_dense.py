@@ -18,16 +18,18 @@ def test_add_is_idempotent_and_retrieve_ranks_by_source():
         Chunk(
             id="returns",
             text="Returns: a 30 day return policy and the refund process",
-            source="returns.md",
+            source="amazon-returns.md",
         ),
-        Chunk(id="shipping", text="Shipping: delivery times and carriers", source="shipping.md"),
+        Chunk(
+            id="shipping", text="Shipping: delivery times and carriers", source="amazon-shipping.md"
+        ),
     ]
     retriever.add(chunks)
     retriever.add(chunks)  # idempotent
 
     assert retriever.size() == 2
     hits = retriever.retrieve("return refund policy", 2)
-    assert hits and hits[0].source == "returns.md"
+    assert hits and hits[0].source == "amazon-returns.md"
     assert retriever.retrieve("   ") == []
 
 

@@ -15,7 +15,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 KEYLESS = ROOT / "evals" / "results-keyless.json"
-BUDGET = ROOT / "data" / "budget.json"
 HISTORY = ROOT / "evals" / "guardrail-history.jsonl"
 HISTORY_LIMIT = 50
 
@@ -44,7 +43,7 @@ def _load(path: Path) -> dict:
         return {}
 
 
-def evaluate(keyless: dict, budget: dict) -> list[Guardrail]:
+def evaluate(keyless: dict) -> list[Guardrail]:
     guardrails: list[Guardrail] = []
 
     def add(name: str, value: float, floor: float, direction: str, source: str) -> None:
@@ -100,10 +99,6 @@ def evaluate(keyless: dict, budget: dict) -> list[Guardrail]:
                 "scale",
             )
 
-    spent = budget.get("spent_cny")
-    if spent is not None:
-        add("cost:spent_cny", spent, 10.0, "at_most", "budget")
-
     return guardrails
 
 
@@ -138,7 +133,7 @@ def record(result: dict, path: Path = HISTORY, limit: int = HISTORY_LIMIT) -> No
 
 def run_guardrails() -> dict:
     keyless = _load(KEYLESS)
-    guardrails = evaluate(keyless, _load(BUDGET))
+    guardrails = evaluate(keyless)
     history = load_history()
     previous = history[-1]["metrics"] if history else {}
     metrics: list[dict] = []

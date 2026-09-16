@@ -136,41 +136,52 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         name="order_status",
         intent="orders",
-        user_text="where is my order?",
+        user_text="where is my order O-1001?",
         turns=[
-            tool_turn("list_orders", "{}", call_id="o1"),
-            tool_turn("get_order_status", '{"order_id": "O-1001"}', call_id="o2"),
+            tool_turn("get_order_status", '{"order_id": "O-1001"}', call_id="o1"),
             _DONE,
         ],
-        expect_tools=["list_orders", "get_order_status"],
-        expect_components=["orders", "order"],
+        expect_tools=["get_order_status"],
+        expect_components=["order"],
     ),
     Scenario(
         name="start_return",
         intent="returns",
-        user_text="I want to return the tent",
+        user_text="I want to return the tent from order O-1001",
         turns=[
-            tool_turn("list_orders", "{}", call_id="o1"),
+            tool_turn("get_order_status", '{"order_id": "O-1001"}', call_id="o1"),
+            tool_turn("list_returnable_items", '{"order_id": "O-1001"}', call_id="o2"),
             tool_turn(
-                "start_return", '{"order_id": "O-1001", "product_id": "P-101"}', call_id="o2"
+                "propose_return_decision",
+                '{"order_id": "O-1001", "item_ref": 1, "decision": "eligible",'
+                ' "reason": "unwanted"}',
+                call_id="o3",
             ),
             _DONE,
         ],
-        expect_tools=["list_orders", "start_return"],
-        expect_components=["orders", "return"],
+        expect_tools=["get_order_status", "list_returnable_items", "propose_return_decision"],
+        expect_components=["order", "returnable_items", "return_decision"],
     ),
     Scenario(
         name="return_out_of_window",
         intent="returns",
-        user_text="I want to return the backpack",
+        user_text="I want to return the backpack from order O-1002",
         turns=[
-            tool_turn("list_orders", "{}", call_id="o1"),
+            tool_turn("get_order_status", '{"order_id": "O-1002"}', call_id="o1"),
+            tool_turn("list_returnable_items", '{"order_id": "O-1002"}', call_id="o2"),
+            # The proposal contradicts the policy (45 days > a 30-day window), so the
+            # runtime gate rejects it: the closed-loop form of "cannot return".
             tool_turn(
-                "start_return", '{"order_id": "O-1002", "product_id": "P-104"}', call_id="o2"
+                "propose_return_decision",
+                '{"order_id": "O-1002", "item_ref": 1, "decision": "eligible",'
+                ' "reason": "unwanted"}',
+                call_id="o3",
             ),
             _DONE,
         ],
-        expect_tools=["list_orders", "start_return"],
-        expect_components=["orders"],
+        expect_tools=["get_order_status", "list_returnable_items", "propose_return_decision"],
+        # No decision component: the gate rejects the proposal, so the tool returns an
+        # error result and nothing is recorded (the closed-loop form of "refused").
+        expect_components=["order", "returnable_items"],
     ),
 ]

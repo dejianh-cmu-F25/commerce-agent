@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Declare the guardrail metrics (quality, safety, latency, cost) with
 floors, aggregate them in the gate, render them, and require a guardrail statement
 per measurable change (EV-3).
@@ -75,6 +74,14 @@ assert the evidence gate fails.
 - **SC-003**: A measurable entry without a guardrail statement fails the evidence
   gate.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

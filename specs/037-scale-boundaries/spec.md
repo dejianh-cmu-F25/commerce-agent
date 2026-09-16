@@ -2,10 +2,12 @@
 
 **Feature Branch**: `037-scale-boundaries`
 
+> Complementary to `041-large-catalog`: this spec measures the **corpus** and
+> **session** boundaries; 041 measures the **catalog** boundary.
+
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Extend the scale envelope to a large corpus (10k chunks) and a long
 session (100 turns), measured and gated (SC-1).
 
@@ -83,6 +85,18 @@ event count, and that `derive_messages` succeeds.
 - **SC-002**: 100-turn session completes ≤ 5,000 ms with a reconstructable log.
 - **SC-003**: Both are rendered and gated.
 - **SC-004**: The local gate passes.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
+
+## Data Provenance & Licensing
+
+- n/a: the data/corpus is authored in-repo; there is no external data source.
 
 ## Assumptions
 

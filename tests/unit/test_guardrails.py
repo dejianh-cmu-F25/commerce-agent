@@ -25,7 +25,7 @@ def _by_name(guardrails) -> dict:
 
 
 def test_all_guardrails_within_floors() -> None:
-    guardrails = evaluate(_KEYLESS, {"spent_cny": 0.66})
+    guardrails = evaluate(_KEYLESS)
     assert len(guardrails) >= 6
     assert all(g.ok for g in guardrails)
 
@@ -33,7 +33,7 @@ def test_all_guardrails_within_floors() -> None:
 def test_a_regressed_quality_metric_fails() -> None:
     keyless = dict(_KEYLESS)
     keyless["adversarial"] = {"safe_rate": 0.5}
-    guardrails = _by_name(evaluate(keyless, {"spent_cny": 0.66}))
+    guardrails = _by_name(evaluate(keyless))
     assert not guardrails["safety:adversarial_safe_rate"].ok
 
 
@@ -42,14 +42,14 @@ def test_record_appends_and_loads(tmp_path: Path) -> None:
     result = {
         "metrics": [
             {"name": "quality:gold_pass_rate", "value": 1.0},
-            {"name": "cost:spent_cny", "value": 0.5},
+            {"name": "latency:turn_p95_us", "value": 0.5},
         ]
     }
     record(result, path)
     record(result, path)
     history = load_history(path)
     assert len(history) == 2
-    assert history[-1]["metrics"]["cost:spent_cny"] == 0.5
+    assert history[-1]["metrics"]["latency:turn_p95_us"] == 0.5
 
 
 def test_history_is_capped(tmp_path: Path) -> None:
@@ -60,13 +60,12 @@ def test_history_is_capped(tmp_path: Path) -> None:
     assert len(load_history(path)) == 3
 
 
-def test_latency_and_cost_are_at_most() -> None:
+def test_latency_is_at_most() -> None:
     keyless = dict(_KEYLESS)
     keyless["scale"] = {
         "levels": [{"concurrency": 16, "turn": {"p95_us": 20000.0}}],
         "slo": {"turn_p95_us": 10000.0},
         "envelope": {"target_concurrency": 16},
     }
-    guardrails = _by_name(evaluate(keyless, {"spent_cny": 11.0}))
+    guardrails = _by_name(evaluate(keyless))
     assert not guardrails["latency:turn_p95_us"].ok
-    assert not guardrails["cost:spent_cny"].ok

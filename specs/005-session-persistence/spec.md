@@ -4,8 +4,7 @@
 
 **Created**: 2026-09-13
 
-**Status**: Draft
-
+**Status**: Implemented
 **Input**: Persist the session log to SQLite so conversations survive restarts and
 can be resumed by `session_id`, with `derive_messages` producing identical
 messages after reload.
@@ -117,7 +116,7 @@ messages. Restart the app and request the same id: the messages are still there.
 
 ## Observability
 
-No new events; structured traces arrive with feature 080 (SL-2).
+No new events; structured traces shipped in feature 007 (SL-2).
 
 ## Success Criteria *(mandatory)*
 
@@ -127,6 +126,14 @@ No new events; structured traces arrive with feature 080 (SL-2).
 - **SC-003**: Unit tests cover the in-memory store; integration tests cover the
   SQLite store (round-trip, idempotent save, 404 path via the API).
 - **SC-004**: Switching `session.store` changes the provider with no code change.
+
+## Evaluation Plan
+
+- **Dataset(s)**: the in-repo evaluation sets under `evals/` (keyless) — see `specs/RESULTS.md`.
+- **Metric(s)**: see `## Measured Results` and `specs/RESULTS.md`.
+- **Threshold(s)**: enforced by the local gate (`make ci-fast`).
+- **Cost/speed**: keyless (no model call).
+- **Report**: `specs/RESULTS.md`, `evals/report.md`.
 
 ## Assumptions
 

@@ -46,6 +46,36 @@ export type OrderDetail = {
   items: OrderLine[];
 };
 
+// The closed-loop return proposal, as the harness returns it. Three shapes reach the
+// UI: an accepted proposal, a proposal the policy gate refused (validated:false plus
+// the engine's reason), and an order the tenancy gate would not read (accessible:false).
+export type ReturnDecisionData = {
+  order_id: string;
+  fulfillment_line_item_id?: string;
+  decision?: "eligible" | "ineligible" | "escalate";
+  cited_clauses?: string[];
+  validated?: boolean;
+  policy?: string | null;
+  accessible?: boolean;
+  reason?: string;
+  guidance?: string;
+};
+
+export type ReviewItem = {
+  rating: number;
+  title: string;
+  text: string;
+  helpful_votes: number;
+  verified: boolean;
+};
+
+export type ReturnableItem = {
+  fulfillment_line_item_id: string;
+  title: string;
+  sku: string;
+  quantity: number;
+};
+
 export type ReturnData = {
   order_id: string;
   product_id: string;
@@ -66,6 +96,9 @@ export type AgentDataTypes = {
   orders: { items: OrderSummary[] };
   order: OrderDetail;
   return: ReturnData;
+  "return-decision": ReturnDecisionData;
+  "returnable-items": { items: ReturnableItem[] };
+  reviews: { items: ReviewItem[] };
 };
 
 export type AgentUIMessage = UIMessage<unknown, AgentDataTypes>;
@@ -159,6 +192,23 @@ export function mapEvent(event: WireEvent, ctx: Ctx): UIMessageChunk[] {
         out.push({ type: "data-order", data: payload as unknown as OrderDetail });
       } else if (component === "return") {
         out.push({ type: "data-return", data: payload as unknown as ReturnData });
+      } else if (component === "return_decision") {
+        // Emitted on every accepted, refused and unreadable return proposal: the card
+        // is where a customer sees the decision AND the harness's verdict on it.
+        out.push({
+          type: "data-return-decision",
+          data: payload as unknown as ReturnDecisionData,
+        });
+      } else if (component === "returnable_items") {
+        const items = (payload.items as ReturnableItem[]) ?? [];
+        if (items.length > 0) {
+          out.push({ type: "data-returnable-items", data: { items } });
+        }
+      } else if (component === "reviews") {
+        const items = (payload.items as ReviewItem[]) ?? [];
+        if (items.length > 0) {
+          out.push({ type: "data-reviews", data: { items } });
+        }
       }
       break;
     }

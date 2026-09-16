@@ -13,7 +13,7 @@ system **degrade observably rather than fail silently**.
 | Customer memory | SQLite store | no memory (turn proceeds) | traced span, error swallowed | — |
 | Merchant writes | SQLite | staged change only (never applied) | `P3` gate | — |
 | LLM provider | configured provider | fallback provider (if configured), else a surfaced error turn | `FallbackLLM.degraded` + `ErrorEvent` | `llm.fallback_provider` |
-| Budget | — | turn stopped at the cap (HR-12) | `BudgetExceeded` event | `budget.enabled` |
+| Cost | — | recorded and reported; the turn stops only when a cap is armed | `UsageReported` event (`BudgetExceeded` only with `budget.enabled`) | `budget.enabled` |
 
 The **retriever** fallback is the one wrapped by code: `app/core/resilience.py`
 composes a primary and a secondary retriever, serves the secondary on a primary
