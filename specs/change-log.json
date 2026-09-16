@@ -1864,6 +1864,22 @@
       "blast_radius": "app/gates/* (base/registry/pipeline/approval/factory + the four gates), app/tools/registry.py (gate execution, effects, context builders), app/tools/{cart,checkout,post_purchase}.py (bindings), app/core/loop.py (one span attribute), config/settings.yaml + settings.py (gates section), evals that built gates per call, and tests. The ~50 ToolRegistry() build sites are unaffected: a registry with no gate set is unchanged.",
       "rollback": "git revert; the change is additive - a ToolRegistry() with no GateSet behaves exactly as before",
       "evidence": "tests/integration/test_mcp_gates.py, tests/unit/test_gate_coverage.py, tests/unit/test_gate_registry.py"
+    },
+    {
+      "date": "2026-09-16",
+      "change": "#120 047-product-rag (need-based discovery: retrieval over product text beats keyword)",
+      "area": "discovery",
+      "class": "measurable",
+      "what": "Discovery was measured on lexical/attribute/ESCI queries but not on need/task queries ('something to keep dog hair off my clothes while grooming him'), where the matching words live in the review or feature text, not the title. Added a labeled need set (evals/need_cases.py -> evals/need_cases.jsonl, 24 cases, labels provable from product text) and a benchmark (evals/need_bench.py) comparing a title-only keyword index (tfidf-plain), retrieval over the product text (tfidf-enriched), keyless dense (dense-hash), and a real embedding (dense-openai / hybrid-openai).",
+      "metric": "need-query hit@10 on evals/need_cases.jsonl",
+      "before": 0.292,
+      "after": 0.583,
+      "note": null,
+      "guardrails": "additive change (new labeled set + benchmark; no shipped-path change); the keyless gate is unaffected; the rule set / ESCI / attribute benchmarks are unchanged",
+      "verdict": "accepted",
+      "blast_radius": "discovery evaluation only (new evals + spec + report); no app/, tool, gate, or prompt change",
+      "rollback": "git revert; nothing in the shipped path depends on it",
+      "evidence": "reports/discovery-need.md, evals/need_bench.py, evals/need_cases.py, specs/047-product-rag/spec.md"
     }
   ]
 }
