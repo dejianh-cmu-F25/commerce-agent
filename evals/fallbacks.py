@@ -41,7 +41,7 @@ class FailingRetriever:
     def add(self, chunks: list[Chunk]) -> None:
         return None
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where=None) -> list[Chunk]:
         self.attempts += 1
         raise RuntimeError("vector store unavailable")
 

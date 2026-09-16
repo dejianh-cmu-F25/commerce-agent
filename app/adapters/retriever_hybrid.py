@@ -11,6 +11,7 @@ Dependency-free and deterministic; it just composes two ``Retriever`` ports.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 from app.core.types import Chunk
 from app.ports.retriever import Retriever
@@ -37,7 +38,13 @@ def rrf_fuse(
             by_id[chunk.id] = chunk
     ordered = sorted(scores, key=lambda cid: (-scores[cid], cid))[: max(1, k)]
     return [
-        Chunk(id=cid, text=by_id[cid].text, source=by_id[cid].source, score=scores[cid])
+        Chunk(
+            id=cid,
+            text=by_id[cid].text,
+            source=by_id[cid].source,
+            score=scores[cid],
+            metadata=by_id[cid].metadata,
+        )
         for cid in ordered
     ]
 
@@ -65,13 +72,13 @@ class HybridRetriever:
         self._sparse.add(chunks)
         self._dense.add(chunks)
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where: dict[str, Any] | None = None) -> list[Chunk]:
         if not query.strip():
             return []
         return rrf_fuse(
             [
-                self._sparse.retrieve(query, self._candidate_k),
-                self._dense.retrieve(query, self._candidate_k),
+                self._sparse.retrieve(query, self._candidate_k, where),
+                self._dense.retrieve(query, self._candidate_k, where),
             ],
             rrf_k=self._rrf_k,
             weights=self._weights,

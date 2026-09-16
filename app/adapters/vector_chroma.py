@@ -12,7 +12,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.core.filters import to_chroma_where
 from app.core.types import Chunk
+
+_SCALARS = (str, int, float, bool)
+
+
+def _metadata(chunk: Chunk) -> dict[str, Any]:
+    """Chroma metadata: JSON scalars only (no None, no nested values)."""
+    data: dict[str, Any] = {"source": chunk.source}
+    for key, value in chunk.metadata.items():
+        if value is not None and isinstance(value, _SCALARS):
+            data[key] = value
+    return data
 
 
 class ChromaVectorStore:
@@ -46,21 +58,27 @@ class ChromaVectorStore:
             ids=[chunk.id for chunk in chunks],
             embeddings=embeddings,
             documents=[chunk.text for chunk in chunks],
-            metadatas=[{"source": chunk.source} for chunk in chunks],
+            metadatas=[_metadata(chunk) for chunk in chunks],
         )
 
     def size(self) -> int:
         return int(self._collection.count())
 
-    def query(self, embedding: list[float], k: int = 3) -> list[Chunk]:
+    def query(
+        self, embedding: list[float], k: int = 3, where: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         count = self.size()
         if count == 0:
             return []
-        result = self._collection.query(
-            query_embeddings=[embedding],
-            n_results=min(max(1, k), count),
-            include=["documents", "metadatas", "distances"],
-        )
+        chroma_where = to_chroma_where(where)
+        arguments: dict[str, Any] = {
+            "query_embeddings": [embedding],
+            "n_results": min(max(1, k), count),
+            "include": ["documents", "metadatas", "distances"],
+        }
+        if chroma_where is not None:
+            arguments["where"] = chroma_where
+        result = self._collection.query(**arguments)
         ids = (result.get("ids") or [[]])[0]
         documents = (result.get("documents") or [[]])[0]
         metadatas = (result.get("metadatas") or [[]])[0]
@@ -73,12 +91,14 @@ class ChromaVectorStore:
             score = 1.0 - float(distance)
             if score <= 0:
                 continue
+            fields = dict(metadata or {})
             hits.append(
                 Chunk(
                     id=str(chunk_id),
                     text=str(document),
-                    source=str((metadata or {}).get("source", "")),
+                    source=str(fields.get("source", "")),
                     score=round(score, 6),
+                    metadata=fields,
                 )
             )
         return hits

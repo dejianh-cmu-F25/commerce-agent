@@ -17,7 +17,9 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from typing import Any
 
+from app.core.filters import metadata_matches
 from app.core.types import Chunk
 
 _TOKEN = re.compile(r"[a-z0-9]+")
@@ -63,7 +65,7 @@ class Bm25Retriever:
         # The +0.5 smoothed form, floored at 0 so a term in every document adds nothing.
         return max(0.0, math.log(1.0 + (total - freq + 0.5) / (freq + 0.5)))
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where: dict[str, Any] | None = None) -> list[Chunk]:
         terms = set(_tokens(query))
         if not terms or not self._chunks:
             return []
@@ -71,6 +73,9 @@ class Bm25Retriever:
         average_length = self._total_length / len(self._chunks)
         scored: list[tuple[float, Chunk]] = []
         for chunk_id, counts in self._term_counts.items():
+            chunk = self._chunks[chunk_id]
+            if not metadata_matches(chunk.metadata, where):
+                continue
             length = self._lengths[chunk_id]
             normaliser = self._k1 * (1.0 - self._b + self._b * length / average_length)
             score = 0.0
@@ -80,10 +85,16 @@ class Bm25Retriever:
                     continue
                 score += self._idf(term) * (tf * (self._k1 + 1.0)) / (tf + normaliser)
             if score > 0:
-                scored.append((score, self._chunks[chunk_id]))
+                scored.append((score, chunk))
 
         scored.sort(key=lambda pair: (-pair[0], pair[1].id))
         return [
-            Chunk(id=chunk.id, text=chunk.text, source=chunk.source, score=round(score, 6))
+            Chunk(
+                id=chunk.id,
+                text=chunk.text,
+                source=chunk.source,
+                score=round(score, 6),
+                metadata=chunk.metadata,
+            )
             for score, chunk in scored[: max(1, k)]
         ]

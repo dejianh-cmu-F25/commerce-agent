@@ -13,7 +13,7 @@ class _FakeRetriever:
     def add(self, chunks: list[Chunk]) -> None:  # pragma: no cover - not used
         pass
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where=None) -> list[Chunk]:
         return [Chunk(id=cid, text=cid, source=cid) for cid in self._order[:k]]
 
 

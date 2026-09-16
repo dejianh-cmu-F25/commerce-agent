@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 from app.core.types import Chunk, LLMEvent, Message, ToolSpec
 from app.ports.llm import LLMClient
@@ -29,7 +29,9 @@ class Degradation:
 class _Retriever(Protocol):
     def add(self, chunks: list[Chunk]) -> None: ...
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]: ...
+    def retrieve(
+        self, query: str, k: int = 3, where: dict[str, Any] | None = None
+    ) -> list[Chunk]: ...
 
 
 class FallbackRetriever:
@@ -58,13 +60,13 @@ class FallbackRetriever:
         self._primary.add(chunks)
         self._secondary.add(chunks)
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where: dict[str, Any] | None = None) -> list[Chunk]:
         if self._degraded:
-            return self._secondary.retrieve(query, k)  # already down: don't retry
+            return self._secondary.retrieve(query, k, where)  # already down: don't retry
         if not self._enabled:
-            return self._primary.retrieve(query, k)  # disabled: let it fail loud
+            return self._primary.retrieve(query, k, where)  # disabled: let it fail loud
         try:
-            return self._primary.retrieve(query, k)
+            return self._primary.retrieve(query, k, where)
         except Exception as exc:  # degrade, but record it (RD-1)
             self._degraded = True
             self._degradations.append(

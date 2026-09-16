@@ -10,7 +10,9 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
+from typing import Any
 
+from app.core.filters import metadata_matches
 from app.core.types import Chunk
 
 _TOKEN = re.compile(r"[a-z0-9]+")
@@ -39,7 +41,7 @@ class InMemoryRetriever:
     def size(self) -> int:
         return len(self._chunks)
 
-    def retrieve(self, query: str, k: int = 3) -> list[Chunk]:
+    def retrieve(self, query: str, k: int = 3, where: dict[str, Any] | None = None) -> list[Chunk]:
         terms = set(_tokens(query))
         if not terms or not self._chunks:
             return []
@@ -47,6 +49,9 @@ class InMemoryRetriever:
         total = len(self._chunks)
         scored: list[tuple[float, Chunk]] = []
         for chunk_id, counts in self._term_counts.items():
+            chunk = self._chunks[chunk_id]
+            if not metadata_matches(chunk.metadata, where):
+                continue
             score = 0.0
             for term in terms:
                 tf = counts.get(term, 0)
@@ -55,10 +60,16 @@ class InMemoryRetriever:
                 idf = math.log((1 + total) / (1 + self._doc_freq[term])) + 1.0
                 score += (1.0 + math.log(tf)) * idf
             if score > 0:
-                scored.append((score, self._chunks[chunk_id]))
+                scored.append((score, chunk))
 
         scored.sort(key=lambda pair: (-pair[0], pair[1].id))
         return [
-            Chunk(id=chunk.id, text=chunk.text, source=chunk.source, score=round(score, 6))
+            Chunk(
+                id=chunk.id,
+                text=chunk.text,
+                source=chunk.source,
+                score=round(score, 6),
+                metadata=chunk.metadata,
+            )
             for score, chunk in scored[: max(1, k)]
         ]

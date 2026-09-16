@@ -19,8 +19,9 @@ offline baseline and the live path index exactly the same corpus.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from app.core.types import Chunk, Order, Product
 from app.ports.retriever import Retriever
@@ -28,6 +29,16 @@ from app.ports.storefront import StorefrontBackend
 from app.reviews.clean import clean_review, is_usable_body
 
 SNIPPET_CHARS = 200
+
+_SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+
+
+class IdIndex(Protocol):
+    """What `LocalSearchCatalog` needs: ids from a local index, facts from the shop."""
+
+    def search(self, query: str, limit: int) -> list[str]: ...
+
+    def record(self, product_id: str) -> dict[str, Any] | None: ...
 
 
 def _review_snippets(product: dict[str, Any], reviews: Any, limit: int) -> list[str]:
@@ -85,6 +96,161 @@ def load_snapshot(path: str | Path) -> list[dict[str, Any]]:
     return products if isinstance(products, list) else []
 
 
+def _feature_sentences(description: Any, *, min_chars: int = 25, limit: int = 6) -> list[str]:
+    """Split a product's feature list into passage-sized pieces (feature 047).
+
+    The feature text is a run of short claims ("GENTLE ON THE SKIN - ..."); one
+    chunk per claim keeps each passage about one thing, which is what makes the
+    evidence citable and the retrieval faithful.
+    """
+    text = " ".join(str(description or "").split())
+    if not text:
+        return []
+    parts = [part.strip() for part in _SENTENCE.split(text) if part.strip()]
+    kept = [part for part in parts if len(part) >= min_chars]
+    return kept[:limit] or [text[:300]]
+
+
+def catalog_chunks(
+    product: dict[str, Any],
+    *,
+    reviews: Any | None = None,
+    review_limit: int = 5,
+    review_chars: int = 300,
+) -> list[Chunk]:
+    """Passage-level chunks for one product, each linked by ``product_id`` (047).
+
+    Three passage kinds: a product summary (title/vendor/type/tags), one chunk per
+    feature sentence, and one chunk per review. Every chunk carries the metadata a
+    filter can use (``source``, ``product_id``, ``category``, ``price``, ``vendor``,
+    and for reviews ``rating``/``verified``/``helpful_votes``).
+    """
+    pid = str(product["id"])
+    base = {
+        "product_id": pid,
+        "category": str(product.get("type") or ""),
+        "price": float(product.get("price") or 0.0),
+        "vendor": str(product.get("vendor") or ""),
+    }
+    tags = [tag for tag in product.get("tags") or [] if not tag.startswith("imported:")]
+    summary = " ".join(
+        part
+        for part in [
+            product.get("title") or "",
+            product.get("vendor") or "",
+            product.get("type") or "",
+            *tags,
+        ]
+        if part
+    ).strip()
+    chunks = [
+        Chunk(
+            id=f"{pid}#product",
+            text=summary,
+            source=pid,
+            metadata={**base, "source": "product"},
+        )
+    ]
+    for index, sentence in enumerate(_feature_sentences(product.get("description"))):
+        chunks.append(
+            Chunk(
+                id=f"{pid}#desc{index}",
+                text=sentence,
+                source=pid,
+                metadata={**base, "source": "description"},
+            )
+        )
+    sku = str(product.get("sku") or "")
+    if reviews is not None and sku:
+        for index, review in enumerate(reviews.get_reviews(sku, review_limit)):
+            text = clean_review(review.text, review.title)
+            if not is_usable_body(text):
+                continue
+            chunks.append(
+                Chunk(
+                    id=f"{pid}#review{index}",
+                    text=text[:review_chars],
+                    source=pid,
+                    metadata={
+                        **base,
+                        "source": "review",
+                        "rating": float(review.rating),
+                        "verified": bool(review.verified),
+                        "helpful_votes": int(review.helpful_votes),
+                    },
+                )
+            )
+    return chunks
+
+
+class PassageCatalogIndex:
+    """Passage-level catalog index that aggregates chunk hits to products (047).
+
+    Where :class:`CatalogIndex` indexes one document per product, this indexes each
+    passage and links it back to its product: a query retrieves the most relevant
+    passages (optionally filtered by metadata), then their scores are aggregated per
+    product. The chunk hits are kept for chunk-level metrics and for citing the
+    evidence an answer used.
+    """
+
+    def __init__(
+        self,
+        retriever: Retriever,
+        products: list[dict[str, Any]],
+        *,
+        reviews: Any | None = None,
+        chunks: list[Chunk] | None = None,
+        review_limit: int = 5,
+    ) -> None:
+        self._retriever = retriever
+        self._products = {str(p["id"]): p for p in products}
+        materialised = (
+            chunks
+            if chunks is not None
+            else [
+                chunk
+                for product in products
+                for chunk in catalog_chunks(product, reviews=reviews, review_limit=review_limit)
+            ]
+        )
+        self._chunk_count = len(materialised)
+        self._retriever.add(materialised)
+
+    def size(self) -> int:
+        return len(self._products)
+
+    def chunk_count(self) -> int:
+        return self._chunk_count
+
+    def retrieve_chunks(
+        self, query: str, k: int, where: dict[str, Any] | None = None
+    ) -> list[Chunk]:
+        return [hit for hit in self._retriever.retrieve(query, k, where) if hit.id]
+
+    def search(
+        self,
+        query: str,
+        limit: int,
+        *,
+        where: dict[str, Any] | None = None,
+        chunk_k: int = 100,
+    ) -> list[str]:
+        """Product ids ranked by their best passage, for a (filtered) query."""
+        if limit <= 0 or not query.strip():
+            return []
+        best: dict[str, float] = {}
+        for hit in self.retrieve_chunks(query, chunk_k, where):
+            pid = str((hit.metadata or {}).get("product_id") or "")
+            if pid not in self._products:
+                continue
+            best[pid] = max(best.get(pid, 0.0), hit.score)
+        ranked = sorted(best, key=lambda pid: (-best[pid], pid))
+        return ranked[:limit]
+
+    def record(self, product_id: str) -> dict[str, Any] | None:
+        return self._products.get(product_id)
+
+
 class CatalogIndex:
     """A local index over the catalog snapshot. Returns ids, never facts."""
 
@@ -137,9 +303,9 @@ class LocalSearchCatalog:
     def __init__(
         self,
         live: StorefrontBackend,
-        index: CatalogIndex,
+        index: IdIndex,
         *,
-        enriched: CatalogIndex | None = None,
+        enriched: IdIndex | None = None,
         overfetch: int = 4,
     ) -> None:
         self._live = live
